@@ -1,0 +1,30 @@
+### PLANTILLA PARA MAC
+
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute
+from qiskit.circuit.library.standard_gates import *
+from qiskit import Aer
+from qiskit.visualization import plot_histogram
+from qiskit.quantum_info.operators import Operator
+from math import pi
+import numpy 
+from qiskit.visualization import plot_state_city 
+from qiskit.visualization import plot_histogram
+from qiskit.circuit.library import MCMT
+
+
+#DECLARATION#
+#INITIALIZATION#
+#CALCULUS#
+#MEASURES#
+
+backend = Aer.get_backend('statevector_simulator')
+job = backend.run(circuit, shots=#SHOTS#) 
+result = job.result()
+histogram = result.get_counts()
+
+#outputstate = result.get_statevector(circuit, decimals=1) 
+
+print(histogram)
+
+#plot_histogram(histogram)
+#print(circuit)

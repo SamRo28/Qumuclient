@@ -1,0 +1,50 @@
+{
+	"operators" : [
+		{
+			"family" : "Initialization errors",
+			"operators" : [ "ChangeInitialValue", "FirstGateDuplication" ]
+		},
+		{
+			"family" : "Swap Gates",
+			"containerClass" : "SwapGates",
+			"operators" : [ "H_X", "H_Y", "H_Z", "X_H", "X_Y", "X_Z", "Y_X", "Y_H", "Y_Z", "Z_H", "Z_X", "Z_Y" ]
+		},
+		{
+			"family" : "Control Gates",
+			"operators" : [ "ControlGateRemoval", "SwapControlAndControlledQubits" ]
+		},
+		{
+			"family" : "Other operators",
+			"operators" : [ "FurtherGateDuplication", "NonControlGateRemoval" ]
+		},
+		{
+			"family" : "Position errors",
+			"operators" : [ "MoveGateDownAdj", "MoveGateDownAll","MoveGateUpAdj", "MoveGateUpAll","ChangeControlledQubitDown", "ChangeControlledQubitUp","ChangeControlQubitDown", "ChangeControlQubitUp" ]
+		}
+	],
+	"gates" : [
+		[ "H", "H", "circuit.h(#QUBIT#)" ],
+		
+		[ "X", "X", "circuit.x(#QUBIT#)" ],
+		[ "X^½", "X^½", "circuit.sx(#QUBIT#)" ],
+		[ "X^-½", "X^-½" ],
+		[ "X^¼", "X^¼" ],
+		[ "X^-¼", "X^-¼" ],
+		
+		[ "Y", "Y", "circuit.y(#QUBIT#)" ],
+		[ "Y^½", "Y^½" ],
+		[ "Y^-½", "Y^-½" ],
+		[ "Y^¼", "Y^¼" ],
+		[ "Y^-¼", "Y^-¼" ],
+		
+		[ "Z", "Z", "circuit.z(#QUBIT#)" ],
+		[ "Z^½", "Z^½", "circuit.s(#QUBIT#)" ],
+		[ "Z^-½", "Z^-½", "circuit.sdg(#QUBIT#)" ],
+		[ "Z^¼", "Z^¼", "circuit.t(#QUBIT#)" ],
+		[ "Z^-¼", "Z^-¼", "circuit.tdg(#QUBIT#)" ],
+		
+		[ "•", "•" ],
+		[ 1, 1 ],
+		[ 0, 0 ]
+	]
+}
