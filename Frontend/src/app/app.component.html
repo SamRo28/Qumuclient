@@ -1,8 +1,10 @@
 <div>
   <span style="color : red">{{ getError() }}</span>
 
-  <app-circuits-configuration></app-circuits-configuration>
+  <app-home *ngIf="manager.showHome"></app-home>
 
+  <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
+  <!--
   <app-mutants-generated></app-mutants-generated>
 
   <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
@@ -10,4 +12,6 @@
   <app-simple-result *ngIf="manager.executionAlgorithm=='Simple'"></app-simple-result>
 
   <app-strategy-results *ngIf="manager.executionAlgorithm!='Simple'"></app-strategy-results>
+  -->
+
 </div>

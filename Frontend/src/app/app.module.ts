@@ -12,6 +12,7 @@ import { SimpleResultsComponent } from './simple-results/simple-results.componen
 import { StrategyResultsComponent } from './strategy-results/strategy-results.component';
 import { SpinnerComponent } from './spinner/spinner.component';
 import { CircuitsConfigurationComponent } from './circuits-configuration/circuits-configuration.component';
+import { HomeComponent } from './home/home.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import { CircuitsConfigurationComponent } from './circuits-configuration/circuit
     SimpleResultsComponent,
     StrategyResultsComponent,
     SpinnerComponent,
-    CircuitsConfigurationComponent
+    CircuitsConfigurationComponent,
+    HomeComponent
   ],
   imports: [
     BrowserModule,

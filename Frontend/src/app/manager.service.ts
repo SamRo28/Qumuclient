@@ -10,7 +10,10 @@ export class ManagerService {
   mutants : Mutant[] = []
 
   selectedMutant? : Mutant
+  
   showMutantCode : boolean = false
+  showHome : boolean = true
+  showCircuit : boolean = false
 
   inputQubits : string = ""
   outputQubits : string = ""

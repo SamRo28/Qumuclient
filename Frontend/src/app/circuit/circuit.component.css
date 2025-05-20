@@ -1,81 +1,98 @@
-.tabs {
-  display: flex;
-  margin-bottom: 20px;
-}
-
-.tab {
-  padding: 10px 20px;
-  margin-right: 10px;
-  border: none;
-  cursor: pointer;
-  background-color: #f0f0f0;
-}
-
-.tab.active {
-  background-color: white;
-  border-bottom: 2px solid transparent;
-}
-
-.tab:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+/* CSS for Circuit Component */
 
 .form-container {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px 16px;
-  border: 1px solid #ccc;
+    max-width: 100%;
+    margin: 0 auto;
 }
 
 .form-group {
-  margin-bottom: 20px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 8px;
-  font-size: 1rem;
-}
-
-.quirk-container {
-  position: relative;
-}
-
-.quirk-textarea {
-  width: 99.5%;
-  height: 200px;
-  font-family: monospace;
-  padding: 8px;
-  resize: vertical;
-}
-
-.visualize-btn {
-
-  right: 8px;
-  top: 8px;
-  background-color: #a646f2;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 4px;
-  margin: 5px;
-}
-
-.form-group input {
-  width: 99.5%;
-  padding: 8px;
+    margin-bottom: 1.5rem;
 }
 
 label {
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 1rem;
-  margin-bottom: 8px;
-  align-items: center;
+    display: block;
+    color: #4c5866;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
 }
 
-.circuit-code{
-  display: flex;
-  justify-content: space-between;
+.name-input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-family: Arial, sans-serif;
+}
+
+.circuit-code {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.visualize-btn {
+    background-color: #9dc0a9;
+    color: #333;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.visualize-btn:hover {
+    background-color: #8ab095;
+    transform: translateY(-2px);
+}
+
+.quirk-container {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f0f7f3;
+    padding: 0.5rem;
+}
+
+.quirk-textarea {
+    width: 100%;
+    min-height: 150px;
+    border: none;
+    background-color: transparent;
+    resize: vertical;
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 0.5rem;
+}
+
+.quirk-textarea:focus {
+    outline: none;
+}
+
+/* Form validation styles */
+input.ng-invalid.ng-touched,
+textarea.ng-invalid.ng-touched {
+    border-color: #f44336;
+}
+
+.validation-error {
+    color: #f44336;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* For responsive design */
+@media (max-width: 768px) {
+    .circuit-code {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .visualize-btn {
+        margin-top: 0.5rem;
+    }
 }
