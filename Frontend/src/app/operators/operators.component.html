@@ -1,36 +1,43 @@
-<app-spinner></app-spinner>
+<div class="form-group">
+  <label for="qubits">QUBITS</label>
+  <input type="number" [(ngModel)]="manager.qubitCount" class="form-control">
 
-<h1>Operators</h1>
+  <label>OUTPUT QUBITS</label>
+  <div class="checkbox-group">
+    <label *ngFor="let q of manager.outputQubits; index as i">
+      <input type="checkbox" [(ngModel)]="manager.qubits[i]"> Qubit {{ i }}
+    </label>
+  </div>
+</div>
 
-<table border="1">
-    <tr>
-        <th colspan="2" *ngIf="manager.selectedCircuit">
-            <u (click)="selectAll()">Operators</u>
-            &nbsp;
-            <i>Apply on: Columns: <input type="text" [(ngModel)]="manager.selectedCircuit.mutableColumns">
-            &nbsp; Rows: <input type="text" [(ngModel)]="manager.selectedCircuit.mutableRows"></i>
-        </th>
-    </tr>
-    <tr *ngFor="let family of families">
-        <th>
-            <u (click)="family.select()">{{ family.name }}</u>
-        </th>
-        <td>
-            <span *ngFor="let operator of family.operators">
-                <input type="checkbox" [(ngModel)]="operator.selected">
-                {{ operator.name }}
-            </span>&nbsp;
-        </td>
-    </tr>
-    <tr>
-        <th colspan="2">
-            Input qubits: <input type="text" [(ngModel)]="manager.inputQubits" (change)="reloadOriginalCode()">&nbsp;
-            Output qubits: <input type="text" [(ngModel)]="manager.outputQubits" (change)="reloadOriginalCode()">&nbsp;
-            Shots: <input type="number" min="100" step="10" [(ngModel)]="manager.shots" (change)="reloadOriginalCode()">
-            &nbsp;
-            <input type="checkbox" [(ngModel)]="manager.generateWithAllInputs">Generate with all inputs
-            &nbsp;
-            <button (click)="generateMutants()">Generate mutants</button>
-        </th>
-    </tr>
-</table>
+
+<!-- Families dynamically loaded -->
+<div *ngFor="let family of families" class="family-box">
+  <label>
+    {{ family.name }}
+    <button (click)="showInfo(family)" class="info-button">i</button>
+  </label>
+  <div class="checkbox-group">
+    <label *ngFor="let op of family.operators">
+      <input type="checkbox" [(ngModel)]="op.selected"> {{ op.name }}
+    </label>
+  </div>
+</div>
+
+<div class="form-actions">
+  <button class="btn" (click)="selectAll()">Select All</button>
+  <button class="btn btn-primary" (click)="generateMutants()">Generate Mutants</button>
+</div>
+<ng-template #infoModal let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">{{ selectedFamily?.name }} Operators</h5>
+    <button type="button" class="close" (click)="closeModal()">×</button>
+  </div>
+  <div class="modal-body">
+    <ul>
+      <li *ngFor="let op of selectedFamily?.operators">
+        <strong>{{ op.name }}:</strong> {{ op.description }}
+      </li>
+    </ul>
+  </div>
+</ng-template>

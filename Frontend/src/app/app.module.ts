@@ -11,6 +11,7 @@ import { MutantsGeneratedComponent } from './mutants/mutants-generated.component
 import { SimpleResultsComponent } from './simple-results/simple-results.component';
 import { StrategyResultsComponent } from './strategy-results/strategy-results.component';
 import { SpinnerComponent } from './spinner/spinner.component';
+import { CircuitsConfigurationComponent } from './circuits-configuration/circuits-configuration.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { SpinnerComponent } from './spinner/spinner.component';
     MutantsGeneratedComponent,
     SimpleResultsComponent,
     StrategyResultsComponent,
-    SpinnerComponent
+    SpinnerComponent,
+    CircuitsConfigurationComponent
   ],
   imports: [
     BrowserModule,

@@ -6,6 +6,7 @@ import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
 import { QumugenService } from '../qumugen.service';
 import { QasmService } from '../qasm.service';
+import { Output, EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-circuit',
@@ -17,23 +18,27 @@ export class CircuitComponent implements OnInit {
   url  : SafeResourceUrl
 
   qiskitURL : string = "https://quantum-circuit.com/api/get/circuit/ARcZq5J2vNuktzRD6?format=qiskit"
-
+  private _circuitName: string = '';
+  private _quirkCode: string = '';
   randomQubits : number = 5
   randomColumns : number = 5
   randomButDeterministic : boolean = false
   randomAndStartWithH : boolean = true
-
+  @Output() validityChange = new EventEmitter<boolean>();
   originalCircuitName? : string
   selectedCircuit : Circuit = new Circuit()
   hideQuirk : boolean = true
 
   circuits : Circuit[] = []
+  selectedTab: string = 'circuit';
 
   constructor(public sanitizer: DomSanitizer, private reper : ReperService, private manager : ManagerService, private qumugen : QumugenService, private qasm : QasmService) { 
     this.url = sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl)
   }
 
   ngOnInit(): void {
+    this.checkValidity();
+
     this.reper.getCircuits().subscribe(
       circuits => {
         AppComponent.error = ""
@@ -45,6 +50,33 @@ export class CircuitComponent implements OnInit {
         AppComponent.error = error.error ? error.error.message : error
       }
     )
+  }
+  ngOnChanges(): void {
+  this.checkValidity();
+}
+
+checkValidity() {
+  const valid = this.circuitName.trim() !== '' && this.quirkCode.trim() !== '';
+  this.validityChange.emit(valid);
+}
+  get isCircuitValid(): boolean {
+    return this.circuitName.trim() !== '' && this.quirkCode.trim() !== '';
+  }
+
+  get circuitName(): string {
+    return this._circuitName;
+  }
+  set circuitName(value: string) {
+    this._circuitName = value;
+    this.checkValidity();
+  }
+
+  get quirkCode(): string {
+    return this._quirkCode;
+  }
+  set quirkCode(value: string) {
+    this._quirkCode = value;
+    this.checkValidity();
   }
 
   importQiskit() {
@@ -85,6 +117,12 @@ export class CircuitComponent implements OnInit {
     )
   }
 
+  visualizeCircuit() {
+  /*
+  Aqui me tiene que llevar a la pagina de quirk con el circuito
+  */
+  }
+
   selectCircuit() {
     this.selectedCircuit = this.circuits.filter(c => c.id==this.originalCircuitName).at(0)!
     this.manager.setSelectedCircuit(this.selectedCircuit)
@@ -102,4 +140,16 @@ export class CircuitComponent implements OnInit {
   generateExtremaduraCircuit() {
     this.selectedCircuit.generateExtremaduraCircuit(this.randomQubits, this.randomColumns)
   }
+
+  onSubmit() {
+  // Handle form submission logic here
+  console.log('Form submitted:', this.circuitName);
+}
+
+  selectTab(tab: 'circuit' | 'mutants') {
+    if (tab === 'mutants' && !this.isCircuitValid) return;
+    this.selectedTab = tab;
+  }
+
+
 }

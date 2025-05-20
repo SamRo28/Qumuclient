@@ -1,0 +1,81 @@
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px 20px;
+  margin-right: 10px;
+  border: none;
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.tab.active {
+  background-color: white;
+  border-bottom: 2px solid transparent;
+}
+
+.tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.form-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 16px;
+  border: 1px solid #ccc;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  font-size: 1rem;
+}
+
+.quirk-container {
+  position: relative;
+}
+
+.quirk-textarea {
+  width: 99.5%;
+  height: 200px;
+  font-family: monospace;
+  padding: 8px;
+  resize: vertical;
+}
+
+.visualize-btn {
+
+  right: 8px;
+  top: 8px;
+  background-color: #a646f2;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 5px;
+}
+
+.form-group input {
+  width: 99.5%;
+  padding: 8px;
+}
+
+label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.circuit-code{
+  display: flex;
+  justify-content: space-between;
+}

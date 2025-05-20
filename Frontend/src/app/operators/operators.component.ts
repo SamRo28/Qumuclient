@@ -73,4 +73,17 @@ export class OperatorsComponent {
       }
     )
   }
+
+  selectedFamily: OperatorFamily | null = null;
+
+  showInfo(family: OperatorFamily) {
+    this.selectedFamily = family;
+    // abre el modal aquí, dependiendo si usas Bootstrap, Angular Material, etc.
+  }
+
+  closeModal() {
+    this.selectedFamily = null;
+  }
+
+
 }

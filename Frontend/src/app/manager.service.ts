@@ -14,6 +14,8 @@ export class ManagerService {
 
   inputQubits : string = ""
   outputQubits : string = ""
+  qubitCount : number = 0
+  qubits : number[] = []
   shots : number = 100
 
   executionAlgorithm : string = "Simple"
@@ -22,10 +24,13 @@ export class ManagerService {
 
   setSelectedCircuit(circuit : Circuit) {
     this.selectedCircuit = circuit
-    let qubits = this.selectedCircuit.getQubits()
+    this.qubitCount = this.selectedCircuit.getQubits()
+    
+    this.qubits = Array.from({ length:this.qubitCount }, (_, i) => i);
+
     this.inputQubits = ""
     this.outputQubits = ""
-    for (let i=0; i<qubits; i++) {
+    for (let i=0; i<this.qubitCount; i++) {
       this.inputQubits = this.inputQubits + i + ","
       this.outputQubits = this.outputQubits + i + ","
     }

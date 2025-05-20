@@ -17,6 +17,7 @@ export class Operator {
     name? : string
     printedName? : string
     selected : boolean = false
+    description? : string
 
     constructor(operator : any) {
         this.name = operator.name
