@@ -30,6 +30,7 @@ label {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
+    padding: 4px;
 }
 
 .visualize-btn {
@@ -50,7 +51,7 @@ label {
 }
 
 .quirk-container {
-    width: 100%;
+    width: 98%;
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #f0f7f3;
@@ -66,7 +67,8 @@ label {
     font-family: monospace;
     font-size: 14px;
     line-height: 1.4;
-    padding: 0.5rem;
+
+
 }
 
 .quirk-textarea:focus {

@@ -17,14 +17,10 @@ export class CircuitsConfigurationComponent implements OnInit {
   ngOnInit(): void {
   }
 
-
-
-  
-
-selectTab(tab: 'circuit' | 'mutants') {
-  if (tab === 'mutants' && !this.isCircuitValid) return;
-  this.selectedTab = tab;
-}
+  selectTab(tab: 'circuit' | 'mutants') {
+    if (tab === 'mutants' && !this.isCircuitValid) return;
+    this.selectedTab = tab;
+  }
 
 
 

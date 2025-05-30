@@ -7,6 +7,7 @@ import { Mutant } from './model/Mutant';
 })
 export class ManagerService {
   selectedCircuit? : Circuit
+  
   mutants : Mutant[] = []
 
   selectedMutant? : Mutant
@@ -44,6 +45,10 @@ export class ManagerService {
     if (this.outputQubits.endsWith(","))
       this.outputQubits = this.outputQubits.substring(0, this.outputQubits.length-1)
     this.selectedCircuit.outputQubits = this.outputQubits
+  }
+
+  setNewSelectedCircuit(circuit : Circuit) {
+    this.selectedCircuit = circuit
   }
 
   setMutants(mutants: any) {

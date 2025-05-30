@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ManagerService } from '../manager.service';
+import { Circuit } from '../model/Circuit';
 
 @Component({
   selector: 'app-home',
@@ -7,9 +9,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class HomeComponent implements OnInit {
 
-  constructor() { }
+
+  constructor(public manager : ManagerService) { }
 
   ngOnInit(): void {
+  }
+
+  createCircuit() {
+    this.manager.showHome = false
+    this.manager.showCircuit = true
+    let circuit = new Circuit("Circuit1")
+    this.manager.setNewSelectedCircuit(circuit)
   }
 
 }

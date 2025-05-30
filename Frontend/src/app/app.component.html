@@ -1,8 +1,16 @@
 <div>
   <span style="color : red">{{ getError() }}</span>
 
+  <!--div class="content" *ngIf="manager.showCircuit">
+      <div class="header">
+        <h1 class="title fade-in" (click)="goToHome()" style="cursor: pointer;" title="Go to home">
+           Quantum Mutants Generator
+        </h1>
+      </div>
+    
+    </div-->
   <app-home *ngIf="manager.showHome"></app-home>
-
+  <!--app-side-bar></app-side-bar-->
   <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
   <!--
   <app-mutants-generated></app-mutants-generated>

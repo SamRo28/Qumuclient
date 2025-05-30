@@ -7,6 +7,7 @@ import { ManagerService } from './manager.service';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
+
   title = 'qumuclient';
 
   public static error : string = ""
@@ -18,5 +19,11 @@ export class AppComponent {
   getError() {
     return AppComponent.error
   }
+
+  goToHome() {
+    this.manager.showHome = true;
+    this.manager.showCircuit = false;
+
+}
 
 }

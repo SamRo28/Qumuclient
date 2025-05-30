@@ -1,3 +1,6 @@
+import { Mutant } from "./Mutant"
+import { MutantProject } from "./MutantProject"
+
 export class Circuit {
     id : string = ""
     quirkCode : any
@@ -8,7 +11,8 @@ export class Circuit {
     inputQubits? : string
     mutableColumns : string = "-1,"
     mutableRows : string = ""
-
+    mutantsProjects: MutantProject[] = []
+    
     constructor(id? : string, quirkCode? : any) {
         if (id)
             this.id = id
@@ -211,5 +215,9 @@ export class Circuit {
             qubits.push(parseInt(qubit))
         }
         return qubits
+    }
+
+    addMutantProject(mutantProject : MutantProject) {
+        this.mutantsProjects.push(mutantProject)
     }
 }

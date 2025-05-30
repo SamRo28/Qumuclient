@@ -13,6 +13,7 @@ import { StrategyResultsComponent } from './strategy-results/strategy-results.co
 import { SpinnerComponent } from './spinner/spinner.component';
 import { CircuitsConfigurationComponent } from './circuits-configuration/circuits-configuration.component';
 import { HomeComponent } from './home/home.component';
+import { SideBarComponent } from './side-bar/side-bar.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { HomeComponent } from './home/home.component';
     StrategyResultsComponent,
     SpinnerComponent,
     CircuitsConfigurationComponent,
-    HomeComponent
+    HomeComponent,
+    SideBarComponent
   ],
   imports: [
     BrowserModule,

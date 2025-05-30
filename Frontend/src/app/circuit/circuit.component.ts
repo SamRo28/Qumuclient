@@ -26,7 +26,7 @@ export class CircuitComponent implements OnInit {
   randomAndStartWithH : boolean = true
   @Output() validityChange = new EventEmitter<boolean>();
   originalCircuitName? : string
-  selectedCircuit : Circuit = new Circuit()
+  selectedCircuit: Circuit = new Circuit();
   hideQuirk : boolean = true
 
   circuits : Circuit[] = []
@@ -38,6 +38,8 @@ export class CircuitComponent implements OnInit {
 
   ngOnInit(): void {
     this.checkValidity();
+    /*
+    ESTO IRÍA EN LA PARTE DEL SIDE-BAR
 
     this.reper.getCircuits().subscribe(
       circuits => {
@@ -49,7 +51,8 @@ export class CircuitComponent implements OnInit {
       error => {
         AppComponent.error = error.error ? error.error.message : error
       }
-    )
+    )*/
+    this.selectedCircuit = this.manager.selectedCircuit || new Circuit();
   }
   ngOnChanges(): void {
   this.checkValidity();
@@ -142,9 +145,17 @@ checkValidity() {
   }
 
   onSubmit() {
-  // Handle form submission logic here
-  console.log('Form submitted:', this.circuitName);
-}
+    if(this.selectedCircuit.id){
+      this.circuitName = this.selectedCircuit.id;
+    }
+    else {
+      this.circuitName = "Circuit1";
+    }
+    
+    if(this.selectedCircuit.quirkCode) {
+      this.quirkCode = this.selectedCircuit.quirkCode;
+    }
+  }
 
   selectTab(tab: 'circuit' | 'mutants') {
     if (tab === 'mutants' && !this.isCircuitValid) return;

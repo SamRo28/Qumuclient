@@ -1,0 +1,73 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<div class="sidebar" [class.open]="menuAbierto">
+      <button class="toggle-btn" (click)="toggleMenu()" aria-label="Toggle menu">
+        <i class="fas" [ngClass]="menuAbierto ? 'fa-times' : 'fa-bars'"></i>
+      </button>
+
+      <ul>
+        <!-- <li>
+          <a>
+            <i *ngIf="!menuAbierto">——</i>
+            <span *ngIf="menuAbierto">FEATURES</span>
+          </a>
+        </li> -->
+        <li>
+          <a routerLink="matrixes" routerLinkActive="active">
+            <i class="fas fa-table" title="Matrices"></i>
+            <span *ngIf="menuAbierto">Matrices</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="grenoble" routerLinkActive="active">
+            <i class="fas fas fa-search" title="Grover, Grover and Rudolph, Grenoble"></i>
+            <span *ngIf="menuAbierto">Algorithms
+              <br>
+              <small style="font-size: 12px;">Grover, Grover and Rudolph, Grenoble</small>
+            </span>
+          </a>
+        </li>
+        <!-- <li>
+          <a routerLink="grover" routerLinkActive="active">
+            <i class="fas fa-search" title="Grover"></i>
+            <span *ngIf="menuAbierto">Grover</span>
+          </a>
+        </li> -->
+        <li>
+          <a routerLink="elonging" routerLinkActive="active">
+            <i class="fas fa-dna" title="Genetic algorithm"></i>
+            <span *ngIf="menuAbierto">Genetic algorithm</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="blocks" routerLinkActive="active">
+            <i class="fas fa-th-large" title="Blocks genetic algorithm"></i>
+            <span *ngIf="menuAbierto">Blocks genetic algorithm</span>
+          </a>
+        </li>
+        <li class="separador">
+          <a class="separador">
+            <i *ngIf="!menuAbierto">——</i>
+            <span *ngIf="menuAbierto">CONFIGURATON</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="editor" routerLinkActive="active">
+            <i class="fas fa-microchip" title="Circuits editor"></i>
+            <span *ngIf="menuAbierto">Circuits editor</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="qubits-configuration" routerLinkActive="active">
+            <i class="fas fa-cubes" title="Qubits configuration"></i>
+            <span *ngIf="menuAbierto">Qubits configurations</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="templates" routerLinkActive="active">
+            <i class="fas fa-file-code" title="Code templates"></i>
+            <span *ngIf="menuAbierto">Code templates</span>
+          </a>
+        </li>
+      </ul>
+    </div>
