@@ -1,10 +1,9 @@
 <div class="form-group">
   <label for="qubits">QUBITS</label>
-  <input type="number" [(ngModel)]="manager.qubitCount" class="form-control">
-
+  <input type="number" [(ngModel)]="qubitCount" class="form-control">
   <label>OUTPUT QUBITS</label>
   <div class="checkbox-group">
-    <label *ngFor="let q of manager.outputQubits; index as i">
+    <label *ngFor="let q of outputQubitsArray; index as i">
       <input type="checkbox" [(ngModel)]="manager.qubits[i]"> Qubit {{ i }}
     </label>
   </div>

@@ -9,7 +9,7 @@ export class ManagerService {
   selectedCircuit? : Circuit
   
   mutants : Mutant[] = []
-
+  
   selectedMutant? : Mutant
   
   showMutantCode : boolean = false

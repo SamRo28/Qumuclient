@@ -1,4 +1,3 @@
-<!-- Tabs -->
 <div class="tabs">
   <button class="tab" [class.active]="selectedTab === 'circuit'" (click)="selectTab('circuit')">
     CIRCUIT
@@ -11,14 +10,11 @@
   </button>
 </div>
 
-<!-- Tab content -->
 <div *ngIf="selectedTab === 'circuit'">
-  <!-- Aquí va el formulario del circuito, mostrado anteriormente -->
   <app-circuit (validityChange)="isCircuitValid = $event"></app-circuit>
 </div>
 
 <div *ngIf="selectedTab === 'mutants'">
-  <!-- Segundo tab con operadores -->
   <app-operators></app-operators>
 </div>
 

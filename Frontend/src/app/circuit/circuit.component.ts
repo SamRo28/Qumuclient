@@ -15,9 +15,8 @@ import { Output, EventEmitter } from '@angular/core';
 })
 export class CircuitComponent implements OnInit {
 
-  url  : SafeResourceUrl
+  url  : string = '';
 
-  qiskitURL : string = "https://quantum-circuit.com/api/get/circuit/ARcZq5J2vNuktzRD6?format=qiskit"
   private _circuitName: string = '';
   private _quirkCode: string = '';
   randomQubits : number = 5
@@ -33,30 +32,36 @@ export class CircuitComponent implements OnInit {
   selectedTab: string = 'circuit';
 
   constructor(public sanitizer: DomSanitizer, private reper : ReperService, private manager : ManagerService, private qumugen : QumugenService, private qasm : QasmService) { 
-    this.url = sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl)
+    this.url = '';
   }
-
   ngOnInit(): void {
-    this.checkValidity();
-    /*
-    ESTO IRÍA EN LA PARTE DEL SIDE-BAR
-
-    this.reper.getCircuits().subscribe(
-      circuits => {
-        AppComponent.error = ""
-        for (let i=0; i<circuits.length; i++) {
-          this.circuits.push(new Circuit(circuits[i].id, circuits[i].quirkCode))
-        }
-      },
-      error => {
-        AppComponent.error = error.error ? error.error.message : error
-      }
-    )*/
-    this.selectedCircuit = this.manager.selectedCircuit || new Circuit();
+    this.loadCircuitFromManager();
   }
+
   ngOnChanges(): void {
-  this.checkValidity();
-}
+    this.loadCircuitFromManager();
+  }
+  // Método para cargar el circuito desde el ManagerService
+  public loadCircuitFromManager(): void {
+    this.selectedCircuit = this.manager.selectedCircuit || new Circuit();
+    
+    // Cargar el nombre del circuito
+    if (this.selectedCircuit.id) {
+      this.originalCircuitName = this.selectedCircuit.id;
+      this._circuitName = this.selectedCircuit.id;
+    } else {
+      this._circuitName = '';
+    }
+    
+    // Cargar el código Quirk
+    if (this.selectedCircuit.textQuirkCode) {
+      this._quirkCode = this.selectedCircuit.textQuirkCode;
+    } else {
+      this._quirkCode = '';
+    }
+    
+    this.checkValidity();
+  }
 
 checkValidity() {
   const valid = this.circuitName.trim() !== '' && this.quirkCode.trim() !== '';
@@ -71,6 +76,10 @@ checkValidity() {
   }
   set circuitName(value: string) {
     this._circuitName = value;
+    if (this.selectedCircuit) {
+      this.selectedCircuit.id = value;
+      this.manager.setSelectedCircuit(this.selectedCircuit);
+    }
     this.checkValidity();
   }
 
@@ -79,25 +88,11 @@ checkValidity() {
   }
   set quirkCode(value: string) {
     this._quirkCode = value;
+    this.selectedCircuit.textQuirkCode = value;
+    this.selectedCircuit.qubits = -1;
+    this.selectedCircuit.quirkCode = JSON.parse(value);
+    this.manager.setSelectedCircuit(this.selectedCircuit);
     this.checkValidity();
-  }
-
-  importQiskit() {
-    if (this.qiskitURL) {
-      this.qasm.import(this.qiskitURL).subscribe(
-        code => {
-          this.selectedCircuit.buildFromQiskitCode(code)
-        },
-        error => {
-          AppComponent.error = error.error ? error.error.message : error
-        }
-      )
-    }
-  } 
-
-  draw() {
-    this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + this.selectedCircuit.textQuirkCode)
-    this.hideQuirk = false
   }
 
   save() {
@@ -121,9 +116,8 @@ checkValidity() {
   }
 
   visualizeCircuit() {
-  /*
-  Aqui me tiene que llevar a la pagina de quirk con el circuito
-  */
+    this.url = AppComponent.quirkUrl + "#circuit=" + this.selectedCircuit.textQuirkCode;
+    window.open(this.url, '_blank');
   }
 
   selectCircuit() {
@@ -136,13 +130,6 @@ checkValidity() {
     )
   }
 
-  generateRandomCircuit() {
-    this.selectedCircuit.randomize(this.randomQubits, this.randomColumns, this.randomButDeterministic, this.randomAndStartWithH)
-  }
-
-  generateExtremaduraCircuit() {
-    this.selectedCircuit.generateExtremaduraCircuit(this.randomQubits, this.randomColumns)
-  }
 
   onSubmit() {
     if(this.selectedCircuit.id){

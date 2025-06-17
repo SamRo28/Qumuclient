@@ -36,93 +36,6 @@ export class Circuit {
         return this.inputQubits!.split(",").length
     }
 
-    generateExtremaduraCircuit(qubits: number, columns: number) {
-        let cols = []
-        for (let i=0; i<columns; i++) {
-            let col = this.extremaduraColumn(qubits)
-            cols.push(col)
-        }
-        this.quirkCode = { cols : cols }
-        this.textQuirkCode = JSON.stringify(this.quirkCode)
-        this.qubits = this.getQubits()
-    }
-
-    randomize(qubits : number, columns : number, deterministic : boolean, startWithH : boolean) {
-        let cols = []
-        let start = 0
-        if (startWithH) {
-            start = 1
-            let col = []
-            for (let i=0; i<qubits; i++)
-                col.push("H")
-            cols.push(col)
-        }
-        for (let i=start; i<columns; i++) {
-            let col = this.randomColumn(qubits, deterministic)
-            cols.push(col)
-        }
-        this.quirkCode = { cols : cols }
-        this.textQuirkCode = JSON.stringify(this.quirkCode)
-        this.qubits = this.getQubits()
-    }
-
-    private extremaduraColumn(qubits : number) {
-        let col = []
-        if (Math.random()<0.4) {
-            let gates = ["H", "X", "Z", "Y", "S", "T", 1]
-            for (let i=0; i<qubits; i++) {
-                let dado = Math.floor(Math.random()*gates.length)
-                if (dado>0.5)
-                    col.push(gates[dado])
-                else
-                    col.push(1)
-            }
-        } else {
-            for (let i=0; i<qubits; i++)
-                col.push(1)
-
-            let control1 = Math.floor(Math.random()*qubits)
-            let control2 = Math.floor(Math.random()*qubits)
-            let controlled = Math.floor(Math.random()*qubits)
-            while (control1==controlled || control1==control2 || control1==controlled || control2==controlled) {
-                control1 = Math.floor(Math.random()*qubits)
-                control2 = Math.floor(Math.random()*qubits)
-                controlled = Math.floor(Math.random()*qubits)
-            }
-            col[control1] = "•"
-            col[control2] = "•"
-            col[controlled] = "X"
-        }
-        return col
-    }
-    
-    private randomColumn(qubits : number, deterministic : boolean) {
-        let col = []
-        if (Math.random()<0.4) {
-            let gates = ["H", "X", "X^½", 
-                "Y", 
-                "Z", "Z^½", "Z^-½", "Z^¼", "Z^-¼",
-                1 ]
-            if (deterministic)
-                gates = ["X", "Y", "Z", 1]
-            for (let i=0; i<qubits; i++) {
-                let dado = Math.floor(Math.random()*gates.length)
-                if (dado>0.5)
-                    col.push(gates[dado])
-                else
-                    col.push(1)
-            }
-        } else {
-            let dado = Math.floor(Math.random()*qubits)
-            for (let i=0; i<qubits; i++) {
-                if (i==dado)
-                    col.push("X")               
-                else if (Math.random()<0.7)
-                    col.push("•")
-            }
-        }
-        return col
-    }
 
     getColumns() {
         if (this.quirkCode)
@@ -220,4 +133,18 @@ export class Circuit {
     addMutantProject(mutantProject : MutantProject) {
         this.mutantsProjects.push(mutantProject)
     }
+
+    setMutableColumns() {
+        for (let i=0; i<this.quirkCode.cols.length; i++)
+                this.mutableColumns = this.mutableColumns + i + "," 
+            if (this.mutableColumns.endsWith(","))
+                this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length-1)
+    }
+
+    setMutableRows() {
+        for (let i=0; i<this.qubits; i++)
+                this.mutableRows = this.mutableRows + i + "," 
+            if (this.mutableRows.endsWith(","))
+                this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
+        }
 }

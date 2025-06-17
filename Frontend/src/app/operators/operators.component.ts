@@ -13,8 +13,20 @@ import { LoadingService } from '../loading.service';
 export class OperatorsComponent {
   families : OperatorFamily[] = []
   error : string = ""
+  qubitCount: number = -1;
+
+
+  get outputQubitsArray(): string[] {
+    if (!this.manager.outputQubits || this.manager.outputQubits.trim() === '') {
+      return [];
+    }
+    return this.manager.outputQubits.split(',').filter(item => item.trim() !== '');
+  }
 
   constructor(private service : QumugenService, public manager : ManagerService, private loading : LoadingService) { 
+    
+    this.qubitCount = this.manager.selectedCircuit ? this.manager.selectedCircuit.getQubits() : -1;
+    
     this.service.getOperatorsByFamily().subscribe(
       families => {
         let familyNames = Object.keys(families)
@@ -40,6 +52,8 @@ export class OperatorsComponent {
       AppComponent.error = "Please, select the circuit you want to mutate"
       return
     }
+    selectedCircuit.setMutableColumns();
+    selectedCircuit.setMutableRows();
 
     let selectedOperators = []
     for (let i=0; i<this.families.length; i++) {
@@ -84,6 +98,5 @@ export class OperatorsComponent {
   closeModal() {
     this.selectedFamily = null;
   }
-
 
 }
