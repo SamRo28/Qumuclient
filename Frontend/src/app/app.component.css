@@ -1,4 +1,4 @@
- h1,
+h1,
   h2,
   h3,
   h4,
@@ -18,6 +18,28 @@
     max-width: 960px;
     flex-direction: column;
     align-items: center;
+  }
+  .main-content {
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+  }
+
+  .main-content.with-sidebar {
+    margin-left: 60px; /* Espacio para el sidebar colapsado */
+  }
+
+  .main-content.with-sidebar.sidebar-expanded {
+    margin-left: 280px; /* Espacio para el sidebar expandido */
+  }
+  /* Responsive para dispositivos móviles */
+  @media (max-width: 768px) {
+    .main-content.with-sidebar {
+      margin-left: 0;
+    }
+    
+    .main-content.with-sidebar.sidebar-expanded {
+      margin-left: 0;
+    }
   }
 
   a,

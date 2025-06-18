@@ -1,25 +1,22 @@
 <div>
   <span style="color : red">{{ getError() }}</span>
 
-  <!--div class="content" *ngIf="manager.showCircuit">
-      <div class="header">
-        <h1 class="title fade-in" (click)="goToHome()" style="cursor: pointer;" title="Go to home">
-           Quantum Mutants Generator
-        </h1>
-      </div>
+  <app-side-bar *ngIf="manager.showSidebar"></app-side-bar>
+  <div class="main-content" 
+       [class.with-sidebar]="manager.showSidebar" 
+       [class.sidebar-expanded]="manager.sidebarExpanded">
+    <app-home *ngIf="manager.showHome"></app-home>
     
-    </div-->
-  <app-home *ngIf="manager.showHome"></app-home>
-  <!--app-side-bar></app-side-bar-->
-  <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
-  <!--
-  <app-mutants-generated></app-mutants-generated>
+    <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
+    
+    <app-mutants-generated *ngIf="manager.showMutantInformation"></app-mutants-generated>
+    <!--
+    <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
 
-  <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
+    <app-simple-result *ngIf="manager.executionAlgorithm=='Simple'"></app-simple-result>
 
-  <app-simple-result *ngIf="manager.executionAlgorithm=='Simple'"></app-simple-result>
-
-  <app-strategy-results *ngIf="manager.executionAlgorithm!='Simple'"></app-strategy-results>
-  -->
+    <app-strategy-results *ngIf="manager.executionAlgorithm!='Simple'"></app-strategy-results>
+    -->
+  </div>
 
 </div>

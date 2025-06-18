@@ -149,30 +149,6 @@ export class MutantsGeneratedComponent {
     }
   }
 
-  selectMutant(mutant: Mutant) {
-    AppComponent.error = ""
-    if (mutant.mutantIndex == this.manager.selectedMutant?.mutantIndex) {
-      this.manager.selectedMutant = undefined
-      return
-    }
-
-    this.manager.showMutantCode = true
-    if (this.manager.selectedCircuit) {
-      this.qumugen.getQiskitCode(this.manager.selectedCircuit).then(
-        code => {
-          this.manager.selectedCircuit!.qiskitCode = code.wholeCode.split("\n")
-        }
-      )
-    }
-    this.manager.selectedMutant = mutant
-    this.qumugen.getQiskitCode(mutant.circuit!).then(
-      code => {
-        this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.textQuirkCode)
-        mutant.circuit!.qiskitCode = code.wholeCode.split("\n")
-      }
-    )
-  }
-
   setMutantExecutionAlgorithm(e: any) {
     this.manager.executionAlgorithm = e.target.value
   }

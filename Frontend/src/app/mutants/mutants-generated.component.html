@@ -50,25 +50,5 @@
         </ol>
     </div>
 
-    <table>
-      <tr>
-        <td colspan="2">
-          <span *ngFor="let mutant of manager.mutants">
-            <u style="color: blue" (click)="selectMutant(mutant)" [id]="'gm' + mutant.mutantIndex">{{ mutant.mutantIndex }}</u>&nbsp;
-          </span>
-        </td>
-      </tr>
-      
-      <tr>
-        <td colspan="2">
-          <b>Mutant execution</b><br>
-          Algorithm: <input type="radio" name="mutantExecutionAlgorithm" checked value="Simple" (change)="setMutantExecutionAlgorithm($event)">"As is"
-          &nbsp;&nbsp;
-          <input type="radio" value="AllAgainstAll" name="mutantExecutionAlgorithm" (change)="setMutantExecutionAlgorithm($event)">Run the circuit with specific inputs
-          <br>
-          Tolerated error: <input type="number" min="0" step="0.05" [(ngModel)]="toleratedError">
-        </td>
-      </tr>
-    </table>
   </div>
   

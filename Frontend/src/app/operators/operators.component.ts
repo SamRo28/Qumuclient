@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { QumugenService } from '../qumugen.service';
+
 import { OperatorFamily } from '../model/OperatorFamily';
 import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
 import { LoadingService } from '../loading.service';
+import { Circuit } from '../model/Circuit';
 
 @Component({
   selector: 'app-operators',
@@ -68,6 +70,8 @@ export class OperatorsComponent {
         mutants => { 
           this.manager.setMutants(mutants)
           this.loading.hide()
+          this.manager.showSidebar = true
+          
          },
         error => {
           AppComponent.error = error.error ? error.error.message : error.error

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Circuit } from './model/Circuit';
 import { Mutant } from './model/Mutant';
+import { MutantProject } from './model/MutantProject';
 
 @Injectable({
   providedIn: 'root'
@@ -11,11 +13,16 @@ export class ManagerService {
   mutants : Mutant[] = []
   
   selectedMutant? : Mutant
+
+  // Subject para notificar cuando se agrega un nuevo circuito
+  private newCircuitSubject = new Subject<Circuit>();
+  public newCircuit$ = this.newCircuitSubject.asObservable();
   
-  showMutantCode : boolean = false
+  showMutantInformation : boolean = false
   showHome : boolean = true
   showCircuit : boolean = false
-
+  showSidebar : boolean = false
+  sidebarExpanded : boolean = false 
   inputQubits : string = ""
   outputQubits : string = ""
   qubitCount : number = 0
@@ -53,10 +60,15 @@ export class ManagerService {
 
   setMutants(mutants: any) {
     this.mutants = []
+    
     for (let i=0; i<mutants.length; i++) {
       let mutant = new Mutant(mutants[i])
       this.mutants.push(mutant)
+
     }
+    let mutantPrj = new MutantProject(this.mutants)
+    this.selectedCircuit?.mutantsProjects.push(mutantPrj);
+
   }
 
   getNumberOfInputQubits() {
