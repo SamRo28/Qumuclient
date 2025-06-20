@@ -1,0 +1,80 @@
+<div class="container">
+  <h1>Mutant Information</h1>
+  
+  <div class="section">
+    <div class="row">
+      <div class="field">
+        <label for="operator">OPERATOR</label>
+        <input type="string" id="operator" name="operator" class="input" 
+               [value]="selectedMutant?.mutationOperator" readonly>
+      </div>
+      
+      <div class="field-small">
+        <label for="column">COLUMN</label>
+        <input type="number" id="column" name="column" min="-1" class="input" 
+               [value]="selectedMutant?.mutatedColumn" readonly>
+      </div>
+      
+      <div class="field-small">
+        <label for="row">ROW</label>
+        <input type="number" id="row" name="row" min="1" class="input" 
+               [value]="selectedMutant?.mutatedRow" readonly>
+      </div>
+    </div>
+  </div>
+  
+
+  <!--h2>Mutation Type</h2>
+  
+  <div class="section">
+    <div class="row">
+      <div class="field">
+        <label for="category">CATEGORY</label>
+        <select id="category" name="category" class="input" 
+                [value]="category" disabled>
+          <option value="">Select Category</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+      
+      <div class="field">
+        <label for="type">TYPE</label>
+        <select id="type" name="type" class="input" 
+                [value]="type" disabled>
+          <option value="">Select Type</option>
+          <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="two-column">
+      <div class="column">
+        <label for="original-gate">ORIGINAL GATE</label>
+        <select id="original-gate" name="original-gate" class="input" 
+                [value]="originalGate" disabled>
+          <option value="">Select Gate</option>
+          <option *ngFor="let gate of gates" [value]="gate">{{ gate }}</option>
+        </select>
+      </div>
+      
+      <div class="column">
+        <label for="mutated-gate">MUTATED GATE</label>
+        <select id="mutated-gate" name="mutated-gate" class="input" 
+                [value]="mutatedGate" disabled>
+          <option value="">Select Gate</option>
+          <option *ngFor="let gate of gates" [value]="gate">{{ gate }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  -- Opcional: Mostrar información de debug >
+  <div class="debug-info" *ngIf="selectedMutant">
+    <h3>Debug Info</h3>
+    <p>Mutant Index: {{ mutantIndex }}</p>
+    <p>Selected Mutant: {{ selectedMutant | json }}</p>
+  </div>
+  
+
+  </div-->
+</div>

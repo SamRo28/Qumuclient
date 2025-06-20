@@ -6,28 +6,32 @@ import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
 import { OperatorsComponent } from './operators/operators.component';
 import { CircuitComponent } from './circuit/circuit.component';
-import { MutantCodeComponent } from './mutant-code/mutant-code.component'
-import { MutantsGeneratedComponent } from './mutants/mutants-generated.component';
 import { SimpleResultsComponent } from './simple-results/simple-results.component';
 import { StrategyResultsComponent } from './strategy-results/strategy-results.component';
 import { SpinnerComponent } from './spinner/spinner.component';
 import { CircuitsConfigurationComponent } from './circuits-configuration/circuits-configuration.component';
 import { HomeComponent } from './home/home.component';
 import { SideBarComponent } from './side-bar/side-bar.component';
+import { MutantsInfoComponent } from './mutants-info/mutants-info.component';
+import { MutantsCodeComponent } from './mutants-code/mutants-code.component';
+import { MutantsVisualComponent } from './mutants-visual/mutants-visual.component';
+import { MutantsGeneralComponent } from './mutants-general/mutants-general.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     OperatorsComponent,
     CircuitComponent,
-    MutantCodeComponent,
-    MutantsGeneratedComponent,
     SimpleResultsComponent,
     StrategyResultsComponent,
     SpinnerComponent,
     CircuitsConfigurationComponent,
     HomeComponent,
-    SideBarComponent
+    SideBarComponent,
+    MutantsInfoComponent,
+    MutantsCodeComponent,
+    MutantsVisualComponent,
+    MutantsGeneralComponent
   ],
   imports: [
     BrowserModule,

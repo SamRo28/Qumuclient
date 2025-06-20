@@ -122,13 +122,14 @@ itToList(circuit: Circuit): void {
     this.manager.setSelectedCircuit(circuit);
     this.manager.showCircuit = true;
     this.manager.showHome = false;
+    this.manager.showMutantsInfo = false;
   }
 
   selectMutant(mutant: Mutant): void {
-    this.manager.selectedMutant = mutant;
-    this.manager.showMutantInformation = true;
+    this.manager.setSelectedMutant(mutant);
     this.manager.showCircuit = false;
     this.manager.showHome = false;
+    this.manager.showMutantsInfo = true;
   }
 
   getProjectKey(circuitId: string, projectId: number): string {
@@ -164,7 +165,7 @@ itToList(circuit: Circuit): void {
   goToHome() {
     this.manager.showHome = true;
     this.manager.showCircuit = false;
-    this.manager.showMutantInformation = false;
+    this.manager.showMutantsInfo = false;
   }
 
   ngOnDestroy(): void {

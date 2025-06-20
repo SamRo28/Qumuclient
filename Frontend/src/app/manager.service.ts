@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject,  BehaviorSubject, Observable  } from 'rxjs';
 import { Circuit } from './model/Circuit';
 import { Mutant } from './model/Mutant';
 import { MutantProject } from './model/MutantProject';
@@ -12,13 +12,17 @@ export class ManagerService {
   
   mutants : Mutant[] = []
   
-  selectedMutant? : Mutant
-
   // Subject para notificar cuando se agrega un nuevo circuito
   private newCircuitSubject = new Subject<Circuit>();
   public newCircuit$ = this.newCircuitSubject.asObservable();
   
-  showMutantInformation : boolean = false
+  private _selectedMutant = new BehaviorSubject<Mutant | null>(null);
+  
+  // Observable público para suscribirse
+  public selectedMutant$ = this._selectedMutant.asObservable();
+  
+
+
   showHome : boolean = true
   showCircuit : boolean = false
   showSidebar : boolean = false
@@ -31,7 +35,9 @@ export class ManagerService {
 
   executionAlgorithm : string = "Simple"
   toleratedError : number = 0.05
-  generateWithAllInputs: boolean = true
+  generateWithAllInputs: boolean = false;
+  
+  showMutantsInfo: boolean = false;
 
   setSelectedCircuit(circuit : Circuit) {
     this.selectedCircuit = circuit
@@ -74,4 +80,16 @@ export class ManagerService {
   getNumberOfInputQubits() {
     return this.inputQubits.split(",").length
   }
+
+  // Getter para compatibilidad
+  get selectedMutant(): Mutant | null {
+    return this._selectedMutant.value;
+  }
+  
+  // Método para actualizar el mutante seleccionado
+  setSelectedMutant(mutant: Mutant | null): void {
+    this._selectedMutant.next(mutant);
+  }
+
+
 }

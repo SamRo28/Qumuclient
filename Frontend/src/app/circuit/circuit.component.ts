@@ -19,11 +19,9 @@ export class CircuitComponent implements OnInit {
 
   private _circuitName: string = '';
   private _quirkCode: string = '';
-  randomQubits : number = 5
-  randomColumns : number = 5
-  randomButDeterministic : boolean = false
-  randomAndStartWithH : boolean = true
+
   @Output() validityChange = new EventEmitter<boolean>();
+  
   originalCircuitName? : string
   selectedCircuit: Circuit = new Circuit();
   hideQuirk : boolean = true
