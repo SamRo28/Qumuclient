@@ -1,14 +1,17 @@
 import { Mutant } from "./Mutant"
 
 export class MutantProject {
-    id : number = -1
+    id : number = 0
     mutants: Mutant[] = []
 
     
-    constructor( mutants? : Mutant[]) {
+    constructor( mutants? : Mutant[], id? : number) {
         if (mutants) {
             this.mutants = [...mutants]   
             
+        }
+        if (id) {
+            this.id = id
         }
     }
 

@@ -142,15 +142,23 @@ itToList(circuit: Circuit): void {
         code => {
           this.manager.selectedCircuit!.qiskitCode = code.wholeCode.split("\n")
         }
-      )
+      ).catch(error => {
+        console.error('Error getting qiskit code for selected circuit:', error);
+      })
     }
 
-    this.qumugen.getQiskitCode(mutant.circuit!).then(
-      code => {
-        this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.textQuirkCode)
-        mutant.circuit!.qiskitCode = code.wholeCode.split("\n")
-      }
-    )
+    if (mutant.circuit && mutant.circuit.textQuirkCode) {
+      this.qumugen.getQiskitCode(mutant.circuit).then(
+        code => {
+          this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.textQuirkCode)
+          mutant.circuit!.qiskitCode = code.wholeCode.split("\n")
+        }
+      ).catch(error => {
+        console.error('Error getting qiskit code for mutant circuit:', error);
+      })
+    } else {
+      console.warn('Cannot process mutant: circuit or quirk code not available');
+    }
   }
 
 
@@ -182,6 +190,16 @@ itToList(circuit: Circuit): void {
   toggleMenu() {
     this.menuAbierto = !this.menuAbierto;
     this.manager.sidebarExpanded = this.menuAbierto;
+  }
+
+  createNewCircuit() {
+    let name = 'Circuit' + (this.circuits.length + 1);
+    let newCircuit = new Circuit(name);
+    this.manager.setNewSelectedCircuit(newCircuit);
+    this.manager.showCircuit = true;
+    this.manager.showMutantsInfo = false;
+    this.circuits.push(newCircuit);
+    this.expandedCircuits.add(newCircuit.id);
   }
 
   goToHome() {

@@ -14,7 +14,12 @@
   <!-- Circuits tree structure -->
   <div *ngIf="!loading" class="tree-container">
     <div class="tree-header" *ngIf="menuAbierto">
-      <h3>Circuits</h3>
+      <div class="header-content">
+        <h3>Circuits</h3>
+        <button class="new-btn" (click)="createNewCircuit()" aria-label="Create new circuit">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
     </div>
 
     <ul class="tree-list">
@@ -72,11 +77,4 @@
     </div>
   </div>
 
-  <!-- Quick actions -->
-  <div class="quick-actions" *ngIf="menuAbierto">
-    <button class="action-btn" (click)="goToHome()">
-      <i class="fas fa-home"></i>
-      Home
-    </button>
-  </div>
 </div>

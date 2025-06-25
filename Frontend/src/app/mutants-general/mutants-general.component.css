@@ -40,7 +40,7 @@ h2 {
   display: flex;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .row:last-child {

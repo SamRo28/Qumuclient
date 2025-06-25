@@ -20,15 +20,19 @@ export class Circuit {
             this.quirkCode = quirkCode
             this.textQuirkCode = JSON.stringify(quirkCode)
             this.qubits = this.getQubits()
-            for (let i=0; i<quirkCode.cols.length; i++)
-                this.mutableColumns = this.mutableColumns + i + "," 
-            if (this.mutableColumns.endsWith(","))
-                this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length-1)
+            
+            // Solo procesar columnas y filas si quirkCode tiene la estructura correcta
+            if (quirkCode.cols && Array.isArray(quirkCode.cols)) {
+                for (let i=0; i<quirkCode.cols.length; i++)
+                    this.mutableColumns = this.mutableColumns + i + "," 
+                if (this.mutableColumns.endsWith(","))
+                    this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length-1)
 
-            for (let i=0; i<this.qubits; i++)
-                this.mutableRows = this.mutableRows + i + "," 
-            if (this.mutableRows.endsWith(","))
-                this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
+                for (let i=0; i<this.qubits; i++)
+                    this.mutableRows = this.mutableRows + i + "," 
+                if (this.mutableRows.endsWith(","))
+                    this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
+            }
         }
     }
 
@@ -38,15 +42,16 @@ export class Circuit {
 
 
     getColumns() {
-        if (this.quirkCode)
-            return JSON.parse(this.quirkCode).cols.length
-        return -1
+        if (this.quirkCode && this.quirkCode.cols)
+            return this.quirkCode.cols.length
+        return 0 // Retornar 0 en lugar de -1 para circuitos sin código
     }
 
     getQubits() {
         if (this.qubits==-1) {
-            if (this.quirkCode.length==0)
-                return -1
+            // Verificar si quirkCode existe y tiene la estructura correcta
+            if (!this.quirkCode || !this.quirkCode.cols || this.quirkCode.cols.length == 0)
+                return 0; // Retornar 0 en lugar de -1 para circuitos sin código
             let columns = this.quirkCode.cols
             for (let i=0; i<columns.length; i++)
                 if (columns[i].length>this.qubits)
@@ -135,16 +140,22 @@ export class Circuit {
     }
 
     setMutableColumns() {
-        for (let i=0; i<this.quirkCode.cols.length; i++)
+        if (this.quirkCode && this.quirkCode.cols && Array.isArray(this.quirkCode.cols)) {
+            this.mutableColumns = "-1,"; // Reiniciar
+            for (let i=0; i<this.quirkCode.cols.length; i++)
                 this.mutableColumns = this.mutableColumns + i + "," 
             if (this.mutableColumns.endsWith(","))
                 this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length-1)
+        }
     }
 
     setMutableRows() {
-        for (let i=0; i<this.qubits; i++)
+        if (this.qubits > 0) {
+            this.mutableRows = ""; // Reiniciar
+            for (let i=0; i<this.qubits; i++)
                 this.mutableRows = this.mutableRows + i + "," 
             if (this.mutableRows.endsWith(","))
                 this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
         }
+    }
 }

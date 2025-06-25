@@ -17,11 +17,11 @@ export class ManagerService {
   public newCircuit$ = this.newCircuitSubject.asObservable();
   
   private _selectedMutant = new BehaviorSubject<Mutant | null>(null);
-  
+  private _selectedCircuit = new BehaviorSubject<Circuit | null>(null);
   // Observable público para suscribirse
   public selectedMutant$ = this._selectedMutant.asObservable();
   
-
+  public selectedCircuit$ = this._selectedCircuit.asObservable();
 
   showHome : boolean = true
   showCircuit : boolean = false
@@ -43,25 +43,40 @@ export class ManagerService {
     this.selectedCircuit = circuit
     this.qubitCount = this.selectedCircuit.getQubits()
     
-    this.qubits = Array.from({ length:this.qubitCount }, (_, i) => i);
+    // Solo procesar qubits si hay código Quirk válido
+    if (this.qubitCount > 0) {
+      this.qubits = Array.from({ length:this.qubitCount }, (_, i) => i);
 
-    this.inputQubits = ""
-    this.outputQubits = ""
-    for (let i=0; i<this.qubitCount; i++) {
-      this.inputQubits = this.inputQubits + i + ","
-      this.outputQubits = this.outputQubits + i + ","
+      this.inputQubits = ""
+      this.outputQubits = ""
+      for (let i=0; i<this.qubitCount; i++) {
+        this.inputQubits = this.inputQubits + i + ","
+        this.outputQubits = this.outputQubits + i + ","
+      }
+      if (this.inputQubits.endsWith(","))
+        this.inputQubits = this.inputQubits.substring(0, this.inputQubits.length-1)
+      this.selectedCircuit.inputQubits = this.inputQubits
+
+      if (this.outputQubits.endsWith(","))
+        this.outputQubits = this.outputQubits.substring(0, this.outputQubits.length-1)
+      this.selectedCircuit.outputQubits = this.outputQubits
+    } else {
+      // Para circuitos sin código Quirk, inicializar valores por defecto
+      this.qubits = []
+      this.inputQubits = ""
+      this.outputQubits = ""
+      this.selectedCircuit.inputQubits = ""
+      this.selectedCircuit.outputQubits = ""
     }
-    if (this.inputQubits.endsWith(","))
-      this.inputQubits = this.inputQubits.substring(0, this.inputQubits.length-1)
-    this.selectedCircuit.inputQubits = this.inputQubits
-
-    if (this.outputQubits.endsWith(","))
-      this.outputQubits = this.outputQubits.substring(0, this.outputQubits.length-1)
-    this.selectedCircuit.outputQubits = this.outputQubits
+    
+    // Notificar a los suscriptores del cambio de circuito
+    this._selectedCircuit.next(circuit);
   }
 
   setNewSelectedCircuit(circuit : Circuit) {
     this.selectedCircuit = circuit
+    // Notificar a los suscriptores del nuevo circuito seleccionado
+    this._selectedCircuit.next(circuit);
   }
 
   setMutants(mutants: any) {
@@ -72,7 +87,7 @@ export class ManagerService {
       this.mutants.push(mutant)
 
     }
-    let mutantPrj = new MutantProject(this.mutants)
+    let mutantPrj = new MutantProject(this.mutants, this.selectedCircuit?.mutantsProjects.length);
     this.selectedCircuit?.mutantsProjects.push(mutantPrj);
 
   }

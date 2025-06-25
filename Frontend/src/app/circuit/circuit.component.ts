@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ReperService } from '../reper.service';
 import { Circuit } from '../model/Circuit';
+import { Subscription } from 'rxjs';
 import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
 import { QumugenService } from '../qumugen.service';
@@ -13,7 +14,7 @@ import { Output, EventEmitter } from '@angular/core';
   templateUrl: './circuit.component.html',
   styleUrls: ['./circuit.component.css']
 })
-export class CircuitComponent implements OnInit {
+export class CircuitComponent implements OnInit, OnDestroy {
 
   url  : string = '';
 
@@ -23,8 +24,9 @@ export class CircuitComponent implements OnInit {
   @Output() validityChange = new EventEmitter<boolean>();
   
   originalCircuitName? : string
-  selectedCircuit: Circuit = new Circuit();
   hideQuirk : boolean = true
+  selectedCircuit: Circuit | null = new Circuit();
+  private subscription = new Subscription();
 
   circuits : Circuit[] = []
   selectedTab: string = 'circuit';
@@ -33,15 +35,28 @@ export class CircuitComponent implements OnInit {
     this.url = '';
   }
   ngOnInit(): void {
-    this.loadCircuitFromManager();
+    this.subscription.add(
+        this.manager.selectedCircuit$.subscribe(circuit => {
+          this.selectedCircuit = circuit;
+          this.loadCircuitFromManager();
+          this.selectTab('circuit');
+        })
+      );
+  }
+  ngOnChanges(): void {
+    this.loadCircuitFromManager();  
   }
 
-  ngOnChanges(): void {
-    this.loadCircuitFromManager();
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
+
   // Método para cargar el circuito desde el ManagerService
   public loadCircuitFromManager(): void {
     this.selectedCircuit = this.manager.selectedCircuit || new Circuit();
+    if (!this.selectedCircuit) {
+      this.selectedCircuit = new Circuit();
+    }
     
     // Cargar el nombre del circuito
     if (this.selectedCircuit.id) {
@@ -86,19 +101,37 @@ checkValidity() {
   }
   set quirkCode(value: string) {
     this._quirkCode = value;
-    this.selectedCircuit.textQuirkCode = value;
-    this.selectedCircuit.qubits = -1;
-    this.selectedCircuit.quirkCode = JSON.parse(value);
-    this.manager.setSelectedCircuit(this.selectedCircuit);
+    if (this.selectedCircuit) {
+      this.selectedCircuit.textQuirkCode = value;
+      this.selectedCircuit.qubits = -1;
+      
+      // Solo parsear el JSON si el valor no está vacío
+      if (value && value.trim() !== '') {
+        try {
+          this.selectedCircuit.quirkCode = JSON.parse(value);
+        } catch (error) {
+          console.error('Error parsing quirk code:', error);
+          this.selectedCircuit.quirkCode = null;
+        }
+      } else {
+        this.selectedCircuit.quirkCode = null;
+      }
+      
+      this.manager.setSelectedCircuit(this.selectedCircuit);
+    }
     this.checkValidity();
   }
 
   save() {
+    if (!this.selectedCircuit) {
+      AppComponent.error = "No circuit selected";
+      return;
+    }
     if (this.selectedCircuit.id.trim().length==0) {
       AppComponent.error = "Please, give a name to the circuit"
       return
     }
-    if (!this.selectCircuit) {
+    if (!this.selectedCircuit.textQuirkCode || this.selectedCircuit.textQuirkCode.trim().length==0) {
       AppComponent.error = "Please, write the Quirk code of the circuit"
       return
     }
@@ -114,8 +147,12 @@ checkValidity() {
   }
 
   visualizeCircuit() {
-    this.url = AppComponent.quirkUrl + "#circuit=" + this.selectedCircuit.textQuirkCode;
-    window.open(this.url, '_blank');
+    if (this.selectedCircuit && this.selectedCircuit.textQuirkCode && this.selectedCircuit.textQuirkCode.trim() !== '') {
+      this.url = AppComponent.quirkUrl + "#circuit=" + this.selectedCircuit.textQuirkCode;
+      window.open(this.url, '_blank');
+    } else {
+      console.warn('Cannot visualize circuit: no quirk code available');
+    }
   }
 
   selectCircuit() {
@@ -123,21 +160,23 @@ checkValidity() {
     this.manager.setSelectedCircuit(this.selectedCircuit)
     this.qumugen.getQiskitCode(this.selectedCircuit).then(
       result=> {
-        this.selectedCircuit.qiskitCode = result.wholeCode.split("\n")
+        if (this.selectedCircuit) {
+          this.selectedCircuit.qiskitCode = result.wholeCode.split("\n")
+        }
       }
     )
   }
 
 
   onSubmit() {
-    if(this.selectedCircuit.id){
+    if(this.selectedCircuit?.id){
       this.circuitName = this.selectedCircuit.id;
     }
     else {
       this.circuitName = "Circuit1";
     }
     
-    if(this.selectedCircuit.quirkCode) {
+    if(this.selectedCircuit?.quirkCode) {
       this.quirkCode = this.selectedCircuit.quirkCode;
     }
   }

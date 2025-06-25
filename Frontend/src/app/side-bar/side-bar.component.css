@@ -13,6 +13,7 @@
   letter-spacing: -0.01em;
   transition: width 0.3s ease, left 0.3s ease;
   overflow: hidden;
+  overflow-x: hidden; /* Eliminar barra de desplazamiento horizontal */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -90,7 +91,9 @@ a.separador:hover {
   list-style: none;
   padding: 0;
   width: 100%;
+  max-width: 100%;
   margin: 0;
+  overflow-x: hidden;
 }
 
 .sidebar ul li {
@@ -145,10 +148,12 @@ a.separador:hover {
 .tree-container {
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px 0;
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 100%;
 }
 
 /* Scrollbar minimalista */
@@ -176,6 +181,13 @@ a.separador:hover {
   background-color: rgba(75, 132, 110, 0.407);
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .tree-header h3 {
   margin: 0;
   color: #f8fafc;
@@ -185,6 +197,30 @@ a.separador:hover {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  flex-grow: 1;
+}
+
+.new-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #9dc0a9;
+  background-color: #9dc0a9;
+  color: #1f2937;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.new-btn:hover {
+  background-color: #8ab095;
+  border-color: #8ab095;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(157, 192, 169, 0.3);
 }
 
 /* Listas del árbol - CORRECCIÓN PRINCIPAL */
@@ -201,26 +237,55 @@ a.separador:hover {
   list-style: none;
   padding: 0;
   margin: 0;
-  margin-left: 16px; /* Indentación como VS Code */
+  margin-left: 24px; /* Indentación aumentada para mejor jerarquía visual */
   display: flex;
   flex-direction: column;
   margin-top: 2px;
-  width: calc(100% - 16px);
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  overflow-x: hidden;
 }
 
-/* Indentación adicional para mutantes */
+/* Indentación adicional para mutantes (doble indentación) */
 .project-item > .tree-sublist {
-  margin-left: 16px;
-  width: calc(100% - 16px);
+  margin-left: 24px; /* Mantener consistencia en la indentación */
+  width: calc(100% - 24px);
+  position: relative;
 }
 
-/* Items del árbol */
+/* Líneas guía verticales para mejorar la percepción de jerarquía */
+.tree-sublist:before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(157, 192, 169, 0.3);
+}
+
+/* Items del árbol con indentación jerárquica específica */
 .tree-item {
   margin: 1px 0;
   display: flex;
   flex-direction: column;
   width: 100%;
   clear: both;
+}
+
+/* Circuitos - Nivel 0 (sin indentación adicional) */
+.circuit-item {
+  margin-left: 0;
+}
+
+/* Proyectos - Nivel 1 (primera indentación) */
+.project-item {
+  margin-left: 0; /* La indentación se maneja por tree-sublist */
+}
+
+/* Mutantes - Nivel 2 (segunda indentación) */
+.mutant-item {
+  margin-left: 0; /* La indentación se maneja por tree-sublist anidada */
 }
 
 .tree-node {
@@ -293,6 +358,10 @@ a.separador:hover {
   word-break: break-word;
   line-height: 1.3;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 50px);
 }
 
 .node-label small {
@@ -307,6 +376,7 @@ a.separador:hover {
   font-weight: 600;
   font-family: 'Inter', sans-serif;
   letter-spacing: -0.01em;
+  padding-left: 8px; /* Padding estándar para circuitos */
 }
 
 .project-item .tree-node {
@@ -314,6 +384,7 @@ a.separador:hover {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: -0.005em;
+  padding-left: 12px; /* Padding adicional para proyectos */
 }
 
 .mutant-item .tree-node {
@@ -321,7 +392,7 @@ a.separador:hover {
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  padding: 3px 8px;
+  padding: 3px 8px 3px 16px; /* Padding adicional para mutantes */
 }
 
 .empty-state {
