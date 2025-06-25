@@ -260,7 +260,7 @@ a.separador:hover {
 }
 
 .circuit-icon {
-  color: #059669;
+  color: #fbbf24; /* Amarillo dorado - para circuitos (nivel superior) */
   font-size: 14px !important;
   width: 16px !important;
   margin-right: 6px;
@@ -268,7 +268,7 @@ a.separador:hover {
 }
 
 .project-icon {
-  color: #d97706;
+  color: #60a5fa; /* Azul claro - para proyectos (nivel intermedio) */
   font-size: 12px !important;
   width: 16px !important;
   margin-right: 6px;
@@ -276,7 +276,7 @@ a.separador:hover {
 }
 
 .mutant-icon {
-  color: #dc2626;
+  color: #f87171; /* Coral/Rosa - para mutantes (nivel más profundo) */
   font-size: 11px !important;
   width: 16px !important;
   margin-right: 6px;

@@ -106,7 +106,6 @@ label {
   border-color: #e0e0e0;
 }
 
-/* Remove focus effects for read-only fields */
 .input:disabled:focus,
 .input[readonly]:focus {
   outline: none;

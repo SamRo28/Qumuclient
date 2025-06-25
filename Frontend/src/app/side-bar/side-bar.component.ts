@@ -6,6 +6,9 @@ import { ManagerService } from '../manager.service';
 import { Circuit } from '../model/Circuit';
 import { MutantProject } from '../model/MutantProject';
 import { Mutant } from '../model/Mutant';
+import { QumugenService } from '../qumugen.service';
+import { AppComponent } from '../app.component';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-side-bar',
@@ -14,6 +17,7 @@ import { Mutant } from '../model/Mutant';
 })
 export class SideBarComponent implements OnInit, OnDestroy {
 
+  url?: SafeResourceUrl;
   
   menuAbierto = false;
   mostrarInicio = true;
@@ -28,7 +32,9 @@ export class SideBarComponent implements OnInit, OnDestroy {
      private router: Router, 
      private el: ElementRef, 
      private reperService: ReperService,
-     private manager: ManagerService
+     private manager: ManagerService,
+     private qumugen: QumugenService,
+     public sanitizer: DomSanitizer
    ) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -130,7 +136,23 @@ itToList(circuit: Circuit): void {
     this.manager.showCircuit = false;
     this.manager.showHome = false;
     this.manager.showMutantsInfo = true;
+    
+    if (this.manager.selectedCircuit) {
+      this.qumugen.getQiskitCode(this.manager.selectedCircuit).then(
+        code => {
+          this.manager.selectedCircuit!.qiskitCode = code.wholeCode.split("\n")
+        }
+      )
+    }
+
+    this.qumugen.getQiskitCode(mutant.circuit!).then(
+      code => {
+        this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.textQuirkCode)
+        mutant.circuit!.qiskitCode = code.wholeCode.split("\n")
+      }
+    )
   }
+
 
   getProjectKey(circuitId: string, projectId: number): string {
     return `${circuitId}_${projectId}`;

@@ -1,1 +1,37 @@
-<p>mutants-visual works!</p>
+<body>
+    <div class="container">
+        <!-- Original Code Section -->
+        <div class="code-section">
+            <h2 class="section-title">ORIGINAL CIRCUIT</h2>
+            <div class="circuit-iframe-container">
+                <iframe 
+                    *ngIf="originalCircuitUrl" 
+                    [src]="originalCircuitUrl" 
+                    class="circuit-iframe"
+                    frameborder="0"
+                    title="Original Circuit Visualization">
+                </iframe>
+                <div *ngIf="!originalCircuitUrl" class="no-circuit-message">
+                    <p>No circuit visualization available</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mutant Code Section -->
+        <div class="code-section">
+            <h2 class="section-title">MUTANT CIRCUIT</h2>
+            <div class="circuit-iframe-container">
+                <iframe 
+                    *ngIf="mutantCircuitUrl" 
+                    [src]="mutantCircuitUrl" 
+                    class="circuit-iframe"
+                    frameborder="0"
+                    title="Mutant Circuit Visualization">
+                </iframe>
+                <div *ngIf="!mutantCircuitUrl" class="no-circuit-message">
+                    <p>No circuit visualization available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>

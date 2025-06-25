@@ -1,5 +1,18 @@
 /* CSS for Circuit Configuration Component */
 
+/* Mutant Title Styles */
+.mutant-title {
+    color: #4c5866;
+    font-size: 2rem;
+    margin: 0 0 2rem 0;
+    font-weight: bold;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    text-align: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid #9dc0a9;
+    letter-spacing: 0.02em;
+}
+
 .tabs {
     display: flex;
     border-bottom: 1px solid #ddd;
