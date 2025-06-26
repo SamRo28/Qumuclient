@@ -325,7 +325,7 @@ a.separador:hover {
 }
 
 .circuit-icon {
-  color: #fbbf24; /* Amarillo dorado - para circuitos (nivel superior) */
+  color: #D4FF92; /* Amarillo dorado - para circuitos (nivel superior) */
   font-size: 14px !important;
   width: 16px !important;
   margin-right: 6px;
@@ -333,7 +333,7 @@ a.separador:hover {
 }
 
 .project-icon {
-  color: #60a5fa; /* Azul claro - para proyectos (nivel intermedio) */
+  color: #90f3bbc6; /* Azul claro - para proyectos (nivel intermedio) */
   font-size: 12px !important;
   width: 16px !important;
   margin-right: 6px;
@@ -341,7 +341,7 @@ a.separador:hover {
 }
 
 .mutant-icon {
-  color: #f87171; /* Coral/Rosa - para mutantes (nivel más profundo) */
+  color: #D4F2E1; /* Coral/Rosa - para mutantes (nivel más profundo) */
   font-size: 11px !important;
   width: 16px !important;
   margin-right: 6px;
