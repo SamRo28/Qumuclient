@@ -45,7 +45,7 @@
                  [class.expanded]="isProjectExpanded(getProjectKey(circuit.id, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
               <span *ngIf="menuAbierto" class="node-label">
-                Project {{ project.id }} ({{ project.mutants.length }} mutants)
+                Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
               </span>
               <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>
             </div>

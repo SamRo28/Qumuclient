@@ -13,7 +13,7 @@ export class QumugenService {
   constructor(private dict : DictionaryService, private client : HttpClient, private manager : ManagerService) { }
 
   getOperatorsByFamily() {
-    return this.client.get<any>(this.dict.getQumugenURL()+ "getOperatorsByFamily")
+    return this.client.get<any>("http://localhost:8080/qumureper/getoperatorsByFamily")
   }
 
   getOperators(family : string) {

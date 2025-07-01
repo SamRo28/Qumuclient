@@ -5,7 +5,6 @@ import { OperatorFamily } from '../model/OperatorFamily';
 import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
 import { LoadingService } from '../loading.service';
-import { Circuit } from '../model/Circuit';
 
 @Component({
   selector: 'app-operators',
@@ -31,9 +30,8 @@ export class OperatorsComponent {
     
     this.service.getOperatorsByFamily().subscribe(
       families => {
-        let familyNames = Object.keys(families)
-        for (let familyName of familyNames) {
-          let family = new OperatorFamily(familyName, families[familyName])
+        for (let familyData of families) {
+          let family = new OperatorFamily(familyData.name, familyData.operators)
           this.families.push(family)
         }
       },
@@ -44,7 +42,8 @@ export class OperatorsComponent {
   }
 
   selectAll() {
-    this.families.forEach(f => f.select())
+    this.families.forEach(f => 
+      f.select())
   }
 
   generateMutants() {
@@ -93,14 +92,20 @@ export class OperatorsComponent {
   }
 
   selectedFamily: OperatorFamily | null = null;
+  isModalOpen: boolean = false;
 
   showInfo(family: OperatorFamily) {
     this.selectedFamily = family;
-    // abre el modal aquí, dependiendo si usas Bootstrap, Angular Material, etc.
+    this.isModalOpen = true;
   }
 
   closeModal() {
     this.selectedFamily = null;
+    this.isModalOpen = false;
+  }
+
+  getEnabledOperators(family: OperatorFamily) {
+    return family.operators.filter(op => op.enabled);
   }
 
 }

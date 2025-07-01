@@ -14,13 +14,17 @@ export class OperatorFamily {
 }
 
 export class Operator {
+    id? : number
     name? : string
-    printedName? : string
+    enabled? : boolean
     selected : boolean = false
     description? : string
-
+    
     constructor(operator : any) {
         this.name = operator.name
-        this.printedName = operator.printedName
+        this.id = operator.id
+        this.enabled = operator.enabled
+        this.description = operator.description
+        this.selected = operator.selected || false
     }
 }
