@@ -193,7 +193,7 @@ itToList(circuit: Circuit): void {
   }
 
   createNewCircuit() {
-    let name = 'Circuit' + (this.circuits.length + 1);
+    let name = 'Project' + (this.circuits.length + 1);
     let newCircuit = new Circuit(name);
     this.manager.setNewSelectedCircuit(newCircuit);
     this.manager.showCircuit = true;

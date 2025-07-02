@@ -18,7 +18,7 @@ export class HomeComponent implements OnInit {
   createCircuit() {
     this.manager.showHome = false
     this.manager.showCircuit = true
-    let circuit = new Circuit("Circuit1")
+    let circuit = new Circuit("Project1")
     this.manager.setNewSelectedCircuit(circuit)
   }
 
