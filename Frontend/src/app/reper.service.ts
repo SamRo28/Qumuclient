@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Circuit } from './model/Circuit';
+import { QProgram } from './model/QProgram';
 import { DictionaryService } from './dictionary.service';
 import { Mutant } from './model/Mutant';
 
@@ -16,7 +16,7 @@ export class ReperService {
     return this.client.get<any>(this.dict.getReperURL() + "findAll" + this.right + "circuits")
   }
 
-  save(circuit : Circuit) {
+  save(circuit : QProgram) {
     return this.client.put<any>(this.dict.getReperURL() + "saveJSON" + this.right + "circuits", circuit)
   }
 

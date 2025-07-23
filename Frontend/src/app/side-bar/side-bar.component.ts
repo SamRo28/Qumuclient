@@ -3,8 +3,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ReperService } from '../reper.service';
 import { ManagerService } from '../manager.service';
-import { Circuit } from '../model/Circuit';
-import { MutantProject } from '../model/MutantProject';
+import { QProgram } from '../model/QProgram';
+import { MutantCycle } from '../model/MutantCycle';
 import { Mutant } from '../model/Mutant';
 import { QumugenService } from '../qumugen.service';
 import { AppComponent } from '../app.component';
@@ -21,7 +21,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   
   menuAbierto = false;
   mostrarInicio = true;
-  circuits: Circuit[] = [];
+  circuits: QProgram[] = [];
   expandedCircuits: Set<string> = new Set();
   expandedProjects: Set<string> = new Set();
   loading = false;;
@@ -55,7 +55,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
     }
   }
 
-itToList(circuit: Circuit): void {
+itToList(circuit: QProgram): void {
     // Verificar si el circuito ya existe en la lista
     const existingIndex = this.circuits.findIndex(c => c.id === circuit.id);
     
@@ -68,7 +68,7 @@ itToList(circuit: Circuit): void {
     }
     
     // Expandir automáticamente el circuito recién agregado
-    this.expandedCircuits.add(circuit.id);
+    this.expandedCircuits.add(circuit.name!);
   }
 
   // Método opcional para cargar circuitos desde el servicio si es necesario
@@ -77,11 +77,11 @@ itToList(circuit: Circuit): void {
     this.reperService.getCircuits().subscribe({
       next: (data) => {
         this.circuits = data.map((circuitData: any) => {
-          const circuit = new Circuit(circuitData.id, circuitData.quirkCode);
+          const circuit = new QProgram(circuitData.id, circuitData.quirkCode);
           // Si el circuito tiene proyectos de mutantes, los cargamos
           if (circuitData.mutantsProjects) {
             circuit.mutantsProjects = circuitData.mutantsProjects.map((proj: any) => {
-              const project = new MutantProject();
+              const project = new MutantCycle();
               project.id = proj.id;
               if (proj.mutants) {
                 project.mutants = proj.mutants.map((mutant: any) => new Mutant(mutant));
@@ -124,7 +124,7 @@ itToList(circuit: Circuit): void {
     return this.expandedProjects.has(projectKey);
   }
 
-  selectCircuit(circuit: Circuit): void {
+  selectCircuit(circuit: QProgram): void {
     this.manager.setSelectedCircuit(circuit);
     this.manager.showCircuit = true;
     this.manager.showHome = false;
@@ -136,6 +136,7 @@ itToList(circuit: Circuit): void {
     this.manager.showCircuit = false;
     this.manager.showHome = false;
     this.manager.showMutantsInfo = true;
+    this.manager.showMutantCycleInfo = false;
     
     if (this.manager.selectedCircuit) {
       this.qumugen.getQiskitCode(this.manager.selectedCircuit).then(
@@ -161,6 +162,13 @@ itToList(circuit: Circuit): void {
     }
   }
 
+  selectMutantCycle(mutantCycle: MutantCycle): void {
+    this.manager.setSelectedMutantCycle(mutantCycle);
+    this.manager.showCircuit = false;
+    this.manager.showHome = false;
+    this.manager.showMutantsInfo = false;
+    this.manager.showMutantCycleInfo = true;
+  }
 
   getProjectKey(circuitId: string, projectId: number): string {
     return `${circuitId}_${projectId}`;
@@ -194,12 +202,13 @@ itToList(circuit: Circuit): void {
 
   createNewCircuit() {
     let name = 'Project' + (this.circuits.length + 1);
-    let newCircuit = new Circuit(name);
+    let newCircuit = new QProgram();
+    newCircuit.name = name;
     this.manager.setNewSelectedCircuit(newCircuit);
     this.manager.showCircuit = true;
     this.manager.showMutantsInfo = false;
     this.circuits.push(newCircuit);
-    this.expandedCircuits.add(newCircuit.id);
+    this.expandedCircuits.add(newCircuit.name!);
   }
 
   goToHome() {

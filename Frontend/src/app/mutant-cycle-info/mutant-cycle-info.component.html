@@ -1,0 +1,113 @@
+<div class="mutant-cycle-container" *ngIf="mutantCycle">
+  <div class="header">
+    <h2>Mutant Cycle: {{ mutantCycle.id }}</h2>
+    <button class="execute-btn" (click)="onExecute()">
+      <span class="execute-text">EXECUTE</span>
+      <span class="execute-icon">▶</span>
+    </button>
+  </div>
+
+  <div class="content">
+    <div class="section">
+      <h3>Execution Configuration</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="executionDate">Execution Date</label>
+          <input 
+            type="date" 
+            id="executionDate" 
+            name="executionDate"
+            [value]="getFormattedDate()"
+            (change)="updateExecutionDate($event)"
+            class="form-input">
+        </div>
+        
+        <div class="form-group machine-group">
+          <label for="machine">Machine</label>
+          <input 
+            type="text" 
+            id="machine" 
+            name="machine"
+            [value]="mutantCycle.execConfiguration?.machine || ''"
+            (input)="updateMachine($event)"
+            class="form-input machine-input"
+            placeholder="Enter machine name">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group algorithm-group">
+          <label for="execAlgorithm">Execution Algorithm</label>
+          <input 
+            type="text" 
+            id="execAlgorithm" 
+            name="execAlgorithm"
+            [value]="mutantCycle.execConfiguration?.execAlgorithm || ''"
+            (input)="updateExecAlgorithm($event)"
+            class="form-input algorithm-input"
+            placeholder="Enter execution algorithm">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Killing Matrix</h3>
+      
+      <div *ngIf="mutantCycle.mutants && mutantCycle.mutants.length > 0; else emptyMatrix">
+        <div class="killing-matrix-container">
+          <table class="killing-matrix-table">
+            <thead>
+              <tr>
+                <th class="index-column">Índice</th>
+                <th class="operator-column">Operador</th>
+                <th class="position-column">Fila</th>
+                <th class="position-column">Columna</th>
+                <th class="result-column">Resultado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mutant of mutantCycle.mutants; trackBy: trackByMutantIndex">
+                <td class="index-column">
+                  <span [class.empty-cell]="mutant.mutantIndex === undefined">
+                    {{ mutant.mutantIndex !== undefined ? mutant.mutantIndex : '-' }}
+                  </span>
+                </td>
+                <td class="operator-column">
+                  <span [class.empty-cell]="!mutant.mutationOperator">
+                    {{ mutant.mutationOperator || 'N/A' }}
+                  </span>
+                </td>
+                <td class="position-column">
+                  <span [class.empty-cell]="mutant.mutatedRow === undefined">
+                    {{ mutant.mutatedRow !== undefined ? mutant.mutatedRow : '-' }}
+                  </span>
+                </td>
+                <td class="position-column">
+                  <span [class.empty-cell]="mutant.mutatedColumn === undefined">
+                    {{ mutant.mutatedColumn !== undefined ? mutant.mutatedColumn : '-' }}
+                  </span>
+                </td>
+                <td class="result-column">
+                  <span class="result-badge" [ngClass]="getResultBadgeClass(mutant.result?.result)">
+                    {{ getResultDisplayText(mutant.result?.result) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <ng-template #emptyMatrix>
+        <div class="killing-matrix-empty">
+          <p class="empty-text">No hay mutantes en este ciclo</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>
+
+<div class="no-selection" *ngIf="!mutantCycle">
+  <p>Select a Mutant Cycle to view its information</p>
+</div>

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Circuit } from './model/Circuit';
+import { QProgram } from './model/QProgram';
 import { ManagerService } from './manager.service';
 import { Mutant } from './model/Mutant';
 import { DictionaryService } from './dictionary.service';
@@ -20,7 +20,7 @@ export class QumugenService {
     return this.client.get(this.dict.getQumugenURL() + "getOperators/" + family)
   }
 
-  generateMutants(circuit : Circuit, selectedOperators : any[]) {
+  generateMutants(circuit : QProgram, selectedOperators : any[]) {
     let info = {
       circuit : circuit.quirkCode,
       operatorNames : selectedOperators,
@@ -32,7 +32,7 @@ export class QumugenService {
     return this.client.put<any>(this.dict.getQumugenURL() + "generateQuirkMutants", info) 
   }
 
-  async getQiskitCode(circuit : Circuit) {
+  async getQiskitCode(circuit : QProgram) {
     circuit.inputQubits = this.manager.inputQubits
     circuit.outputQubits = this.manager.outputQubits
     try {

@@ -27,7 +27,7 @@
 }
 
 .sidebar.open {
-  width: 280px; /* Tamaño cuando está expandido */
+  width: 180px; /* Tamaño cuando está expandido */
   align-items: flex-start;
   padding-left: 15px;
 }
@@ -370,6 +370,19 @@ a.separador:hover {
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.02em;
+}
+
+/* Estilo específico para MutantCycle clickeable */
+.project-item .node-label {
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.project-item .node-label:hover {
+  color: #9dc0a9;
+  background-color: rgba(157, 192, 169, 0.1);
 }
 
 .circuit-item .tree-node {

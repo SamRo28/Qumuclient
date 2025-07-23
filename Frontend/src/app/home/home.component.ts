@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ManagerService } from '../manager.service';
-import { Circuit } from '../model/Circuit';
+import { QProgram } from '../model/QProgram';
 
 @Component({
   selector: 'app-home',
@@ -18,7 +18,7 @@ export class HomeComponent implements OnInit {
   createCircuit() {
     this.manager.showHome = false
     this.manager.showCircuit = true
-    let circuit = new Circuit("Project1")
+    let circuit = new QProgram("Project1")
     this.manager.setNewSelectedCircuit(circuit)
   }
 

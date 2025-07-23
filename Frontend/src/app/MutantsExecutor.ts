@@ -1,5 +1,5 @@
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser"
-import { Circuit } from "./model/Circuit"
+import { QProgram } from "./model/QProgram"
 
 export abstract class MutantsExecutor {
     originalResults : any
@@ -19,7 +19,7 @@ export abstract class MutantsExecutor {
         this.JSON = JSON
     }
 
-    abstract runOne(circuit : Circuit, program? : string) : void
+    abstract runOne(circuit : QProgram, program? : string) : void
     abstract runMutants() : void
 
     stopExecution() {

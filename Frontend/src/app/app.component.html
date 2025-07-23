@@ -11,6 +11,8 @@
 
     <app-mutants-info *ngIf="manager.showMutantsInfo"></app-mutants-info>
     
+    <app-mutant-cycle-info *ngIf="manager.showMutantCycleInfo" [mutantCycle]="manager.selectedMutantCycle"></app-mutant-cycle-info>
+    
     <!--
     <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
 

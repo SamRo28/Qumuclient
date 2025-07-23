@@ -88,7 +88,7 @@ body {
     word-wrap: break-word;
 }
 
-/* Circuit iframe container styles */
+/* QProgram iframe container styles */
 .circuit-iframe-container {
     flex: 1;
     display: flex;

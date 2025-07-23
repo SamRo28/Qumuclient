@@ -1,27 +1,29 @@
 import { Injectable } from '@angular/core';
 import { Subject,  BehaviorSubject, Observable  } from 'rxjs';
-import { Circuit } from './model/Circuit';
+import { QProgram } from './model/QProgram';
 import { Mutant } from './model/Mutant';
-import { MutantProject } from './model/MutantProject';
+import { MutantCycle } from './model/MutantCycle';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ManagerService {
-  selectedCircuit? : Circuit
+  selectedCircuit? : QProgram
   
   mutants : Mutant[] = []
   
   // Subject para notificar cuando se agrega un nuevo circuito
-  private newCircuitSubject = new Subject<Circuit>();
+  private newCircuitSubject = new Subject<QProgram>();
   public newCircuit$ = this.newCircuitSubject.asObservable();
   
   private _selectedMutant = new BehaviorSubject<Mutant | null>(null);
-  private _selectedCircuit = new BehaviorSubject<Circuit | null>(null);
+  private _selectedCircuit = new BehaviorSubject<QProgram | null>(null);
+  private _selectedMutantCycle = new BehaviorSubject<MutantCycle | null>(null);
   // Observable público para suscribirse
   public selectedMutant$ = this._selectedMutant.asObservable();
   
   public selectedCircuit$ = this._selectedCircuit.asObservable();
+  public selectedMutantCycle$ = this._selectedMutantCycle.asObservable();
 
   showHome : boolean = true
   showCircuit : boolean = false
@@ -38,8 +40,9 @@ export class ManagerService {
   generateWithAllInputs: boolean = false;
   
   showMutantsInfo: boolean = false;
+  showMutantCycleInfo: boolean = false;
 
-  setSelectedCircuit(circuit : Circuit) {
+  setSelectedCircuit(circuit : QProgram) {
     this.selectedCircuit = circuit
     this.qubitCount = this.selectedCircuit.getQubits()
     
@@ -73,7 +76,7 @@ export class ManagerService {
     this._selectedCircuit.next(circuit);
   }
 
-  setNewSelectedCircuit(circuit : Circuit) {
+  setNewSelectedCircuit(circuit : QProgram) {
     this.selectedCircuit = circuit
     // Notificar a los suscriptores del nuevo circuito seleccionado
     this._selectedCircuit.next(circuit);
@@ -87,7 +90,7 @@ export class ManagerService {
       this.mutants.push(mutant)
 
     }
-    let mutantPrj = new MutantProject(this.mutants, this.selectedCircuit?.mutantsProjects.length);
+    let mutantPrj = new MutantCycle(this.mutants, this.selectedCircuit?.mutantsProjects.length);
     this.selectedCircuit?.mutantsProjects.push(mutantPrj);
 
   }
@@ -106,5 +109,13 @@ export class ManagerService {
     this._selectedMutant.next(mutant);
   }
 
-
+  // Getter para MutantCycle seleccionado
+  get selectedMutantCycle(): MutantCycle | null {
+    return this._selectedMutantCycle.value;
+  }
+  
+  // Método para actualizar el MutantCycle seleccionado
+  setSelectedMutantCycle(mutantCycle: MutantCycle | null): void {
+    this._selectedMutantCycle.next(mutantCycle);
+  }
 }

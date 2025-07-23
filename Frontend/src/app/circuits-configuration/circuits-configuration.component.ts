@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ManagerService } from '../manager.service';
 import { Subscription } from 'rxjs';
 import { CircuitComponent } from '../circuit/circuit.component';
-import { Circuit } from '../model/Circuit';
+import { QProgram } from '../model/QProgram';
 
 @Component({
   selector: 'app-circuits-configuration',
@@ -13,7 +13,7 @@ export class CircuitsConfigurationComponent implements OnInit, OnDestroy {
 
     isCircuitValid = false;
     selectedTab: 'circuit' | 'mutants' = 'circuit';
-    selectedCircuit: Circuit | null = null; // Inicializar con un circuito vacío
+    selectedCircuit: QProgram | null = null; // Inicializar con un circuito vacío
     private subscription = new Subscription();
     
     @ViewChild(CircuitComponent) circuitComponent!: CircuitComponent;

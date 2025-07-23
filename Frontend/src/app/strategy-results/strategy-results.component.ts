@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ManagerService } from '../manager.service';
-import { Circuit } from '../model/Circuit';
+import { QProgram } from '../model/QProgram';
 import { AppComponent } from '../app.component';
 import { QiskitExecutorService } from '../qiskit-executor.service';
 import { QumugenService } from '../qumugen.service';
@@ -25,7 +25,7 @@ export class StrategyResultsComponent extends MutantsExecutor {
     super(sanitizer)
   }
 
-  runOne(circuit : Circuit, program? : string) { 
+  runOne(circuit : QProgram, program? : string) { 
     AppComponent.error = ""
     
     if (this.stopped) {

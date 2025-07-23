@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ReperService } from '../reper.service';
-import { Circuit } from '../model/Circuit';
+import { QProgram } from '../model/QProgram';
 import { Subscription } from 'rxjs';
 import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
@@ -25,10 +25,10 @@ export class CircuitComponent implements OnInit, OnDestroy {
   
   originalCircuitName? : string
   hideQuirk : boolean = true
-  selectedCircuit: Circuit | null = new Circuit();
+  selectedCircuit: QProgram | null = new QProgram();
   private subscription = new Subscription();
 
-  circuits : Circuit[] = []
+  circuits : QProgram[] = []
   selectedTab: string = 'circuit';
 
   constructor(public sanitizer: DomSanitizer, private reper : ReperService, private manager : ManagerService, private qumugen : QumugenService, private qasm : QasmService) { 
@@ -53,9 +53,9 @@ export class CircuitComponent implements OnInit, OnDestroy {
 
   // Método para cargar el circuito desde el ManagerService
   public loadCircuitFromManager(): void {
-    this.selectedCircuit = this.manager.selectedCircuit || new Circuit();
+    this.selectedCircuit = this.manager.selectedCircuit || new QProgram();
     if (!this.selectedCircuit) {
-      this.selectedCircuit = new Circuit();
+      this.selectedCircuit = new QProgram();
     }
     
     // Cargar el nombre del circuito

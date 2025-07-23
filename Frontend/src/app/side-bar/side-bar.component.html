@@ -24,7 +24,7 @@
 
     <ul class="tree-list">
       <li *ngFor="let circuit of circuits" class="tree-item circuit-item">
-        <!-- Circuit node -->
+        <!-- QProgram node -->
         <div class="tree-node" (click)="toggleCircuit(circuit.id)">
           <i class="fas fa-chevron-right expand-icon" 
              [class.expanded]="isCircuitExpanded(circuit.id)"></i>
@@ -36,7 +36,7 @@
           <span *ngIf="!menuAbierto" class="tooltip">{{ circuit.id }}</span>
         </div>
 
-        <!-- MutantProjects level -->
+        <!-- MutantCycles level -->
         <ul *ngIf="isCircuitExpanded(circuit.id)" class="tree-sublist">
           <li *ngFor="let project of circuit.mutantsProjects" class="tree-item project-item">
             <!-- Project node -->
@@ -44,7 +44,8 @@
               <i class="fas fa-chevron-right expand-icon" 
                  [class.expanded]="isProjectExpanded(getProjectKey(circuit.id, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
-              <span *ngIf="menuAbierto" class="node-label">
+              <span *ngIf="menuAbierto" class="node-label"
+                    (click)="selectMutantCycle(project); $event.stopPropagation()">
                 Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
               </span>
               <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>

@@ -1,19 +1,26 @@
 import { Mutant } from "./Mutant"
-import { MutantProject } from "./MutantProject"
+import { MutantCycle } from "./MutantCycle"
+import { QCode } from "./QCode"
 
-export class Circuit {
-    id : string = ""
-    quirkCode : any
-    textQuirkCode : string = ""
-    qiskitCode : string[] = []
+export class QProgram {
+    id : number = 0
+    name? : string
+    qCode?: QCode
     qubits : number = -1
     outputQubits? : string
     inputQubits? : string
+
+    
+    quirkCode : any
+    textQuirkCode : string = ""
+    qiskitCode : string[] = []
+    
+   
     mutableColumns : string = "-1,"
     mutableRows : string = ""
-    mutantsProjects: MutantProject[] = []
-    
-    constructor(id? : string, quirkCode? : any) {
+    mutantsProjects: MutantCycle[] = []
+
+    constructor(id? : number, quirkCode? : any) {
         if (id)
             this.id = id
         if (quirkCode) {
@@ -34,6 +41,7 @@ export class Circuit {
                     this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
             }
         }
+        this.qCode = new QCode();
     }
 
     getNumberOfInputQubits() : number {
@@ -135,8 +143,8 @@ export class Circuit {
         return qubits
     }
 
-    addMutantProject(mutantProject : MutantProject) {
-        this.mutantsProjects.push(mutantProject)
+    addMutantCycle(MutantCycle : MutantCycle) {
+        this.mutantsProjects.push(MutantCycle)
     }
 
     setMutableColumns() {

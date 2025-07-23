@@ -7,9 +7,9 @@
   <text x="300" y="40" font-family="Arial" font-size="22" font-weight="bold" text-anchor="middle" fill="white">Quantum Mutant Testing</text>
   <text x="300" y="65" font-family="Arial" font-size="14" text-anchor="middle" fill="#aaccff">Validating test case reliability through circuit mutations</text>
 
-  <!-- Original Quantum Circuit -->
+  <!-- Original Quantum QProgram -->
   <g transform="translate(100, 120)">
-    <!-- Circuit wire -->
+    <!-- QProgram wire -->
     <line x1="0" y1="0" x2="400" y2="0" stroke="#3f88f5" stroke-width="3" />
     
     <!-- Gates in original circuit -->
@@ -31,9 +31,9 @@
   </g>
 
 
-  <!-- Mutated Quantum Circuit -->
+  <!-- Mutated Quantum QProgram -->
   <g transform="translate(100, 240)">
-    <!-- Circuit wire -->
+    <!-- QProgram wire -->
     <line x1="0" y1="0" x2="400" y2="0" stroke="#f558a4" stroke-width="3" />
     
     <!-- Gates in mutated circuit with one gate changed (mutation) -->
