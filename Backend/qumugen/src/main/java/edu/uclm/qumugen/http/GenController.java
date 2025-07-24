@@ -60,7 +60,7 @@ public class GenController {
 	
 	@PutMapping("/getQiskitCode")
 	public Map<String, Object> getQiskitCode(@RequestParam(required = false) boolean useTemplate, @RequestParam(required = false) int shots, @RequestParam String qiskitTemplate, @RequestBody Map<String, Object> info) {
-		Map<String, Object> quirk = this.get("quirkCode", info);
+		Map<String, Object> quirk = this.get("quirkCode",this.get("qCircuit", info));
 		List<Integer> outputQubits = null; 
 		outputQubits = getOutputQubits(info, outputQubits);
 		int totalQubits = (int) info.get("qubits");

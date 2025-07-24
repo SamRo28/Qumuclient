@@ -22,4 +22,7 @@
     -->
   </div>
 
+  <!-- Save button - always visible in bottom right corner -->
+  <app-save-button *ngIf="manager.showSaveButton" (saveClick)="onSave()"></app-save-button>
+
 </div>

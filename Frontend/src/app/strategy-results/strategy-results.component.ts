@@ -37,7 +37,7 @@ export class StrategyResultsComponent extends MutantsExecutor {
     outputConsole!.innerHTML = "<i>Results will appear here</i>"
     outputConsole!.scrollIntoView({behavior: 'smooth'});
 
-    this.qe.runOne(circuit, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedCircuit!.qubits, this.reduceTable).subscribe(
+    this.qe.runOne(circuit, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject?.qProgram.qubits!, this.reduceTable).subscribe(
       result => {
         this.hideModal();  // Ocultar el modal cuando termina
         if (this.stopped) {
@@ -75,7 +75,7 @@ export class StrategyResultsComponent extends MutantsExecutor {
     }
 
     this.showModal("Executing original");  // Mostrar el modal
-    this.qe.runOne(this.manager.selectedCircuit!, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedCircuit!.qubits, this.reduceTable, this.inputs).subscribe(
+    this.qe.runOne(this.manager.selectedProject?.qProgram!, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject?.qProgram.qubits!, this.reduceTable, this.inputs).subscribe(
       originalResults => {
         this.createTable()
         this.originalResults = originalResults
@@ -91,7 +91,7 @@ export class StrategyResultsComponent extends MutantsExecutor {
         this.qe.getCores().subscribe(
           result => {
             let chunkSize = 2*result
-            if (Math.pow(2, this.manager.selectedCircuit!.qubits)>chunkSize)
+            if (Math.pow(2, this.manager.selectedProject?.qProgram.qubits!)>chunkSize)
               chunkSize=1
             this._runMutants(0, chunkSize)
           },
@@ -180,13 +180,13 @@ export class StrategyResultsComponent extends MutantsExecutor {
         let td
         if (j==0) {
           td = document.createElement("td")
-          td.innerHTML = result.mutantIndex + ("<br><sub>" + this.binary(result.mutantIndex, this.manager.selectedCircuit!.getNumberOfInputQubits()) + "</sub>")
+          td.innerHTML = result.mutantIndex + ("<br><sub>" + this.binary(result.mutantIndex, this.manager.selectedProject?.qProgram.getNumberOfInputQubits()!) + "</sub>")
           td.rowSpan = result.executionResults.length
           tr.appendChild(td)
           td.setAttribute("style", "border-bottom : solid 2px; border-right : solid 2px")
         }
         td = document.createElement("td")
-        td.innerHTML = result.executionResults[j].order + "<sub>" + this.binary(result.executionResults[j].order, this.manager.selectedCircuit!.getNumberOfInputQubits()-1) + "</sub>"
+        td.innerHTML = result.executionResults[j].order + "<sub>" + this.binary(result.executionResults[j].order, this.manager.selectedProject?.qProgram.getNumberOfInputQubits()!-1) + "</sub>"
         td.align = "right"
         if (j==result.executionResults.length-1)
           td.setAttribute("style", "border-bottom : solid 2px")
@@ -212,7 +212,7 @@ export class StrategyResultsComponent extends MutantsExecutor {
       tr.setAttribute("id", "m" + i)
       table?.appendChild(tr)
       let tdInput = document.createElement("td")
-      tdInput.innerHTML = result.mutantIndex + ("<br><sub>" + this.binary(result.mutantIndex, this.manager.selectedCircuit!.getNumberOfInputQubits()) + "</sub>")
+      tdInput.innerHTML = result.mutantIndex + ("<br><sub>" + this.binary(result.mutantIndex, this.manager.selectedProject?.qProgram.getNumberOfInputQubits()!) + "</sub>")
       tr.appendChild(tdInput)
 
       let tdValue = document.createElement("td")
@@ -225,7 +225,7 @@ export class StrategyResultsComponent extends MutantsExecutor {
         if (result.executionResults[j].frequency==0)
           continue
         let divValue = document.createElement("div")
-        divValue.innerHTML = result.executionResults[j].order + "<sub>" + this.binary(result.executionResults[j].order, this.manager.selectedCircuit!.getNumberOfInputQubits()-1) + "</sub>"
+        divValue.innerHTML = result.executionResults[j].order + "<sub>" + this.binary(result.executionResults[j].order, this.manager.selectedProject?.qProgram.getNumberOfInputQubits()!-1) + "</sub>"
         
         let divFrequency  = document.createElement("div")
         divFrequency.innerHTML = result.executionResults[j].frequency

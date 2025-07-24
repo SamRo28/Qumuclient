@@ -41,7 +41,7 @@ export class QiskitExecutorService {
       algorithm : algorithm,
       toleratedError : toleratedError,
       originalResults : originalResults,
-      qubits : this.manager.selectedCircuit?.qubits,
+      qubits : this.manager.selectedProject!.qProgram.qubits,
       mutants : capped
     }
     let url = this.dict.getQiskitURL() + "simple/executeWithoutStrategy"
@@ -62,7 +62,7 @@ export class QiskitExecutorService {
       algorithm : algorithm,
       toleratedError : toleratedError,
       originalResults : originalResults,
-      qubits : this.manager.selectedCircuit?.qubits,
+      qubits : this.manager.selectedProject!.qProgram.qubits,
       mutants : capped,
       reduceTable : reduceTable,
       inputs : inputs

@@ -1,5 +1,5 @@
 export class QCircuit {
-    id: string = "";
+    id: number = -1;
     quirkCode: any;
     textQuirkCode: string = "";
     
@@ -8,14 +8,14 @@ export class QCircuit {
     mutableRows: string = "";
     
 
-    constructor(id?: string, quirkCode?: any) {
+    constructor(id?: number, quirkCode?: any) {
         if (id) {
             this.id = id;
         }
         if (quirkCode) {
             this.quirkCode = quirkCode;
             this.textQuirkCode = JSON.stringify(quirkCode);
-            // Initialize mutableColumns and mutableRows based on quirkCode
+        
             if (quirkCode.cols && Array.isArray(quirkCode.cols)) {
                 for (let i = 0; i < quirkCode.cols.length; i++) {
                     this.mutableColumns += i + ",";
@@ -33,4 +33,8 @@ export class QCircuit {
             }
         }
     }
+
+    
+
+
 }

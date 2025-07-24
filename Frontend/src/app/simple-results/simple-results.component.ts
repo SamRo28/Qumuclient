@@ -28,7 +28,7 @@ export class SimpleResultsComponent extends MutantsExecutor {
     outputConsole!.innerHTML = "<i>Results will appear here</i>"
     outputConsole!.scrollIntoView({behavior: 'smooth'});
 
-    this.qe.runOne(circuit, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedCircuit!.qubits, false).subscribe(
+    this.qe.runOne(circuit, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       result => {
         this.hideModal()
         outputConsole!.innerHTML=""
@@ -55,9 +55,9 @@ export class SimpleResultsComponent extends MutantsExecutor {
     if (this.stopped)
       return
 
-    this.showModal("Excuting original")
+    this.showModal("Executing original")
 
-    this.qe.runOne(this.manager.selectedCircuit!, this.manager.inputQubits,  this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedCircuit!.qubits, false).subscribe(
+    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits,  this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)

@@ -1,46 +1,23 @@
 import { Mutant } from "./Mutant"
 import { MutantCycle } from "./MutantCycle"
+import { QCircuit } from "./QCircuit"
 import { QCode } from "./QCode"
 
 export class QProgram {
     id : number = 0
     name? : string
-    qCode?: QCode
+    qCode: QCode
     qubits : number = -1
     outputQubits? : string
     inputQubits? : string
+    qCircuit: QCircuit
+    
 
-    
-    quirkCode : any
-    textQuirkCode : string = ""
-    qiskitCode : string[] = []
-    
-   
-    mutableColumns : string = "-1,"
-    mutableRows : string = ""
-    mutantsProjects: MutantCycle[] = []
 
     constructor(id? : number, quirkCode? : any) {
         if (id)
             this.id = id
-        if (quirkCode) {
-            this.quirkCode = quirkCode
-            this.textQuirkCode = JSON.stringify(quirkCode)
-            this.qubits = this.getQubits()
-            
-            // Solo procesar columnas y filas si quirkCode tiene la estructura correcta
-            if (quirkCode.cols && Array.isArray(quirkCode.cols)) {
-                for (let i=0; i<quirkCode.cols.length; i++)
-                    this.mutableColumns = this.mutableColumns + i + "," 
-                if (this.mutableColumns.endsWith(","))
-                    this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length-1)
-
-                for (let i=0; i<this.qubits; i++)
-                    this.mutableRows = this.mutableRows + i + "," 
-                if (this.mutableRows.endsWith(","))
-                    this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
-            }
-        }
+        this.qCircuit = new QCircuit(-1,quirkCode);
         this.qCode = new QCode();
     }
 
@@ -50,17 +27,17 @@ export class QProgram {
 
 
     getColumns() {
-        if (this.quirkCode && this.quirkCode.cols)
-            return this.quirkCode.cols.length
+        if (this.qCircuit.quirkCode && this.qCircuit.quirkCode.cols)
+            return this.qCircuit.quirkCode.cols.length
         return 0 // Retornar 0 en lugar de -1 para circuitos sin código
     }
 
     getQubits() {
         if (this.qubits==-1) {
             // Verificar si quirkCode existe y tiene la estructura correcta
-            if (!this.quirkCode || !this.quirkCode.cols || this.quirkCode.cols.length == 0)
+            if (!this.qCircuit.quirkCode || !this.qCircuit.quirkCode.cols || this.qCircuit.quirkCode.cols.length == 0)
                 return 0; // Retornar 0 en lugar de -1 para circuitos sin código
-            let columns = this.quirkCode.cols
+            let columns = this.qCircuit.quirkCode.cols
             for (let i=0; i<columns.length; i++)
                 if (columns[i].length>this.qubits)
                     this.qubits = columns[i].length
@@ -107,8 +84,8 @@ export class QProgram {
         let result = {
             cols : cols
         }
-        this.quirkCode = result
-        this.textQuirkCode = JSON.stringify(this.quirkCode)
+        this.qCircuit.quirkCode = result
+        this.qCircuit.textQuirkCode = JSON.stringify(this.qCircuit.quirkCode)
 
         tokenStart = "qc.measure("
         tokenEnd = "job = "
@@ -143,27 +120,25 @@ export class QProgram {
         return qubits
     }
 
-    addMutantCycle(MutantCycle : MutantCycle) {
-        this.mutantsProjects.push(MutantCycle)
-    }
+
 
     setMutableColumns() {
-        if (this.quirkCode && this.quirkCode.cols && Array.isArray(this.quirkCode.cols)) {
-            this.mutableColumns = "-1,"; // Reiniciar
-            for (let i=0; i<this.quirkCode.cols.length; i++)
-                this.mutableColumns = this.mutableColumns + i + "," 
-            if (this.mutableColumns.endsWith(","))
-                this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length-1)
+        if (this.qCircuit.quirkCode && this.qCircuit.quirkCode.cols && Array.isArray(this.qCircuit.quirkCode.cols)) {
+            this.qCircuit.mutableColumns = "-1,"; // Reiniciar
+            for (let i=0; i<this.qCircuit.quirkCode.cols.length; i++)
+                this.qCircuit.mutableColumns = this.qCircuit.mutableColumns + i + "," 
+            if (this.qCircuit.mutableColumns.endsWith(","))
+                this.qCircuit.mutableColumns = this.qCircuit.mutableColumns.substring(0, this.qCircuit.mutableColumns.length-1)
         }
     }
 
     setMutableRows() {
         if (this.qubits > 0) {
-            this.mutableRows = ""; // Reiniciar
+            this.qCircuit.mutableRows = ""; // Reiniciar
             for (let i=0; i<this.qubits; i++)
-                this.mutableRows = this.mutableRows + i + "," 
-            if (this.mutableRows.endsWith(","))
-                this.mutableRows = this.mutableRows.substring(0, this.mutableRows.length-1)
+                this.qCircuit.mutableRows = this.qCircuit.mutableRows + i + "," 
+            if (this.qCircuit.mutableRows.endsWith(","))
+                this.qCircuit.mutableRows = this.qCircuit.mutableRows.substring(0, this.qCircuit.mutableRows.length-1)
         }
     }
 }

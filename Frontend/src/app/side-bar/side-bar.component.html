@@ -25,24 +25,24 @@
     <ul class="tree-list">
       <li *ngFor="let circuit of circuits" class="tree-item circuit-item">
         <!-- QProgram node -->
-        <div class="tree-node" (click)="toggleCircuit(circuit.id)">
+        <div class="tree-node" (click)="toggleCircuit(circuit.name)">
           <i class="fas fa-chevron-right expand-icon" 
-             [class.expanded]="isCircuitExpanded(circuit.id)"></i>
+             [class.expanded]="isCircuitExpanded(circuit.name)"></i>
           <i class="fas fa-microchip circuit-icon"></i>
           <span *ngIf="menuAbierto" class="node-label" 
                 (click)="selectCircuit(circuit); $event.stopPropagation()">
-            {{ circuit.id }}
+            {{ circuit.name }}
           </span>
           <span *ngIf="!menuAbierto" class="tooltip">{{ circuit.id }}</span>
         </div>
 
         <!-- MutantCycles level -->
-        <ul *ngIf="isCircuitExpanded(circuit.id)" class="tree-sublist">
-          <li *ngFor="let project of circuit.mutantsProjects" class="tree-item project-item">
+        <ul *ngIf="isCircuitExpanded(circuit.name)" class="tree-sublist">
+          <li *ngFor="let project of circuit.mutantCycles" class="tree-item project-item">
             <!-- Project node -->
-            <div class="tree-node" (click)="toggleProject(getProjectKey(circuit.id, project.id))">
+            <div class="tree-node" (click)="toggleProject(getProjectKey(circuit.name, project.id))">
               <i class="fas fa-chevron-right expand-icon" 
-                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.id, project.id))"></i>
+                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
               <span *ngIf="menuAbierto" class="node-label"
                     (click)="selectMutantCycle(project); $event.stopPropagation()">
@@ -52,7 +52,7 @@
             </div>
 
             <!-- Mutants level -->
-            <ul *ngIf="isProjectExpanded(getProjectKey(circuit.id, project.id))" class="tree-sublist">
+            <ul *ngIf="isProjectExpanded(getProjectKey(circuit.name, project.id))" class="tree-sublist">
               <li *ngFor="let mutant of project.mutants" class="tree-item mutant-item">
                 <div class="tree-node" (click)="selectMutant(mutant)">
                   <i class="fas fa-bug mutant-icon"></i>

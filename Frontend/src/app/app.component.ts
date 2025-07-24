@@ -23,7 +23,13 @@ export class AppComponent {
   goToHome() {
     this.manager.showHome = true;
     this.manager.showCircuit = false;
+  }
 
-}
+  onSave() {
+    // TODO: Implement save functionality
+    console.log('Save button clicked');
+    // Here you can implement the actual save logic
+    // For example: this.manager.saveCurrentState();
+  }
 
 }

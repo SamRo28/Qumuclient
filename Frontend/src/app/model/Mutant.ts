@@ -9,17 +9,14 @@ export class Mutant {
     circuit? : QProgram
     result? : MutantResult
 
-    constructor(mutant? : any) {
-        
-        this.mutantIndex = mutant.mutantIndex
-        this.mutatedColumn = mutant.mutatedColumn
-        this.mutatedRow = mutant.mutatedRow
-        this.mutationOperator = mutant.mutationOperator
-        this.circuit = new QProgram(undefined, mutant.quirk)
-        
-        if (mutant.result) {
-            this.result = new MutantResult(mutant.result)
-        }
+    constructor(mutantIndex? : number, mutatedColumn? : number, mutatedRow? : number, mutationOperator? : string, circuit? : QProgram) {
+
+        this.mutantIndex = mutantIndex;
+        this.mutatedColumn = mutatedColumn;
+        this.mutatedRow = mutatedRow;
+        this.mutationOperator = mutationOperator;
+        this.circuit = circuit;
+
     }
 
 

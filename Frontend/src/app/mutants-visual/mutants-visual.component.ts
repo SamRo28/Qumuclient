@@ -34,8 +34,8 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
   }
 
   private updateOriginalCircuitUrl(): void {
-    if (this.manager.selectedCircuit?.textQuirkCode) {
-      const url = AppComponent.quirkUrl + "#circuit=" + this.manager.selectedCircuit.textQuirkCode;
+    if (this.manager.selectedProject?.qProgram.qCircuit.textQuirkCode) {
+      const url = AppComponent.quirkUrl + "#circuit=" + this.manager.selectedProject.qProgram.qCircuit.textQuirkCode;
       this.originalCircuitUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
     }
   }
@@ -45,8 +45,8 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
     this.updateOriginalCircuitUrl();
     
     // Update mutant circuit URL
-    if (this.selectedMutant?.circuit?.textQuirkCode) {
-      const url = AppComponent.quirkUrl + "#circuit=" + this.selectedMutant.circuit.textQuirkCode;
+    if (this.selectedMutant?.circuit?.qCircuit.textQuirkCode) {
+      const url = AppComponent.quirkUrl + "#circuit=" + this.selectedMutant.circuit.qCircuit.textQuirkCode;
       this.mutantCircuitUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
     } else {
       this.mutantCircuitUrl = null;

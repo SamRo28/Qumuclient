@@ -8,6 +8,7 @@ import { ManagerService } from '../manager.service';
 import { QumugenService } from '../qumugen.service';
 import { QasmService } from '../qasm.service';
 import { Output, EventEmitter } from '@angular/core';
+import { Project } from '../model/Project';
 
 @Component({
   selector: 'app-circuit',
@@ -25,10 +26,10 @@ export class CircuitComponent implements OnInit, OnDestroy {
   
   originalCircuitName? : string
   hideQuirk : boolean = true
-  selectedCircuit: QProgram | null = new QProgram();
+  selectedProject: Project | null = new Project();
   private subscription = new Subscription();
 
-  circuits : QProgram[] = []
+  circuits : Project[] = []
   selectedTab: string = 'circuit';
 
   constructor(public sanitizer: DomSanitizer, private reper : ReperService, private manager : ManagerService, private qumugen : QumugenService, private qasm : QasmService) { 
@@ -36,8 +37,8 @@ export class CircuitComponent implements OnInit, OnDestroy {
   }
   ngOnInit(): void {
     this.subscription.add(
-        this.manager.selectedCircuit$.subscribe(circuit => {
-          this.selectedCircuit = circuit;
+        this.manager.selectedProject$.subscribe(circuit => {
+          this.selectedProject = circuit;
           this.loadCircuitFromManager();
           this.selectTab('circuit');
         })
@@ -53,22 +54,22 @@ export class CircuitComponent implements OnInit, OnDestroy {
 
   // Método para cargar el circuito desde el ManagerService
   public loadCircuitFromManager(): void {
-    this.selectedCircuit = this.manager.selectedCircuit || new QProgram();
-    if (!this.selectedCircuit) {
-      this.selectedCircuit = new QProgram();
+    this.selectedProject = this.manager.selectedProject || new Project();
+    if (!this.selectedProject) {
+      this.selectedProject = new Project();
     }
     
     // Cargar el nombre del circuito
-    if (this.selectedCircuit.id) {
-      this.originalCircuitName = this.selectedCircuit.id;
-      this._circuitName = this.selectedCircuit.id;
+    if (this.selectedProject.id) {
+      this.originalCircuitName = this.selectedProject.name;
+      this._circuitName = this.selectedProject.name || '';
     } else {
       this._circuitName = '';
     }
     
     // Cargar el código Quirk
-    if (this.selectedCircuit.textQuirkCode) {
-      this._quirkCode = this.selectedCircuit.textQuirkCode;
+    if (this.selectedProject.qProgram.qCircuit.textQuirkCode) {
+      this._quirkCode = this.selectedProject.qProgram.qCircuit.textQuirkCode;
     } else {
       this._quirkCode = '';
     }
@@ -89,9 +90,9 @@ checkValidity() {
   }
   set circuitName(value: string) {
     this._circuitName = value;
-    if (this.selectedCircuit) {
-      this.selectedCircuit.id = value;
-      this.manager.setSelectedCircuit(this.selectedCircuit);
+    if (this.selectedProject) {
+      this.selectedProject.name = value;
+      this.manager.setselectedProject(this.selectedProject);
     }
     this.checkValidity();
   }
@@ -101,42 +102,42 @@ checkValidity() {
   }
   set quirkCode(value: string) {
     this._quirkCode = value;
-    if (this.selectedCircuit) {
-      this.selectedCircuit.textQuirkCode = value;
-      this.selectedCircuit.qubits = -1;
+    if (this.selectedProject) {
+      this.selectedProject.qProgram.qCircuit.textQuirkCode = value;
+      this.selectedProject.qProgram.qubits = -1;
       
       // Solo parsear el JSON si el valor no está vacío
       if (value && value.trim() !== '') {
         try {
-          this.selectedCircuit.quirkCode = JSON.parse(value);
+          this.selectedProject.qProgram.qCircuit.quirkCode = JSON.parse(value);
         } catch (error) {
           console.error('Error parsing quirk code:', error);
-          this.selectedCircuit.quirkCode = null;
+          this.selectedProject.qProgram.qCircuit.quirkCode = null;
         }
       } else {
-        this.selectedCircuit.quirkCode = null;
+        this.selectedProject.qProgram.qCircuit.quirkCode = null;
       }
       
-      this.manager.setSelectedCircuit(this.selectedCircuit);
+      this.manager.setselectedProject(this.selectedProject);
     }
     this.checkValidity();
   }
 
   save() {
-    if (!this.selectedCircuit) {
+    if (!this.selectedProject) {
       AppComponent.error = "No circuit selected";
       return;
     }
-    if (this.selectedCircuit.id.trim().length==0) {
+    if (this.selectedProject.name!.trim().length==0) {
       AppComponent.error = "Please, give a name to the circuit"
       return
     }
-    if (!this.selectedCircuit.textQuirkCode || this.selectedCircuit.textQuirkCode.trim().length==0) {
+    if (!this.selectedProject.qProgram.qCircuit.textQuirkCode || this.selectedProject.qProgram.qCircuit.textQuirkCode.trim().length==0) {
       AppComponent.error = "Please, write the Quirk code of the circuit"
       return
     }
-    this.selectedCircuit.quirkCode=JSON.parse(this.selectedCircuit.textQuirkCode)
-    this.reper.save(this.selectedCircuit).subscribe(
+    this.selectedProject.qProgram.qCircuit.quirkCode=JSON.parse(this.selectedProject.qProgram.qCircuit.textQuirkCode)
+    this.reper.save(this.selectedProject).subscribe(
       result => {
         AppComponent.error = ""
       },
@@ -147,8 +148,8 @@ checkValidity() {
   }
 
   visualizeCircuit() {
-    if (this.selectedCircuit && this.selectedCircuit.textQuirkCode && this.selectedCircuit.textQuirkCode.trim() !== '') {
-      this.url = AppComponent.quirkUrl + "#circuit=" + this.selectedCircuit.textQuirkCode;
+    if (this.selectedProject && this.selectedProject.qProgram.qCircuit.textQuirkCode && this.selectedProject.qProgram.qCircuit.textQuirkCode.trim() !== '') {
+      this.url = AppComponent.quirkUrl + "#circuit=" + this.selectedProject.qProgram.qCircuit.textQuirkCode;
       window.open(this.url, '_blank');
     } else {
       console.warn('Cannot visualize circuit: no quirk code available');
@@ -156,12 +157,12 @@ checkValidity() {
   }
 
   selectCircuit() {
-    this.selectedCircuit = this.circuits.filter(c => c.id==this.originalCircuitName).at(0)!
-    this.manager.setSelectedCircuit(this.selectedCircuit)
-    this.qumugen.getQiskitCode(this.selectedCircuit).then(
+    this.selectedProject = this.circuits.filter(c => c.id==this.originalCircuitName).at(0)!
+    this.manager.setselectedProject(this.selectedProject)
+    this.qumugen.getQiskitCode(this.selectedProject.qProgram).then(
       result=> {
-        if (this.selectedCircuit) {
-          this.selectedCircuit.qiskitCode = result.wholeCode.split("\n")
+        if (this.selectedProject) {
+          this.selectedProject.qProgram.qCode!.code = result.wholeCode.split("\n")
         }
       }
     )
@@ -169,15 +170,15 @@ checkValidity() {
 
 
   onSubmit() {
-    if(this.selectedCircuit?.id){
-      this.circuitName = this.selectedCircuit.id;
+    if(this.selectedProject?.id){
+      this.circuitName = this.selectedProject.name || '';
     }
     else {
       this.circuitName = "Circuit1";
     }
-    
-    if(this.selectedCircuit?.quirkCode) {
-      this.quirkCode = this.selectedCircuit.quirkCode;
+
+    if(this.selectedProject?.qProgram.qCircuit.quirkCode) {
+      this.quirkCode = this.selectedProject.qProgram.qCircuit.quirkCode;
     }
   }
 

@@ -3,6 +3,7 @@ import { ManagerService } from '../manager.service';
 import { Subscription } from 'rxjs';
 import { CircuitComponent } from '../circuit/circuit.component';
 import { QProgram } from '../model/QProgram';
+import { Project } from '../model/Project';
 
 @Component({
   selector: 'app-circuits-configuration',
@@ -13,7 +14,7 @@ export class CircuitsConfigurationComponent implements OnInit, OnDestroy {
 
     isCircuitValid = false;
     selectedTab: 'circuit' | 'mutants' = 'circuit';
-    selectedCircuit: QProgram | null = null; // Inicializar con un circuito vacío
+    selectedCircuit: Project | null = null; // Inicializar con un circuito vacío
     private subscription = new Subscription();
     
     @ViewChild(CircuitComponent) circuitComponent!: CircuitComponent;
@@ -22,11 +23,11 @@ export class CircuitsConfigurationComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscription.add(
-        this.manager.selectedCircuit$.subscribe(circuit => {
-          this.selectedCircuit = circuit;
+        this.manager.selectedProject$.subscribe(project => {
+          this.selectedCircuit = project;
           // Cambiar a la pestaña circuit siempre que haya un cambio de circuito
           // (nuevo circuito o circuito seleccionado)
-          if (circuit) {
+          if (project) {
             this.selectTab('circuit');
             // Asegurar que el componente circuit carga la información del circuito
             setTimeout(() => {
@@ -41,13 +42,14 @@ export class CircuitsConfigurationComponent implements OnInit, OnDestroy {
 
   // Getter para validar el circuito usando ManagerService
   get isCircuitValidFromManager(): boolean {
-    return this.manager.selectedCircuit?.id?.trim() !== '' && 
-           this.manager.selectedCircuit?.textQuirkCode?.trim() !== '';
+    return this.manager.selectedProject?.name?.trim() !== '' && 
+           this.manager.selectedProject?.qProgram.qCircuit.textQuirkCode?.trim() !== '';
   }
 
   selectTab(tab: 'circuit' | 'mutants') {
     // Usar la validación del ManagerService
     if (tab === 'mutants' && !this.isCircuitValid) return;
+    this.manager.showSaveButton = this.isCircuitValid;
     this.selectedTab = tab;
     
     // Si volvemos a la pestaña circuit, recargar los valores

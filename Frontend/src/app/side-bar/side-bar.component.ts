@@ -9,6 +9,7 @@ import { Mutant } from '../model/Mutant';
 import { QumugenService } from '../qumugen.service';
 import { AppComponent } from '../app.component';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Project } from '../model/Project';
 
 @Component({
   selector: 'app-side-bar',
@@ -21,10 +22,10 @@ export class SideBarComponent implements OnInit, OnDestroy {
   
   menuAbierto = false;
   mostrarInicio = true;
-  circuits: QProgram[] = [];
+  circuits: Project[] = [];
   expandedCircuits: Set<string> = new Set();
   expandedProjects: Set<string> = new Set();
-  loading = false;;
+  loading = false;
   
   private subscriptions: Subscription = new Subscription();
 
@@ -50,12 +51,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
     // Sincronizar el estado inicial del sidebar con el manager
     this.manager.sidebarExpanded = this.menuAbierto;
     
-    if(!this.circuits.includes(this.manager.selectedCircuit!)) {
-      this.circuits.push(this.manager.selectedCircuit!);
+    if(!this.circuits.includes(this.manager.selectedProject!)) {
+      this.circuits.push(this.manager.selectedProject!);
     }
   }
 
-itToList(circuit: QProgram): void {
+itToList(circuit: Project): void {
     // Verificar si el circuito ya existe en la lista
     const existingIndex = this.circuits.findIndex(c => c.id === circuit.id);
     
@@ -71,7 +72,7 @@ itToList(circuit: QProgram): void {
     this.expandedCircuits.add(circuit.name!);
   }
 
-  // Método opcional para cargar circuitos desde el servicio si es necesario
+  /*// Método opcional para cargar circuitos desde el servicio si es necesario
   loadCircuitsFromService(): void {
     this.loading = true;
     this.reperService.getCircuits().subscribe({
@@ -99,7 +100,7 @@ itToList(circuit: QProgram): void {
       }
     });
   }
-
+*/
   toggleCircuit(circuitId: string): void {
     if (this.expandedCircuits.has(circuitId)) {
       this.expandedCircuits.delete(circuitId);
@@ -124,11 +125,12 @@ itToList(circuit: QProgram): void {
     return this.expandedProjects.has(projectKey);
   }
 
-  selectCircuit(circuit: QProgram): void {
-    this.manager.setSelectedCircuit(circuit);
+  selectCircuit(circuit: Project): void {
+    this.manager.setselectedProject(circuit);
     this.manager.showCircuit = true;
     this.manager.showHome = false;
     this.manager.showMutantsInfo = false;
+    this.manager.showMutantCycleInfo = false;
   }
 
   selectMutant(mutant: Mutant): void {
@@ -138,21 +140,22 @@ itToList(circuit: QProgram): void {
     this.manager.showMutantsInfo = true;
     this.manager.showMutantCycleInfo = false;
     
-    if (this.manager.selectedCircuit) {
-      this.qumugen.getQiskitCode(this.manager.selectedCircuit).then(
+    //Modificar para que no se haga aqui
+    if (this.manager.selectedProject) {
+      this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
         code => {
-          this.manager.selectedCircuit!.qiskitCode = code.wholeCode.split("\n")
+          this.manager.selectedProject!.qProgram.qCode!.code = code.wholeCode.split("\n")
         }
       ).catch(error => {
         console.error('Error getting qiskit code for selected circuit:', error);
       })
     }
 
-    if (mutant.circuit && mutant.circuit.textQuirkCode) {
+    if (mutant.circuit && mutant.circuit.qCircuit.textQuirkCode) {
       this.qumugen.getQiskitCode(mutant.circuit).then(
         code => {
-          this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.textQuirkCode)
-          mutant.circuit!.qiskitCode = code.wholeCode.split("\n")
+          this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.qCircuit.textQuirkCode)
+          mutant.circuit!.qCode!.code = code.wholeCode.split("\n")
         }
       ).catch(error => {
         console.error('Error getting qiskit code for mutant circuit:', error);
@@ -202,11 +205,13 @@ itToList(circuit: QProgram): void {
 
   createNewCircuit() {
     let name = 'Project' + (this.circuits.length + 1);
-    let newCircuit = new QProgram();
+    let newCircuit = new Project();
     newCircuit.name = name;
-    this.manager.setNewSelectedCircuit(newCircuit);
+    this.manager.setNewselectedProject(newCircuit);
     this.manager.showCircuit = true;
     this.manager.showMutantsInfo = false;
+    this.manager.showSaveButton = false;
+    this.manager.showMutantCycleInfo = false;
     this.circuits.push(newCircuit);
     this.expandedCircuits.add(newCircuit.name!);
   }

@@ -25,9 +25,9 @@ export class OperatorsComponent {
   }
 
   constructor(private service : QumugenService, public manager : ManagerService, private loading : LoadingService) { 
-    
-    this.qubitCount = this.manager.selectedCircuit ? this.manager.selectedCircuit.getQubits() : -1;
-    
+
+    this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
+
     this.service.getOperatorsByFamily().subscribe(
       families => {
         for (let familyData of families) {
@@ -48,13 +48,13 @@ export class OperatorsComponent {
 
   generateMutants() {
     AppComponent.error = ""
-    let selectedCircuit = this.manager.selectedCircuit
+    let selectedCircuit = this.manager.selectedProject;
     if (!selectedCircuit) {
       AppComponent.error = "Please, select the circuit you want to mutate"
       return
     }
-    selectedCircuit.setMutableColumns();
-    selectedCircuit.setMutableRows();
+    selectedCircuit.qProgram.setMutableColumns();
+    selectedCircuit.qProgram.setMutableRows();
 
     let selectedOperators = []
     for (let i=0; i<this.families.length; i++) {
@@ -65,7 +65,7 @@ export class OperatorsComponent {
     }
     if (selectedOperators.length>0) {
       this.loading.show()
-      this.service.generateMutants(selectedCircuit, selectedOperators).subscribe(
+      this.service.generateMutants(selectedCircuit.qProgram, selectedOperators).subscribe(
         mutants => { 
           this.manager.setMutants(mutants)
           this.loading.hide()
@@ -84,9 +84,9 @@ export class OperatorsComponent {
   }
 
   reloadOriginalCode() {
-    this.service.getQiskitCode(this.manager.selectedCircuit!).then(
+    this.service.getQiskitCode(this.manager.selectedProject!.qProgram).then(
       result=> {
-        this.manager.selectedCircuit!.qiskitCode = result.wholeCode.split("\n")
+        this.manager.selectedProject!.qProgram.qCode.code = result.wholeCode.split("\n")
       }
     )
   }

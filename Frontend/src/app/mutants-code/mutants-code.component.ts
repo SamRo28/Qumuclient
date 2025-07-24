@@ -29,18 +29,18 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateHighlightedCode(): void {
-    if (this.selectedMutant?.circuit?.qiskitCode && this.manager.selectedCircuit?.qiskitCode) {
-      const originalCode = Array.isArray(this.manager.selectedCircuit.qiskitCode) 
-        ? this.manager.selectedCircuit.qiskitCode.join('\n')
-        : this.manager.selectedCircuit.qiskitCode;
-      const mutantCode = Array.isArray(this.selectedMutant.circuit.qiskitCode)
-        ? this.selectedMutant.circuit.qiskitCode.join('\n')
-        : this.selectedMutant.circuit.qiskitCode;
+    if (this.selectedMutant?.circuit?.qCode.code && this.manager.selectedProject?.qProgram.qCode.code) {
+      const originalCode = Array.isArray(this.manager.selectedProject?.qProgram.qCode.code) 
+        ? this.manager.selectedProject.qProgram.qCode.code.join('\n')
+        : this.manager.selectedProject.qProgram.qCode.code;
+      const mutantCode = Array.isArray(this.selectedMutant.circuit.qCode.code)
+        ? this.selectedMutant.circuit.qCode.code.join('\n')
+        : this.selectedMutant.circuit.qCode.code;
       this.highlightedMutantCode = this.sanitizer.bypassSecurityTrustHtml(
         this.highlightDifferences(originalCode, mutantCode)
       );
     } else {
-      const fallbackCode = this.selectedMutant?.circuit?.qiskitCode;
+      const fallbackCode = this.selectedMutant?.circuit?.qCode.code;
       this.highlightedMutantCode = Array.isArray(fallbackCode) 
         ? fallbackCode.join('\n') 
         : (fallbackCode || '');
@@ -75,7 +75,7 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getOriginalCode(): string {
-    const code = this.manager.selectedCircuit?.qiskitCode;
+    const code = this.manager.selectedProject?.qProgram.qCode.code;
     return Array.isArray(code) ? code.join('\n') : (code || '');
   }
 

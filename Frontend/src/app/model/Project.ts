@@ -2,9 +2,10 @@ import { QProgram } from "./QProgram";
 import { MutantCycle } from "./MutantCycle";
 
 export class Project {
+    
 
     id?: number = -1;
-    name?: string = "";
+    name: string = "";
     qProgram: QProgram = new QProgram();
     mutantCycles: MutantCycle[] = [];
 
@@ -29,6 +30,8 @@ export class Project {
         this.mutantCycles.push(mutantCycle)
     }
 
-
+    getQubits(): number {
+      return this.qProgram.getQubits();
+    }
 
 }

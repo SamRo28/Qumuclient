@@ -22,10 +22,10 @@ export class QumugenService {
 
   generateMutants(circuit : QProgram, selectedOperators : any[]) {
     let info = {
-      circuit : circuit.quirkCode,
+      circuit : circuit.qCircuit.quirkCode,
       operatorNames : selectedOperators,
-      mutableColumns : circuit.mutableColumns,
-      mutableRows : circuit.mutableRows,
+      mutableColumns : circuit.qCircuit.mutableColumns,
+      mutableRows : circuit.qCircuit.mutableRows,
       inputQubits : this.manager.inputQubits,
       generateWithAllInputs : this.manager.generateWithAllInputs
     }

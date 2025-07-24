@@ -3,12 +3,13 @@ import { Subject,  BehaviorSubject, Observable  } from 'rxjs';
 import { QProgram } from './model/QProgram';
 import { Mutant } from './model/Mutant';
 import { MutantCycle } from './model/MutantCycle';
+import { Project } from './model/Project';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ManagerService {
-  selectedCircuit? : QProgram
+  selectedProject? : Project;
   
   mutants : Mutant[] = []
   
@@ -17,12 +18,12 @@ export class ManagerService {
   public newCircuit$ = this.newCircuitSubject.asObservable();
   
   private _selectedMutant = new BehaviorSubject<Mutant | null>(null);
-  private _selectedCircuit = new BehaviorSubject<QProgram | null>(null);
+  private _selectedProject = new BehaviorSubject<Project | null>(null);
   private _selectedMutantCycle = new BehaviorSubject<MutantCycle | null>(null);
   // Observable público para suscribirse
   public selectedMutant$ = this._selectedMutant.asObservable();
   
-  public selectedCircuit$ = this._selectedCircuit.asObservable();
+  public selectedProject$ = this._selectedProject.asObservable();
   public selectedMutantCycle$ = this._selectedMutantCycle.asObservable();
 
   showHome : boolean = true
@@ -41,10 +42,11 @@ export class ManagerService {
   
   showMutantsInfo: boolean = false;
   showMutantCycleInfo: boolean = false;
+  showSaveButton: boolean = false;
 
-  setSelectedCircuit(circuit : QProgram) {
-    this.selectedCircuit = circuit
-    this.qubitCount = this.selectedCircuit.getQubits()
+  setselectedProject(circuit : Project) {
+    this.selectedProject = circuit
+    this.qubitCount = this.selectedProject.getQubits()
     
     // Solo procesar qubits si hay código Quirk válido
     if (this.qubitCount > 0) {
@@ -58,40 +60,45 @@ export class ManagerService {
       }
       if (this.inputQubits.endsWith(","))
         this.inputQubits = this.inputQubits.substring(0, this.inputQubits.length-1)
-      this.selectedCircuit.inputQubits = this.inputQubits
+      this.selectedProject.qProgram.inputQubits = this.inputQubits
 
       if (this.outputQubits.endsWith(","))
         this.outputQubits = this.outputQubits.substring(0, this.outputQubits.length-1)
-      this.selectedCircuit.outputQubits = this.outputQubits
+      this.selectedProject.qProgram.outputQubits = this.outputQubits
     } else {
       // Para circuitos sin código Quirk, inicializar valores por defecto
       this.qubits = []
       this.inputQubits = ""
       this.outputQubits = ""
-      this.selectedCircuit.inputQubits = ""
-      this.selectedCircuit.outputQubits = ""
+      this.selectedProject.qProgram.inputQubits = ""
+      this.selectedProject.qProgram.outputQubits = ""
     }
     
     // Notificar a los suscriptores del cambio de circuito
-    this._selectedCircuit.next(circuit);
+    this._selectedProject.next(circuit);
   }
 
-  setNewSelectedCircuit(circuit : QProgram) {
-    this.selectedCircuit = circuit
+  setNewselectedProject(circuit : Project) {
+    this.selectedProject = circuit
     // Notificar a los suscriptores del nuevo circuito seleccionado
-    this._selectedCircuit.next(circuit);
+    this._selectedProject.next(circuit);
   }
 
   setMutants(mutants: any) {
     this.mutants = []
-    
+    console.log("Mutants received: ", mutants);
     for (let i=0; i<mutants.length; i++) {
-      let mutant = new Mutant(mutants[i])
+      let mutantIndex = mutants[i].mutantIndex;
+      let mutatedColumn = mutants[i].mutatedColumn;
+      let mutatedRow = mutants[i].mutatedRow;
+      let mutationOperator = mutants[i].mutationOperator;
+      let circuit = new QProgram(-1, mutants[i].quirk);
+      let mutant = new Mutant(mutantIndex, mutatedColumn, mutatedRow, mutationOperator, circuit);
       this.mutants.push(mutant)
 
     }
-    let mutantPrj = new MutantCycle(this.mutants, this.selectedCircuit?.mutantsProjects.length);
-    this.selectedCircuit?.mutantsProjects.push(mutantPrj);
+    let mutantPrj = new MutantCycle(this.mutants, this.selectedProject?.mutantCycles.length);
+    this.selectedProject?.mutantCycles.push(mutantPrj);
 
   }
 
