@@ -13,12 +13,12 @@ export class ReperService {
 
   constructor(private dict : DictionaryService, private client : HttpClient) { }
 
-  getCircuits() {
-    return this.client.get<any>(this.dict.getReperURL() + "findAll" + this.right + "circuits")
+  getCircuits(email: string, token : string) {
+    return this.client.post<any>("http://localhost:8080/projects/getAllByUser", { email, token })
   }
 
   save(circuit : Project) {
-    return this.client.put<any>(this.dict.getReperURL() + "saveJSON" + this.right + "circuits", circuit)
+    return this.client.put<any>("http://localhost:8080/projects/save", circuit)
   }
 
   saveMutants(id: string, mutants: Mutant[]) {

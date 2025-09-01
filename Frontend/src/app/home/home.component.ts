@@ -19,7 +19,7 @@ export class HomeComponent implements OnInit {
   createCircuit() {
     this.manager.showHome = false
     this.manager.showCircuit = true
-    let circuit = new Project(-1,"Project1")
+    let circuit = new Project(crypto.randomUUID(),"Project1")
     this.manager.setNewselectedProject(circuit)
   }
 

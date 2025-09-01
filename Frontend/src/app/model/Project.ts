@@ -4,14 +4,14 @@ import { MutantCycle } from "./MutantCycle";
 export class Project {
     
 
-    id?: number = -1;
+    id?: string = crypto.randomUUID();
     name: string = "";
     qProgram: QProgram = new QProgram();
     mutantCycles: MutantCycle[] = [];
 
 
 
-    constructor(id?: number, name?: string, qProgram?: QProgram, mutantCycles?: MutantCycle[]) {
+    constructor(id?: string, name?: string, qProgram?: QProgram, mutantCycles?: MutantCycle[]) {
         if (id) {
             this.id = id;
         }

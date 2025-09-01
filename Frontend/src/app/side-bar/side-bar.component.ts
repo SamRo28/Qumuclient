@@ -50,7 +50,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Sincronizar el estado inicial del sidebar con el manager
     this.manager.sidebarExpanded = this.menuAbierto;
-    
+    this.loadCircuitsFromService();
     if(!this.circuits.includes(this.manager.selectedProject!)) {
       this.circuits.push(this.manager.selectedProject!);
     }
@@ -72,25 +72,13 @@ itToList(circuit: Project): void {
     this.expandedCircuits.add(circuit.name!);
   }
 
-  /*// Método opcional para cargar circuitos desde el servicio si es necesario
+  // Método opcional para cargar circuitos desde el servicio si es necesario
   loadCircuitsFromService(): void {
     this.loading = true;
-    this.reperService.getCircuits().subscribe({
+    this.reperService.getCircuits(sessionStorage.getItem('email')!, sessionStorage.getItem('token')!).subscribe({
       next: (data) => {
         this.circuits = data.map((circuitData: any) => {
-          const circuit = new QProgram(circuitData.id, circuitData.quirkCode);
-          // Si el circuito tiene proyectos de mutantes, los cargamos
-          if (circuitData.mutantsProjects) {
-            circuit.mutantsProjects = circuitData.mutantsProjects.map((proj: any) => {
-              const project = new MutantCycle();
-              project.id = proj.id;
-              if (proj.mutants) {
-                project.mutants = proj.mutants.map((mutant: any) => new Mutant(mutant));
-              }
-              return project;
-            });
-          }
-          return circuit;
+          
         });
         this.loading = false;
       },
@@ -100,7 +88,7 @@ itToList(circuit: Project): void {
       }
     });
   }
-*/
+
   toggleCircuit(circuitId: string): void {
     if (this.expandedCircuits.has(circuitId)) {
       this.expandedCircuits.delete(circuitId);
