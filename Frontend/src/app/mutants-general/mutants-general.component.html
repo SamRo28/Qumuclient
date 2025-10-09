@@ -6,7 +6,7 @@
       <div class="field">
         <label for="operator">OPERATOR</label>
         <input type="string" id="operator" name="operator" class="input" 
-               [value]="selectedMutant?.mutationOperator" readonly>
+               [value]="selectedMutant?.operator?.name || selectedMutant?.mutationOperator" readonly>
       </div>
       
       <div class="field-small">

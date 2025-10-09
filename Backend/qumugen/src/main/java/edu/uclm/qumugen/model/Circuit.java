@@ -84,7 +84,8 @@ public class Circuit {
 	private void loadGates(JSONArray gates) {
 		this.customizedGates = new ArrayList<>();
 		for (int i=0; i<gates.length(); i++) {
-			this.customizedGates.add(new CustomizedGate(gates.getJSONObject(i)));
+			JSONObject jsoGate = gates.getJSONObject(i);
+			this.customizedGates.add(new CustomizedGate(jsoGate));
 		}
 	}
 

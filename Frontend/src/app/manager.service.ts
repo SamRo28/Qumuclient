@@ -4,6 +4,7 @@ import { QProgram } from './model/QProgram';
 import { Mutant } from './model/Mutant';
 import { MutantCycle } from './model/MutantCycle';
 import { Project } from './model/Project';
+import { Operator } from './model/OperatorFamily';
 
 @Injectable({
   providedIn: 'root'
@@ -92,7 +93,7 @@ export class ManagerService {
       let mutatedColumn = mutants[i].mutatedColumn;
       let mutatedRow = mutants[i].mutatedRow;
       let mutationOperator = mutants[i].mutationOperator;
-      let circuit = new QProgram(-1, mutants[i].quirk);
+      let circuit = new QProgram(crypto.randomUUID(), mutants[i].quirk);
       let mutant = new Mutant(mutantIndex, mutatedColumn, mutatedRow, mutationOperator, circuit);
       this.mutants.push(mutant)
 

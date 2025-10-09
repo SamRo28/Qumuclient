@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { of, Subscription, switchMap, tap } from 'rxjs';
 import { ReperService } from '../reper.service';
 import { ManagerService } from '../manager.service';
 import { QProgram } from '../model/QProgram';
@@ -10,6 +10,9 @@ import { QumugenService } from '../qumugen.service';
 import { AppComponent } from '../app.component';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Project } from '../model/Project';
+import { QCircuit } from '../model/QCircuit';
+import { UserService } from '../user.service';
+import { Operator } from '../model/OperatorFamily';
 
 @Component({
   selector: 'app-side-bar',
@@ -26,8 +29,10 @@ export class SideBarComponent implements OnInit, OnDestroy {
   expandedCircuits: Set<string> = new Set();
   expandedProjects: Set<string> = new Set();
   loading = false;
+  private subs = new Subscription();
   
   private subscriptions: Subscription = new Subscription();
+  
 
    constructor(
      private router: Router, 
@@ -35,7 +40,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
      private reperService: ReperService,
      private manager: ManagerService,
      private qumugen: QumugenService,
-     public sanitizer: DomSanitizer
+     public sanitizer: DomSanitizer,
+     private userService: UserService
    ) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -48,9 +54,18 @@ export class SideBarComponent implements OnInit, OnDestroy {
   
 
   ngOnInit(): void {
-    // Sincronizar el estado inicial del sidebar con el manager
+    
     this.manager.sidebarExpanded = this.menuAbierto;
-    this.loadCircuitsFromService();
+    if (sessionStorage.getItem('token')) {
+      this.loadCircuitsFromService();
+    }
+
+   
+    this.subs.add(
+      this.userService.login$.subscribe(() => {
+        this.loadCircuitsFromService();
+      })
+    );
     if(!this.circuits.includes(this.manager.selectedProject!)) {
       this.circuits.push(this.manager.selectedProject!);
     }
@@ -73,7 +88,11 @@ itToList(circuit: Project): void {
   }
 
   // Método opcional para cargar circuitos desde el servicio si es necesario
-  loadCircuitsFromService(): void {
+  /*loadCircuitsFromService(): void {
+    if (!sessionStorage.getItem('email')) {
+      this.getuserEmail();
+    }
+
     this.loading = true;
     this.reperService.getCircuits(sessionStorage.getItem('email')!, sessionStorage.getItem('token')!).subscribe({
       next: (data) => {
@@ -87,6 +106,14 @@ itToList(circuit: Project): void {
         this.loading = false;
       }
     });
+  }*/
+
+  getuserEmail(): void {
+    this.reperService.getUser(sessionStorage.getItem('token')!).subscribe({
+      next:(data)=>{
+        sessionStorage.setItem('email', data);
+      }
+      });
   }
 
   toggleCircuit(circuitId: string): void {
@@ -213,5 +240,121 @@ itToList(circuit: Project): void {
   ngOnDestroy(): void {
     // Limpiar suscripciones para evitar memory leaks
     this.subscriptions.unsubscribe();
+    this.subs.unsubscribe();
   }
+
+  /*loadCircuitsFromService(): void {
+  const email = sessionStorage.getItem('email');
+  const token = sessionStorage.getItem('token')!;
+
+  this.loading = true;
+
+  // Si ya hay email en sessionStorage, lo usamos directamente
+  // Si no, pedimos el email al servicio y lo guardamos
+  let email$ = email 
+    ? of(email)
+    : this.reperService.getUser(token).pipe(
+        tap(userEmail => sessionStorage.setItem('email', userEmail))
+      );
+
+  email$.pipe(
+    switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
+  ).subscribe({
+    next: (data) => {
+      this.circuits = data.map((circuitData: any) => {
+        // tu mapeo aquí
+        return circuitData; // <-- cámbialo según cómo quieras transformar cada circuito
+      });
+      this.loading = false;
+    },
+    error: (error) => {
+      console.error('Error loading circuits:', error);
+      this.loading = false;
+    }
+  });
+}*/
+
+loadCircuitsFromService(): void {
+  const email = sessionStorage.getItem('email');
+  const token = sessionStorage.getItem('token')!;
+
+  this.loading = true;
+
+  let email$ = email 
+    ? of(email)
+    : this.reperService.getUser(token).pipe(
+        tap(userEmail => sessionStorage.setItem('email', userEmail))
+      );
+
+  email$.pipe(
+    switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
+  ).subscribe({
+    next: (data) => {
+      this.circuits = data.map((circuitData: any) => {
+        // Mapeo profundo a clases
+        const project = new Project();
+        project.id = circuitData.id;
+        project.name = circuitData.name;
+
+
+        // QProgram
+        if (circuitData.qProgram) {
+          const qProgram = new QProgram();
+          Object.assign(qProgram, circuitData.qProgram);
+
+          // QCircuit
+          if (circuitData.qProgram.qCircuit) {
+            const qCircuit = new QCircuit(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
+            qProgram.qCircuit = qCircuit;
+          }
+          project.qProgram = qProgram;
+        }
+
+        // MutantCycles
+        project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
+          const mutantCycle = new (require('../model/MutantCycle').MutantCycle)();
+          mutantCycle.id = cycleData.id;
+          mutantCycle.date = cycleData.date;
+          mutantCycle.execConfig = cycleData.execConfig;
+
+          // Mutants
+          mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
+            const mutant = new (require('../model/Mutant').Mutant)();
+            mutant.id = mutantData.id;
+            /*let ope = new Operator(mutantData.operator);
+            mutant.operator = ope;*/
+            mutant.mutantResults = mutantData.mutantResults;
+            mutant.mutantIndex = mutantData.mutantIndex;
+            mutant.mutatedColumn = mutantData.mutatedColumn;
+            mutant.mutatedRow = mutantData.mutatedRow;
+
+            // Circuit (QProgram)
+            if (mutantData.circuit) {
+              const mutantQProgram = new QProgram();
+              Object.assign(mutantQProgram, mutantData.circuit);
+
+              if (mutantData.circuit.qCircuit) {
+                const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
+                
+                mutantQProgram.qCircuit = mutantQCircuit;
+              }
+              mutant.circuit = mutantQProgram;
+            }
+            return mutant;
+          });
+
+          return mutantCycle;
+        });
+
+        return project;
+      });
+      this.loading = false;
+    },
+    error: (error) => {
+      console.error('Error loading circuits:', error);
+      this.loading = false;
+    }
+  });
+}
+  
 }

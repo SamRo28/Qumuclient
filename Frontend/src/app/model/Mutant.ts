@@ -1,5 +1,6 @@
 import { QProgram } from "./QProgram"
 import { MutantResult } from "./MutantResult"
+import { Operator } from "./OperatorFamily"
 
 export class Mutant {
     mutantIndex? : number
@@ -8,6 +9,7 @@ export class Mutant {
     mutationOperator? : string
     circuit? : QProgram
     result? : MutantResult
+    operator? : Operator
 
     constructor(mutantIndex? : number, mutatedColumn? : number, mutatedRow? : number, mutationOperator? : string, circuit? : QProgram) {
 
@@ -16,6 +18,8 @@ export class Mutant {
         this.mutatedRow = mutatedRow;
         this.mutationOperator = mutationOperator;
         this.circuit = circuit;
+        this.operator = new Operator({});
+        this.operator.name = mutationOperator;
 
     }
 

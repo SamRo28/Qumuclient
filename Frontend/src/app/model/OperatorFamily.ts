@@ -27,4 +27,5 @@ export class Operator {
         this.description = operator.description
         this.selected = operator.selected || false
     }
+
 }

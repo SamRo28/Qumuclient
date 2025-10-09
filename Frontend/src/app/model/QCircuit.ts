@@ -1,5 +1,5 @@
 export class QCircuit {
-    id: number = -1;
+    id: string = crypto.randomUUID();
     quirkCode: any;
     textQuirkCode: string = "";
     
@@ -8,7 +8,7 @@ export class QCircuit {
     mutableRows: string = "";
     
 
-    constructor(id?: number, quirkCode?: any) {
+    constructor(id?: string, quirkCode?: any) {
         if (id) {
             this.id = id;
         }

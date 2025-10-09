@@ -18,7 +18,9 @@ export class ReperService {
   }
 
   save(circuit : Project) {
-    return this.client.put<any>("http://localhost:8080/projects/save", circuit)
+    return this.client.put<any>("http://localhost:8080/projects/save", {circuit, user: {
+        id: sessionStorage.getItem('email')
+      }})
   }
 
   saveMutants(id: string, mutants: Mutant[]) {
@@ -27,5 +29,9 @@ export class ReperService {
       mutants : mutants
     }
     return this.client.put<any>(this.dict.getReperURL() + "saveJSONs" + this.right + "mutants", info)
+  }
+
+  getUser(token:string){
+    return this.client.post<any>("http://localhost:8080/users/getUser", { token })
   }
 }
