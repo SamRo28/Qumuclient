@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Circuit } from './model/Circuit';
+import { QProgram } from './model/QProgram';
 import { ManagerService } from './manager.service';
 import { DictionaryService } from './dictionary.service';
 
@@ -10,7 +10,7 @@ import { DictionaryService } from './dictionary.service';
 export class QiskitExecutorService {
   constructor(private dict : DictionaryService, private client : HttpClient, private manager : ManagerService) { }
 
-  runOne(program : Circuit, inputQubits : string, outputQubits : string, algorithm : string, qubits : number, reduceTable : boolean, inputs? : string[]) {
+  runOne(program : QProgram, inputQubits : string, outputQubits : string, algorithm : string, qubits : number, reduceTable : boolean, inputs? : string[]) {
     let info = {
       program : program,
       inputQubits : inputQubits,
@@ -41,7 +41,7 @@ export class QiskitExecutorService {
       algorithm : algorithm,
       toleratedError : toleratedError,
       originalResults : originalResults,
-      qubits : this.manager.selectedCircuit?.qubits,
+      qubits : this.manager.selectedProject!.qProgram.qubits,
       mutants : capped
     }
     let url = this.dict.getQiskitURL() + "simple/executeWithoutStrategy"
@@ -62,7 +62,7 @@ export class QiskitExecutorService {
       algorithm : algorithm,
       toleratedError : toleratedError,
       originalResults : originalResults,
-      qubits : this.manager.selectedCircuit?.qubits,
+      qubits : this.manager.selectedProject!.qProgram.qubits,
       mutants : capped,
       reduceTable : reduceTable,
       inputs : inputs

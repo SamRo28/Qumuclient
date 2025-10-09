@@ -1,0 +1,36 @@
+
+<h2 class="mutant-title">Mutant: {{ manager.selectedMutant?.mutantIndex}}</h2>
+
+<div class="tabs">
+  <button class="tab" [class.active]="selectedTab === 'info'" (click)="selectTab('info')">
+    INFO
+  </button>
+  <button class="tab" 
+          [class.active]="selectedTab === 'code'" 
+          (click)="selectTab('code')">
+    CODE
+  </button>
+  <button class="tab" 
+          [class.active]="selectedTab === 'visualization'" 
+          (click)="selectTab('visualization')">
+    VISUALIZATION
+  </button>
+</div>
+
+<div *ngIf="selectedTab === 'info'">
+  <div class="info-content">
+    <app-mutants-general></app-mutants-general>
+  </div>
+</div>
+
+<div *ngIf="selectedTab === 'code'">
+  <div class="code-content">
+    <app-mutants-code></app-mutants-code>
+  </div>
+</div>
+
+<div *ngIf="selectedTab === 'visualization'">
+  <div class="visualization-content">
+    <app-mutants-visual></app-mutants-visual>
+  </div>
+</div>

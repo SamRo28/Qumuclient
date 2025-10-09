@@ -1,0 +1,567 @@
+/* Importar fuentes modernas */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* Menú lateral */
+.sidebar {
+  width: 60px; /* Tamaño reducido cuando está colapsado */
+  padding-left: 5px;
+  background-color: #50816f; /* Fondo oscuro */
+  color: #f8fafc; /* Texto más claro para mejor contraste */
+  height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  transition: width 0.3s ease, left 0.3s ease;
+  overflow: hidden;
+  overflow-x: hidden; /* Eliminar barra de desplazamiento horizontal */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10;
+  padding-top: 50px;
+  border-right: 2px solid #718f84; /* Borde verde mint */
+  box-shadow: 2px 0 8px rgba(157, 192, 169, 0.1);
+}
+
+.sidebar.open {
+  width: 180px; /* Tamaño cuando está expandido */
+  align-items: flex-start;
+  padding-left: 15px;
+}
+
+/* Botón para abrir/cerrar el menú */
+.toggle-btn {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #9dc0a9;
+  background-color: #9dc0a9;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 11;
+  font-weight: 600;
+}
+
+.toggle-btn:hover {
+  background-color: #8ab095;
+  border-color: #8ab095;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(157, 192, 169, 0.3);
+}
+
+button:hover {
+  background-color: #8ab095;
+  transition: all 0.2s ease;
+  transform: translateY(-1px);
+}
+
+.tree-node:hover {
+  background-color: #9dc0a9; /* Hover verde mint */
+  color: #1f2937;
+  border-radius: 6px;
+  transform: translateX(2px);
+}
+
+li.separador:hover {
+  background-color: #1f2937;
+  transform: scale(1);
+}
+
+a.separador:hover {
+  background-color: #1f2937;
+  transform: scale(1);
+}
+
+/* Estilos de los enlaces del menú */
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.sidebar ul li {
+  display: flex;
+  flex-direction: column; /* Asegurar dirección vertical */
+  align-items: flex-start; /* Alinear al inicio */
+  padding-right: 10px;
+  padding-top: 10px;
+  width: 100%;
+}
+
+.sidebar a {
+  color: #f8fafc;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.sidebar a:hover {
+  background-color: rgba(157, 192, 169, 0.2);
+}
+
+.sidebar i {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+/* Estilos para la estructura de árbol */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #cbd5e1;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.loading-container i {
+  margin-right: 10px;
+}
+
+.tree-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Scrollbar minimalista */
+.tree-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tree-container::-webkit-scrollbar-thumb {
+  background: #9dc0a9;
+  border-radius: 3px;
+}
+
+.tree-container::-webkit-scrollbar-thumb:hover {
+  background: #8ab095;
+}
+
+.tree-header {
+  padding: 10px 15px;
+  border-bottom: 2px solid #a9a9a9;
+  margin-bottom: 10px;
+  background-color: rgba(75, 132, 110, 0.407);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.tree-header h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  flex-grow: 1;
+}
+
+.new-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #9dc0a9;
+  background-color: #9dc0a9;
+  color: #1f2937;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.new-btn:hover {
+  background-color: #8ab095;
+  border-color: #8ab095;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(157, 192, 169, 0.3);
+}
+
+/* Listas del árbol - CORRECCIÓN PRINCIPAL */
+.tree-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column; /* Vertical */
+  width: 100%;
+}
+
+.tree-sublist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  margin-left: 24px; /* Indentación aumentada para mejor jerarquía visual */
+  display: flex;
+  flex-direction: column;
+  margin-top: 2px;
+  width: calc(100% - 24px);
+  max-width: calc(100% - 24px);
+  overflow-x: hidden;
+}
+
+/* Indentación adicional para mutantes (doble indentación) */
+.project-item > .tree-sublist {
+  margin-left: 24px; /* Mantener consistencia en la indentación */
+  width: calc(100% - 24px);
+  position: relative;
+}
+
+/* Líneas guía verticales para mejorar la percepción de jerarquía */
+.tree-sublist:before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: rgba(157, 192, 169, 0.3);
+}
+
+/* Items del árbol con indentación jerárquica específica */
+.tree-item {
+  margin: 1px 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  clear: both;
+}
+
+/* Circuitos - Nivel 0 (sin indentación adicional) */
+.circuit-item {
+  margin-left: 0;
+}
+
+/* Proyectos - Nivel 1 (primera indentación) */
+.project-item {
+  margin-left: 0; /* La indentación se maneja por tree-sublist */
+}
+
+/* Mutantes - Nivel 2 (segunda indentación) */
+.mutant-item {
+  margin-left: 0; /* La indentación se maneja por tree-sublist anidada */
+}
+
+.tree-node {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 3px;
+  margin: 0 2px;
+  width: calc(100% - 4px);
+  box-sizing: border-box;
+  min-height: 22px; /* Altura consistente como VS Code */
+}
+
+.tree-node:hover {
+  background-color: #9dc0a9; /* Hover verde mint */
+  color: #1f2937;
+  border-radius: 6px;
+  transform: translateX(2px);
+}
+
+.expand-icon {
+  width: 12px !important;
+  height: 12px;
+  font-size: 10px !important;
+  margin-right: 4px;
+  transition: transform 0.15s ease;
+  text-align: center !important;
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.circuit-icon {
+  color: #D4FF92; /* Amarillo dorado - para circuitos (nivel superior) */
+  font-size: 14px !important;
+  width: 16px !important;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.project-icon {
+  color: #90f3bbc6; /* Azul claro - para proyectos (nivel intermedio) */
+  font-size: 12px !important;
+  width: 16px !important;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.mutant-icon {
+  color: #D4F2E1; /* Coral/Rosa - para mutantes (nivel más profundo) */
+  font-size: 11px !important;
+  width: 16px !important;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.node-label {
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  flex-grow: 1;
+  word-break: break-word;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 50px);
+}
+
+.node-label small {
+  color: #cbd5e1;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Estilo específico para MutantCycle clickeable */
+.project-item .node-label {
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.project-item .node-label:hover {
+  color: #9dc0a9;
+  background-color: rgba(157, 192, 169, 0.1);
+}
+
+.circuit-item .tree-node {
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+  padding-left: 8px; /* Padding estándar para circuitos */
+}
+
+.project-item .tree-node {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  padding-left: 12px; /* Padding adicional para proyectos */
+}
+
+.mutant-item .tree-node {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  padding: 3px 8px 3px 16px; /* Padding adicional para mutantes */
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 15px;
+  color: #cbd5e1;
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.empty-state i {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.quick-actions {
+  border-top: 2px solid #374151;
+  padding: 10px 8px;
+  margin-top: auto;
+  background-color: rgba(157, 192, 169, 0.1);
+}
+
+.action-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #9dc0a9;
+  border: 2px solid #9dc0a9;
+  border-radius: 6px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.action-btn:hover {
+  background-color: #8ab095;
+  border-color: #8ab095;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(157, 192, 169, 0.3);
+}
+
+.action-btn i {
+  margin-right: 6px;
+  font-size: 12px !important;
+  width: auto !important;
+}
+
+/* Tooltips para modo colapsado - sin numeraciones */
+.tooltip {
+  position: absolute;
+  left: 65px;
+  background-color: #374151;
+  color: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 1001;
+  border: 2px solid #9dc0a9;
+  box-shadow: 0 4px 16px rgba(157, 192, 169, 0.2);
+}
+
+.sidebar:not(.open) .tree-node:hover .tooltip {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tree-node {
+    padding: 6px 8px;
+  }
+  
+  .node-label {
+    font-size: 12px;
+  }
+  
+  .sidebar.open {
+    width: 260px;
+  }
+}
+
+/* Eliminar estilos de numeración */
+.level-index {
+  display: none; /* Ocultar completamente las numeraciones */
+}
+
+/* Asegurar layout vertical para todos los niveles - CORRECCIÓN PRINCIPAL */
+.circuit-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Vertical */
+}
+
+.project-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Vertical */
+}
+
+.mutant-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Vertical */
+}
+
+/* Espaciado entre niveles */
+.circuit-item > .tree-node {
+  margin-bottom: 2px;
+}
+
+.project-item > .tree-node {
+  margin-bottom: 1px;
+}
+
+.mutant-item > .tree-node {
+  margin-bottom: 1px;
+}
+
+/* Asegurar que las sublistas se muestren debajo del nodo padre */
+.circuit-item > .tree-sublist {
+  margin-top: 0;
+}
+
+.project-item > .tree-sublist {
+  margin-top: 0;
+}
+
+/* Estados de selección/activo */
+.tree-node.selected {
+  background-color: #8ab095;
+  color: #1f2937;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.tree-node.active {
+  background-color: #9dc0a9;
+  color: #1f2937;
+  font-weight: 600;
+  border-radius: 6px;
+}

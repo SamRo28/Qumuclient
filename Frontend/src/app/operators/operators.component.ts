@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { QumugenService } from '../qumugen.service';
+
 import { OperatorFamily } from '../model/OperatorFamily';
 import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
@@ -13,13 +14,24 @@ import { LoadingService } from '../loading.service';
 export class OperatorsComponent {
   families : OperatorFamily[] = []
   error : string = ""
+  qubitCount: number = -1;
+
+
+  get outputQubitsArray(): string[] {
+    if (!this.manager.outputQubits || this.manager.outputQubits.trim() === '') {
+      return [];
+    }
+    return this.manager.outputQubits.split(',').filter(item => item.trim() !== '');
+  }
 
   constructor(private service : QumugenService, public manager : ManagerService, private loading : LoadingService) { 
+
+    this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
+
     this.service.getOperatorsByFamily().subscribe(
       families => {
-        let familyNames = Object.keys(families)
-        for (let familyName of familyNames) {
-          let family = new OperatorFamily(familyName, families[familyName])
+        for (let familyData of families) {
+          let family = new OperatorFamily(familyData.name, familyData.operators)
           this.families.push(family)
         }
       },
@@ -30,16 +42,19 @@ export class OperatorsComponent {
   }
 
   selectAll() {
-    this.families.forEach(f => f.select())
+    this.families.forEach(f => 
+      f.select())
   }
 
   generateMutants() {
     AppComponent.error = ""
-    let selectedCircuit = this.manager.selectedCircuit
+    let selectedCircuit = this.manager.selectedProject;
     if (!selectedCircuit) {
       AppComponent.error = "Please, select the circuit you want to mutate"
       return
     }
+    selectedCircuit.qProgram.setMutableColumns();
+    selectedCircuit.qProgram.setMutableRows();
 
     let selectedOperators = []
     for (let i=0; i<this.families.length; i++) {
@@ -50,10 +65,12 @@ export class OperatorsComponent {
     }
     if (selectedOperators.length>0) {
       this.loading.show()
-      this.service.generateMutants(selectedCircuit, selectedOperators).subscribe(
+      this.service.generateMutants(selectedCircuit.qProgram, selectedOperators).subscribe(
         mutants => { 
           this.manager.setMutants(mutants)
           this.loading.hide()
+          this.manager.showSidebar = true
+          
          },
         error => {
           AppComponent.error = error.error ? error.error.message : error.error
@@ -67,23 +84,28 @@ export class OperatorsComponent {
   }
 
   reloadOriginalCode() {
-    this.service.getQiskitCode(this.manager.selectedCircuit!).then(
+    this.service.getQiskitCode(this.manager.selectedProject!.qProgram).then(
       result=> {
-        this.manager.selectedCircuit!.qiskitCode = result.wholeCode.split("\n")
+        this.manager.selectedProject!.qProgram.qCode.code = result.wholeCode.split("\n")
       }
     )
   }
 
   selectedFamily: OperatorFamily | null = null;
+  isModalOpen: boolean = false;
 
   showInfo(family: OperatorFamily) {
     this.selectedFamily = family;
-    // abre el modal aquí, dependiendo si usas Bootstrap, Angular Material, etc.
+    this.isModalOpen = true;
   }
 
   closeModal() {
     this.selectedFamily = null;
+    this.isModalOpen = false;
   }
 
+  getEnabledOperators(family: OperatorFamily) {
+    return family.operators.filter(op => op.enabled);
+  }
 
 }

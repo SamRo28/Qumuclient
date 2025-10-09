@@ -1,0 +1,42 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "DictionaryApp",
+            "request": "launch",
+            "mainClass": "edu.uclm.dictionary.DictionaryApp",
+            "projectName": "dictionary"
+        },
+        {
+            "type": "java",
+            "name": "QiskitExecApp",
+            "request": "launch",
+            "mainClass": "edu.uclm.qiskitexec.QiskitExecApp",
+            "projectName": "qiskitexec"
+        },
+        {
+            "type": "java",
+            "name": "ReperApp",
+            "request": "launch",
+            "mainClass": "edu.uclm.reper.ReperApp",
+            "projectName": "reper"
+        },
+        {
+            "type": "java",
+            "name": "QumuGenApp",
+            "request": "launch",
+            "mainClass": "edu.uclm.qumugen.QumuGenApp",
+            "projectName": "qumugen"
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Open side-bar.component.html",
+            "file": "c:\\Users\\samue\\OneDrive\\Documentos\\ALARCOS\\Código\\Qumuclient\\Frontend\\src\\app\\side-bar\\side-bar.component.html"
+        }
+    ]
+}

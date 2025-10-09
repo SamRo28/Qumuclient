@@ -1,0 +1,81 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<div class="sidebar" [class.open]="menuAbierto">
+  <button class="toggle-btn" (click)="toggleMenu()" aria-label="Toggle menu">
+    <i class="fas" [ngClass]="menuAbierto ? 'fa-times' : 'fa-bars'"></i>
+  </button>
+
+  <!-- Loading indicator -->
+  <div *ngIf="loading" class="loading-container">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span *ngIf="menuAbierto">Loading circuits...</span>
+  </div>
+
+  <!-- Circuits tree structure -->
+  <div *ngIf="!loading" class="tree-container">
+    <div class="tree-header" *ngIf="menuAbierto">
+      <div class="header-content">
+        <h3>Circuits</h3>
+        <button class="new-btn" (click)="createNewCircuit()" aria-label="Create new circuit">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+
+    <ul class="tree-list">
+      <li *ngFor="let circuit of circuits" class="tree-item circuit-item">
+        <!-- QProgram node -->
+        <div class="tree-node" (click)="toggleCircuit(circuit.name)">
+          <i class="fas fa-chevron-right expand-icon" 
+             [class.expanded]="isCircuitExpanded(circuit.name)"></i>
+          <i class="fas fa-microchip circuit-icon"></i>
+          <span *ngIf="menuAbierto" class="node-label" 
+                (click)="selectCircuit(circuit); $event.stopPropagation()">
+            {{ circuit.name }}
+          </span>
+          <span *ngIf="!menuAbierto" class="tooltip">{{ circuit.id }}</span>
+        </div>
+
+        <!-- MutantCycles level -->
+        <ul *ngIf="isCircuitExpanded(circuit.name)" class="tree-sublist">
+          <li *ngFor="let project of circuit.mutantCycles" class="tree-item project-item">
+            <!-- Project node -->
+            <div class="tree-node" (click)="toggleProject(getProjectKey(circuit.name, project.id))">
+              <i class="fas fa-chevron-right expand-icon" 
+                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
+              <i class="fas fa-folder project-icon"></i>
+              <span *ngIf="menuAbierto" class="node-label"
+                    (click)="selectMutantCycle(project); $event.stopPropagation()">
+                Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
+              </span>
+              <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>
+            </div>
+
+            <!-- Mutants level -->
+            <ul *ngIf="isProjectExpanded(getProjectKey(circuit.name, project.id))" class="tree-sublist">
+              <li *ngFor="let mutant of project.mutants" class="tree-item mutant-item">
+                <div class="tree-node" (click)="selectMutant(mutant)">
+                  <i class="fas fa-bug mutant-icon"></i>
+                  <span *ngIf="menuAbierto" class="node-label">
+                    Mutant {{ mutant.mutantIndex }} 
+                    <small>({{ mutant.mutationOperator }})</small>
+                  </span>
+                  <span *ngIf="!menuAbierto" class="tooltip">
+                    Mutant {{ mutant.mutantIndex }}
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- Empty state -->
+    <div *ngIf="circuits.length === 0" class="empty-state">
+      <i class="fas fa-exclamation-circle"></i>
+      <span *ngIf="menuAbierto">No circuits available</span>
+    </div>
+  </div>
+
+</div>

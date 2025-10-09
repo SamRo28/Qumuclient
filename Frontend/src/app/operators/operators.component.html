@@ -1,10 +1,9 @@
 <div class="form-group">
   <label for="qubits">QUBITS</label>
-  <input type="number" [(ngModel)]="manager.qubitCount" class="form-control">
-
+  <input type="number" [(ngModel)]="qubitCount" class="form-control">
   <label>OUTPUT QUBITS</label>
   <div class="checkbox-group">
-    <label *ngFor="let q of manager.outputQubits; index as i">
+    <label *ngFor="let q of outputQubitsArray; index as i">
       <input type="checkbox" [(ngModel)]="manager.qubits[i]"> Qubit {{ i }}
     </label>
   </div>
@@ -18,7 +17,7 @@
     <button (click)="showInfo(family)" class="info-button">i</button>
   </label>
   <div class="checkbox-group">
-    <label *ngFor="let op of family.operators">
+    <label *ngFor="let op of getEnabledOperators(family)">
       <input type="checkbox" [(ngModel)]="op.selected"> {{ op.name }}
     </label>
   </div>
@@ -28,16 +27,20 @@
   <button class="btn" (click)="selectAll()">Select All</button>
   <button class="btn btn-primary" (click)="generateMutants()">Generate Mutants</button>
 </div>
-<ng-template #infoModal let-modal>
-  <div class="modal-header">
-    <h5 class="modal-title">{{ selectedFamily?.name }} Operators</h5>
-    <button type="button" class="close" (click)="closeModal()">×</button>
+
+<!-- Modal -->
+<div *ngIf="isModalOpen" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">{{ selectedFamily?.name }} Operators</h5>
+      <button type="button" class="close" (click)="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <ul>
+        <li *ngFor="let op of getEnabledOperators(selectedFamily!)">
+          <strong>{{ op.name }}:</strong> {{ op.description }}
+        </li>
+      </ul>
+    </div>
   </div>
-  <div class="modal-body">
-    <ul>
-      <li *ngFor="let op of selectedFamily?.operators">
-        <strong>{{ op.name }}:</strong> {{ op.description }}
-      </li>
-    </ul>
-  </div>
-</ng-template>
+</div>

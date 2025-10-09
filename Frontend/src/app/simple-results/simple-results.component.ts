@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ManagerService } from '../manager.service';
 import { QiskitExecutorService } from '../qiskit-executor.service';
 import { QumugenService } from '../qumugen.service';
-import { Circuit } from '../model/Circuit';
+import { QProgram } from '../model/QProgram';
 import { AppComponent } from '../app.component';
 import { MutantsExecutor } from '../MutantsExecutor';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -18,7 +18,7 @@ export class SimpleResultsComponent extends MutantsExecutor {
     super(sanitizer)
   }
 
-  runOne(circuit : Circuit, program? : string) {
+  runOne(circuit : QProgram, program? : string) {
     AppComponent.error = ""
     if (this.stopped)
       return
@@ -28,7 +28,7 @@ export class SimpleResultsComponent extends MutantsExecutor {
     outputConsole!.innerHTML = "<i>Results will appear here</i>"
     outputConsole!.scrollIntoView({behavior: 'smooth'});
 
-    this.qe.runOne(circuit, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedCircuit!.qubits, false).subscribe(
+    this.qe.runOne(circuit, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       result => {
         this.hideModal()
         outputConsole!.innerHTML=""
@@ -55,9 +55,9 @@ export class SimpleResultsComponent extends MutantsExecutor {
     if (this.stopped)
       return
 
-    this.showModal("Excuting original")
+    this.showModal("Executing original")
 
-    this.qe.runOne(this.manager.selectedCircuit!, this.manager.inputQubits,  this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedCircuit!.qubits, false).subscribe(
+    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits,  this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)

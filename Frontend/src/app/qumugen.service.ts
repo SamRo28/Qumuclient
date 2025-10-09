@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Circuit } from './model/Circuit';
+import { QProgram } from './model/QProgram';
 import { ManagerService } from './manager.service';
 import { Mutant } from './model/Mutant';
 import { DictionaryService } from './dictionary.service';
@@ -13,26 +13,26 @@ export class QumugenService {
   constructor(private dict : DictionaryService, private client : HttpClient, private manager : ManagerService) { }
 
   getOperatorsByFamily() {
-    return this.client.get<any>(this.dict.getQumugenURL()+ "getOperatorsByFamily")
+    return this.client.get<any>("http://localhost:8080/qumureper/getoperatorsByFamily")
   }
 
   getOperators(family : string) {
     return this.client.get(this.dict.getQumugenURL() + "getOperators/" + family)
   }
 
-  generateMutants(circuit : Circuit, selectedOperators : any[]) {
+  generateMutants(circuit : QProgram, selectedOperators : any[]) {
     let info = {
-      circuit : circuit.quirkCode,
+      circuit : circuit.qCircuit.quirkCode,
       operatorNames : selectedOperators,
-      mutableColumns : circuit.mutableColumns,
-      mutableRows : circuit.mutableRows,
+      mutableColumns : circuit.qCircuit.mutableColumns,
+      mutableRows : circuit.qCircuit.mutableRows,
       inputQubits : this.manager.inputQubits,
       generateWithAllInputs : this.manager.generateWithAllInputs
     }
     return this.client.put<any>(this.dict.getQumugenURL() + "generateQuirkMutants", info) 
   }
 
-  async getQiskitCode(circuit : Circuit) {
+  async getQiskitCode(circuit : QProgram) {
     circuit.inputQubits = this.manager.inputQubits
     circuit.outputQubits = this.manager.outputQubits
     try {

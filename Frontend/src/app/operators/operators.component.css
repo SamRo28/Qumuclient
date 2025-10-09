@@ -1,4 +1,10 @@
 /* CSS for Operators Component */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    letter-spacing: -0.01em;
+}
 
 .form-group {
     margin-bottom: 1.5rem;
@@ -6,32 +12,53 @@
 
 label {
     display: block;
-    color: #4c5866;
-    font-weight: bold;
+    color: #374151;
+    font-weight: 500;
+    font-size: 0.875rem;
     margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 input[type="number"] {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    width: 98%;
+    padding: 0.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
     margin-bottom: 1rem;
+    font-size: 0.95rem;
+    font-weight: 400;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="number"]:focus {
+    outline: none;
+    border-color: #9dc0a9;
+    box-shadow: 0 0 0 3px rgba(157, 192, 169, 0.1);
 }
 
 .checkbox-group {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
-    margin: 0.5rem 0 1rem;
+    margin: 0.5rem 0 4px;
 }
 
 .checkbox-group label {
     display: flex;
     align-items: center;
-    font-weight: normal;
+    font-weight: 400;
+    font-size: 0.9rem;
     margin-bottom: 0;
     cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #6b7280;
+    transition: color 0.2s ease;
+}
+
+.checkbox-group label:hover {
+    color: #374151;
 }
 
 .checkbox-group input[type="checkbox"] {
@@ -41,14 +68,19 @@ input[type="number"] {
 .family-box {
     background-color: #f0f7f3;
     border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
+    padding: 8px;
+    margin-bottom: 8px;
 }
 
 .family-box > label {
     display: flex;
     align-items: center;
     margin-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 .info-button {
@@ -79,37 +111,63 @@ input[type="number"] {
 }
 
 .btn {
-    padding: 0.6rem 1.2rem;
-    border-radius: 50px;
-    border: 1px solid #ccc;
-    background-color: #f5f5f5;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    background-color: #ffffff;
     cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+    transition: all 0.2s ease;
 }
 
 .btn:hover {
-    background-color: #e5e5e5;
-    transform: translateY(-2px);
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary {
     background-color: #9dc0a9;
-    color: #333;
-    border: none;
+    color: #1f2937;
+    border: 2px solid #9dc0a9;
+    font-weight: 600;
 }
 
 .btn-primary:hover {
     background-color: #8ab095;
+    border-color: #8ab095;
+    box-shadow: 0 4px 16px rgba(157, 192, 169, 0.3);
 }
 
-/* Modal styles 
-/deep/ .modal-content {
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
     border-radius: 8px;
     overflow: hidden;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-/deep/ .modal-header {
+.modal-header {
     background-color: #f0f7f3;
     border-bottom: 1px solid #ddd;
     padding: 1rem;
@@ -118,28 +176,44 @@ input[type="number"] {
     align-items: center;
 }
 
-/deep/ .modal-title {
+.modal-title {
     color: #4c5866;
     margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
-/deep/ .close {
+.close {
     background: none;
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    color: #6b7280;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
-/deep/ .modal-body {
+.close:hover {
+    background-color: #e5e7eb;
+}
+
+.modal-body {
     padding: 1.5rem;
 }
 
-/deep/ ul {
+.modal-body ul {
     padding-left: 1.5rem;
     margin: 0;
+    list-style-type: disc;
 }
 
-/deep/ li {
-    margin-bottom: 0.5rem;
+.modal-body li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
 }
-    */
+
+.modal-body li strong {
+    color: #374151;
+    font-weight: 600;
+}

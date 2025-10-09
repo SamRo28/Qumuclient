@@ -1,17 +1,28 @@
 <div>
   <span style="color : red">{{ getError() }}</span>
 
-  <app-home *ngIf="manager.showHome"></app-home>
+  <app-side-bar *ngIf="manager.showSidebar"></app-side-bar>
+  <div class="main-content" 
+       [class.with-sidebar]="manager.showSidebar" 
+       [class.sidebar-expanded]="manager.sidebarExpanded">
+    <app-home *ngIf="manager.showHome"></app-home>
+    
+    <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
 
-  <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
-  <!--
-  <app-mutants-generated></app-mutants-generated>
+    <app-mutants-info *ngIf="manager.showMutantsInfo"></app-mutants-info>
+    
+    <app-mutant-cycle-info *ngIf="manager.showMutantCycleInfo" [mutantCycle]="manager.selectedMutantCycle"></app-mutant-cycle-info>
+    
+    <!--
+    <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
 
-  <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
+    <app-simple-result *ngIf="manager.executionAlgorithm=='Simple'"></app-simple-result>
 
-  <app-simple-result *ngIf="manager.executionAlgorithm=='Simple'"></app-simple-result>
+    <app-strategy-results *ngIf="manager.executionAlgorithm!='Simple'"></app-strategy-results>
+    -->
+  </div>
 
-  <app-strategy-results *ngIf="manager.executionAlgorithm!='Simple'"></app-strategy-results>
-  -->
+  <!-- Save button - always visible in bottom right corner -->
+  <app-save-button *ngIf="manager.showSaveButton" ></app-save-button>
 
 </div>

@@ -1,0 +1,21 @@
+<body>
+    <div class="container">
+        <!-- Original Code Section -->
+        <div class="code-section">
+            <h2 class="section-title">ORIGINAL CODE</h2>
+            <textarea 
+                id="originalCode" 
+                class="code-textarea" 
+                readonly>{{ getOriginalCode() }}</textarea>
+        </div>
+
+        <!-- Mutant Code Section -->
+        <div class="code-section">
+            <h2 class="section-title">MUTANT CODE</h2>
+            <div 
+                class="code-display"
+                [innerHTML]="highlightedMutantCode">
+            </div>
+        </div>
+    </div>
+</body>
