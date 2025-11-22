@@ -132,7 +132,7 @@ public class QiskitService {
 		return sb;
 	}
 
-	public String getWholeCode(Map<String, Object> result, int shots, String qiskitTemplate) throws IOException {
+	public String getWholeCode(Map<String, Object> result, int shots, String qiskitTemplate, int qubits, List<Integer> outputQubits) throws IOException {
 		
 		/*
 		 * Transforma el código a partir de la plantillas
@@ -140,11 +140,16 @@ public class QiskitService {
 		
 		
 		String wholeCode = Utils.readFileAsString(this, qiskitTemplate);
-		wholeCode = wholeCode.replace("#DECLARATION#", result.get("declaration").toString());
+		wholeCode = wholeCode.replace("#CIRCUITS_DECLARATION#", result.get("declaration").toString());
 		if (result.containsKey("initialization"))
-			wholeCode = wholeCode.replace("#INITIALIZATION#", result.get("initialization").toString());
+			wholeCode = wholeCode.replace("#INITIALIZE#", result.get("initialization").toString());
 		else
-			wholeCode = wholeCode.replace("#INITIALIZATION#", "");
+			wholeCode = wholeCode.replace("#INITIALIZE#", "");
+
+		wholeCode = wholeCode.replace("#QUBITS#", "" + qubits);
+
+
+		wholeCode = wholeCode.replace("#OUTPUT_QUBITS#", outputQubits.toString());
 		wholeCode = wholeCode.replace("#CALCULUS#", result.get("calculus").toString());
 		wholeCode = wholeCode.replace("#MEASURES#", result.get("measures").toString());
 		

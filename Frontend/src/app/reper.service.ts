@@ -9,29 +9,35 @@ import { Project } from './model/Project';
   providedIn: 'root'
 })
 export class ReperService {
-  private right : string = "?db=quantum_mutation&collection="
+  private right: string = "?db=quantum_mutation&collection="
 
-  constructor(private dict : DictionaryService, private client : HttpClient) { }
+  constructor(private dict: DictionaryService, private client: HttpClient) { }
 
-  getCircuits(email: string, token : string) {
+  getCircuits(email: string, token: string) {
     return this.client.post<any>("http://localhost:8080/projects/getAllByUser", { email, token })
   }
 
-  save(circuit : Project) {
-    return this.client.put<any>("http://localhost:8080/projects/save", {circuit, user: {
+  save(circuit: Project) {
+    return this.client.put<any>("http://localhost:8080/projects/save", {
+      circuit, user: {
         id: sessionStorage.getItem('email')
-      }})
+      }
+    })
   }
 
   saveMutants(id: string, mutants: Mutant[]) {
     let info = {
-      circuitId : id,
-      mutants : mutants
+      circuitId: id,
+      mutants: mutants
     }
     return this.client.put<any>(this.dict.getReperURL() + "saveJSONs" + this.right + "mutants", info)
   }
 
-  getUser(token:string){
+  getUser(token: string) {
     return this.client.post<any>("http://localhost:8080/users/getUser", { token })
+  }
+
+  getProjects(token: string, id: string) {
+    return this.client.post<any>("http://localhost:8080/projects/getAllByUser", { token, email: sessionStorage.getItem('email')!, id })
   }
 }

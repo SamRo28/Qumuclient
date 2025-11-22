@@ -12,8 +12,8 @@ import { LoadingService } from '../loading.service';
   styleUrls: ['./operators.component.css']
 })
 export class OperatorsComponent {
-  families : OperatorFamily[] = []
-  error : string = ""
+  families: OperatorFamily[] = []
+  error: string = ""
   qubitCount: number = -1;
 
 
@@ -24,9 +24,10 @@ export class OperatorsComponent {
     return this.manager.outputQubits.split(',').filter(item => item.trim() !== '');
   }
 
-  constructor(private service : QumugenService, public manager : ManagerService, private loading : LoadingService) { 
+  constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) {
 
     this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
+    this.manager.selectedProject!.qProgram.qubits = this.qubitCount;
 
     this.service.getOperatorsByFamily().subscribe(
       families => {
@@ -42,7 +43,7 @@ export class OperatorsComponent {
   }
 
   selectAll() {
-    this.families.forEach(f => 
+    this.families.forEach(f =>
       f.select())
   }
 
@@ -57,21 +58,22 @@ export class OperatorsComponent {
     selectedCircuit.qProgram.setMutableRows();
 
     let selectedOperators = []
-    for (let i=0; i<this.families.length; i++) {
-      for (let j=0; j<this.families[i].operators.length; j++) {
+    for (let i = 0; i < this.families.length; i++) {
+      for (let j = 0; j < this.families[i].operators.length; j++) {
         if (this.families[i].operators[j].selected)
           selectedOperators.push(this.families[i].operators[j].name)
       }
     }
-    if (selectedOperators.length>0) {
+    if (selectedOperators.length > 0) {
       this.loading.show()
       this.service.generateMutants(selectedCircuit.qProgram, selectedOperators).subscribe(
-        mutants => { 
+        mutants => {
+          this.manager.showSidebar = true
           this.manager.setMutants(mutants)
           this.loading.hide()
-          this.manager.showSidebar = true
-          
-         },
+
+
+        },
         error => {
           AppComponent.error = error.error ? error.error.message : error.error
           if (!AppComponent.error)
@@ -85,7 +87,7 @@ export class OperatorsComponent {
 
   reloadOriginalCode() {
     this.service.getQiskitCode(this.manager.selectedProject!.qProgram).then(
-      result=> {
+      result => {
         this.manager.selectedProject!.qProgram.qCode.code = result.wholeCode.split("\n")
       }
     )

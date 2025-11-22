@@ -22,7 +22,7 @@ import { Operator } from '../model/OperatorFamily';
 export class SideBarComponent implements OnInit, OnDestroy {
 
   url?: SafeResourceUrl;
-  
+
   menuAbierto = false;
   mostrarInicio = true;
   circuits: Project[] = [];
@@ -30,51 +30,63 @@ export class SideBarComponent implements OnInit, OnDestroy {
   expandedProjects: Set<string> = new Set();
   loading = false;
   private subs = new Subscription();
-  
-  private subscriptions: Subscription = new Subscription();
-  
 
-   constructor(
-     private router: Router, 
-     private el: ElementRef, 
-     private reperService: ReperService,
-     private manager: ManagerService,
-     private qumugen: QumugenService,
-     public sanitizer: DomSanitizer,
-     private userService: UserService
-   ) {
+  private subscriptions: Subscription = new Subscription();
+
+
+  constructor(
+    private router: Router,
+    private el: ElementRef,
+    private reperService: ReperService,
+    private manager: ManagerService,
+    private qumugen: QumugenService,
+    public sanitizer: DomSanitizer,
+    private userService: UserService
+  ) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
         this.mostrarInicio = this.router.url === '/home';
       }
     });
-  
+
   }
 
-  
+
 
   ngOnInit(): void {
-    
+
     this.manager.sidebarExpanded = this.menuAbierto;
     if (sessionStorage.getItem('token')) {
       this.loadCircuitsFromService();
     }
 
-   
+
     this.subs.add(
       this.userService.login$.subscribe(() => {
         this.loadCircuitsFromService();
       })
     );
-    if(!this.circuits.includes(this.manager.selectedProject!)) {
+
+    // Suscribirse a cambios en el proyecto seleccionado
+    this.subs.add(
+      this.manager.selectedProject$.subscribe((project) => {
+        if (project && !this.circuits.find(c => c.id === project.id)) {
+          this.circuits.push(project);
+          // Expandir automáticamente el nuevo proyecto
+          this.expandedCircuits.add(project.name!);
+        }
+      })
+    );
+
+    if (this.manager.selectedProject && !this.circuits.includes(this.manager.selectedProject!)) {
       this.circuits.push(this.manager.selectedProject!);
     }
   }
 
-itToList(circuit: Project): void {
+  itToList(circuit: Project): void {
     // Verificar si el circuito ya existe en la lista
     const existingIndex = this.circuits.findIndex(c => c.id === circuit.id);
-    
+
     if (existingIndex >= 0) {
       // Si existe, reemplazarlo
       this.circuits[existingIndex] = circuit;
@@ -82,7 +94,7 @@ itToList(circuit: Project): void {
       // Si no existe, agregarlo
       this.circuits.push(circuit);
     }
-    
+
     // Expandir automáticamente el circuito recién agregado
     this.expandedCircuits.add(circuit.name!);
   }
@@ -110,10 +122,10 @@ itToList(circuit: Project): void {
 
   getuserEmail(): void {
     this.reperService.getUser(sessionStorage.getItem('token')!).subscribe({
-      next:(data)=>{
+      next: (data) => {
         sessionStorage.setItem('email', data);
       }
-      });
+    });
   }
 
   toggleCircuit(circuitId: string): void {
@@ -154,7 +166,7 @@ itToList(circuit: Project): void {
     this.manager.showHome = false;
     this.manager.showMutantsInfo = true;
     this.manager.showMutantCycleInfo = false;
-    
+
     //Modificar para que no se haga aqui
     if (this.manager.selectedProject) {
       this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
@@ -243,118 +255,88 @@ itToList(circuit: Project): void {
     this.subs.unsubscribe();
   }
 
-  /*loadCircuitsFromService(): void {
-  const email = sessionStorage.getItem('email');
-  const token = sessionStorage.getItem('token')!;
 
-  this.loading = true;
+  loadCircuitsFromService(): void {
+    const email = sessionStorage.getItem('email');
+    const token = sessionStorage.getItem('token')!;
 
-  // Si ya hay email en sessionStorage, lo usamos directamente
-  // Si no, pedimos el email al servicio y lo guardamos
-  let email$ = email 
-    ? of(email)
-    : this.reperService.getUser(token).pipe(
+    this.loading = true;
+
+    let email$ = email
+      ? of(email)
+      : this.reperService.getUser(token).pipe(
         tap(userEmail => sessionStorage.setItem('email', userEmail))
       );
 
-  email$.pipe(
-    switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
-  ).subscribe({
-    next: (data) => {
-      this.circuits = data.map((circuitData: any) => {
-        // tu mapeo aquí
-        return circuitData; // <-- cámbialo según cómo quieras transformar cada circuito
-      });
-      this.loading = false;
-    },
-    error: (error) => {
-      console.error('Error loading circuits:', error);
-      this.loading = false;
-    }
-  });
-}*/
-
-loadCircuitsFromService(): void {
-  const email = sessionStorage.getItem('email');
-  const token = sessionStorage.getItem('token')!;
-
-  this.loading = true;
-
-  let email$ = email 
-    ? of(email)
-    : this.reperService.getUser(token).pipe(
-        tap(userEmail => sessionStorage.setItem('email', userEmail))
-      );
-
-  email$.pipe(
-    switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
-  ).subscribe({
-    next: (data) => {
-      this.circuits = data.map((circuitData: any) => {
-        // Mapeo profundo a clases
-        const project = new Project();
-        project.id = circuitData.id;
-        project.name = circuitData.name;
+    email$.pipe(
+      switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
+    ).subscribe({
+      next: (data) => {
+        this.circuits = data.map((circuitData: any) => {
+          // Mapeo profundo a clases
+          const project = new Project();
+          project.id = circuitData.id;
+          project.name = circuitData.name;
 
 
-        // QProgram
-        if (circuitData.qProgram) {
-          const qProgram = new QProgram();
-          Object.assign(qProgram, circuitData.qProgram);
+          // QProgram
+          if (circuitData.qProgram) {
+            const qProgram = new QProgram();
+            Object.assign(qProgram, circuitData.qProgram);
 
-          // QCircuit
-          if (circuitData.qProgram.qCircuit) {
-            const qCircuit = new QCircuit(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
-            qProgram.qCircuit = qCircuit;
-          }
-          project.qProgram = qProgram;
-        }
-
-        // MutantCycles
-        project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
-          const mutantCycle = new (require('../model/MutantCycle').MutantCycle)();
-          mutantCycle.id = cycleData.id;
-          mutantCycle.date = cycleData.date;
-          mutantCycle.execConfig = cycleData.execConfig;
-
-          // Mutants
-          mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
-            const mutant = new (require('../model/Mutant').Mutant)();
-            mutant.id = mutantData.id;
-            /*let ope = new Operator(mutantData.operator);
-            mutant.operator = ope;*/
-            mutant.mutantResults = mutantData.mutantResults;
-            mutant.mutantIndex = mutantData.mutantIndex;
-            mutant.mutatedColumn = mutantData.mutatedColumn;
-            mutant.mutatedRow = mutantData.mutatedRow;
-
-            // Circuit (QProgram)
-            if (mutantData.circuit) {
-              const mutantQProgram = new QProgram();
-              Object.assign(mutantQProgram, mutantData.circuit);
-
-              if (mutantData.circuit.qCircuit) {
-                const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
-                
-                mutantQProgram.qCircuit = mutantQCircuit;
-              }
-              mutant.circuit = mutantQProgram;
+            // QCircuit
+            if (circuitData.qProgram.qCircuit) {
+              const qCircuit = new QCircuit(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
+              qProgram.qCircuit = qCircuit;
             }
-            return mutant;
+            project.qProgram = qProgram;
+          }
+
+          // MutantCycles
+          project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
+            const mutantCycle = new (require('../model/MutantCycle').MutantCycle)();
+            mutantCycle.id = cycleData.id;
+            mutantCycle.date = cycleData.date;
+            mutantCycle.execConfig = cycleData.execConfig;
+
+            // Mutants
+            mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
+              const mutant = new (require('../model/Mutant').Mutant)();
+              mutant.id = mutantData.id;
+              /*let ope = new Operator(mutantData.operator);
+              mutant.operator = ope;*/
+              mutant.mutantResults = mutantData.mutantResults;
+              mutant.mutantIndex = mutantData.mutantIndex;
+              mutant.mutatedColumn = mutantData.mutatedColumn;
+              mutant.mutatedRow = mutantData.mutatedRow;
+
+              // Circuit (QProgram)
+              if (mutantData.circuit) {
+                const mutantQProgram = new QProgram();
+                Object.assign(mutantQProgram, mutantData.circuit);
+
+                if (mutantData.circuit.qCircuit) {
+                  const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
+
+                  mutantQProgram.qCircuit = mutantQCircuit;
+                }
+                mutant.circuit = mutantQProgram;
+              }
+              return mutant;
+            });
+
+            return mutantCycle;
           });
 
-          return mutantCycle;
+          return project;
         });
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading circuits:', error);
+        this.loading = false;
+      }
+    });
+  }
 
-        return project;
-      });
-      this.loading = false;
-    },
-    error: (error) => {
-      console.error('Error loading circuits:', error);
-      this.loading = false;
-    }
-  });
-}
-  
 }

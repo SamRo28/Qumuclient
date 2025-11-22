@@ -104,7 +104,7 @@ checkValidity() {
     this._quirkCode = value;
     if (this.selectedProject) {
       this.selectedProject.qProgram.qCircuit.textQuirkCode = value;
-      this.selectedProject.qProgram.qubits = -1;
+  
       
       // Solo parsear el JSON si el valor no está vacío
       if (value && value.trim() !== '') {
