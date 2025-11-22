@@ -1,21 +1,23 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { QumugenService } from '../qumugen.service';
 
 import { OperatorFamily } from '../model/OperatorFamily';
 import { AppComponent } from '../app.component';
 import { ManagerService } from '../manager.service';
 import { LoadingService } from '../loading.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-operators',
   templateUrl: './operators.component.html',
   styleUrls: ['./operators.component.css']
 })
-export class OperatorsComponent {
+export class OperatorsComponent implements OnInit, OnDestroy {
   families: OperatorFamily[] = []
   error: string = ""
   qubitCount: number = -1;
-
+  outputQubitsSelection: { [key: number]: boolean } = {};
+  private projectSubscription?: Subscription;
 
   get outputQubitsArray(): string[] {
     if (!this.manager.outputQubits || this.manager.outputQubits.trim() === '') {
@@ -24,13 +26,31 @@ export class OperatorsComponent {
     return this.manager.outputQubits.split(',').filter(item => item.trim() !== '');
   }
 
-  constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) {
+  getOutputQubitsIndices(): number[] {
+    return this.outputQubitsArray.map((_, index) => index);
+  }
 
-    this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
-    this.manager.selectedProject!.qProgram.qubits = this.qubitCount;
+  getSelectedOutputQubitsCount(): number {
+    return Object.values(this.outputQubitsSelection).filter(selected => selected).length;
+  }
 
+  constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) { }
+
+  ngOnInit() {
+    // Cargar datos iniciales
+    this.loadData();
+
+    // Suscribirse a cambios en el proyecto seleccionado
+    this.projectSubscription = this.manager.selectedProject$.subscribe(project => {
+      if (project) {
+        this.loadData();
+      }
+    });
+
+    // Cargar familias de operadores
     this.service.getOperatorsByFamily().subscribe(
       families => {
+        this.families = []; // Limpiar familias existentes
         for (let familyData of families) {
           let family = new OperatorFamily(familyData.name, familyData.operators)
           this.families.push(family)
@@ -42,9 +62,47 @@ export class OperatorsComponent {
     )
   }
 
+  ngOnDestroy() {
+    // Limpiar suscripción
+    if (this.projectSubscription) {
+      this.projectSubscription.unsubscribe();
+    }
+  }
+
+  loadData() {
+    // Recargar qubitCount
+    this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
+    if (this.manager.selectedProject) {
+      this.manager.selectedProject.qProgram.qubits = this.qubitCount;
+
+      // Calcular mutableColumns y mutableRows si están vacíos o son valores por defecto
+      const qCircuit = this.manager.selectedProject.qProgram.qCircuit;
+
+      // Si mutableColumns está vacío o es el valor por defecto "-1,", calcularlo
+      if (!qCircuit.mutableColumns || qCircuit.mutableColumns === '' || qCircuit.mutableColumns === '-1,') {
+        qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
+      }
+
+      // Si mutableRows está vacío, calcularlo
+      if (!qCircuit.mutableRows || qCircuit.mutableRows === '') {
+        qCircuit.mutableRows = qCircuit.calculateMutableRows();
+      }
+    }
+
+    // Reinicializar outputQubitsSelection
+    this.outputQubitsSelection = {};
+    this.outputQubitsArray.forEach((_, index) => {
+      this.outputQubitsSelection[index] = true; // Por defecto todos seleccionados
+    });
+  }
+
   selectAll() {
     this.families.forEach(f =>
       f.select())
+  }
+
+  selectFamily(family: OperatorFamily) {
+    family.select();
   }
 
   generateMutants() {
@@ -108,6 +166,12 @@ export class OperatorsComponent {
 
   getEnabledOperators(family: OperatorFamily) {
     return family.operators.filter(op => op.enabled);
+  }
+
+  hasSelectedOperators(): boolean {
+    return this.families.some(family =>
+      family.operators.some(op => op.selected)
+    );
   }
 
 }

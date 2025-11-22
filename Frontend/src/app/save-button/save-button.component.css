@@ -3,63 +3,78 @@
 .save-button {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 80px;
   z-index: 1000;
-  
-  /* Styling */
-  background-color:#8ab095;
+
+  /* Glassmorphism Quantum Styling */
+  background: linear-gradient(135deg, #9dc0a9 0%, #8ab095 100%);
   color: white;
-  border: none;
-  border-radius: 50px;
-  padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 500;
+  border: 1px solid rgba(157, 192, 169, 0.3);
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  
-  /* Shadow for depth */
-  box-shadow: 0 4px 12px rgba(3, 128, 74, 0.3);
-  
+
+  /* Glass effect with shadow */
+  box-shadow:
+    0 4px 16px rgba(157, 192, 169, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
   /* Flexbox for icon and text alignment */
   display: flex;
   align-items: center;
-  gap: 8px;
-  
-  /* Transition effects */
-  transition: all 0.3s ease;
+  gap: 0.625rem;
+
+  /* Smooth transition effects */
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.save-button svg {
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .save-button:hover {
-  background-color:#8ab095;
-  box-shadow: 0 6px 16px rgba(3, 128, 74, 0.3);
+  background: linear-gradient(135deg, #8ab095 0%, #7da88a 100%);
+  box-shadow:
+    0 6px 20px rgba(157, 192, 169, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
+  border-color: rgba(157, 192, 169, 0.5);
 }
 
 .save-button:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(3, 128, 74, 0.3);
+  box-shadow:
+    0 2px 8px rgba(157, 192, 169, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .save-button:focus {
   outline: none;
-  box-shadow: 0 0 0 3pxrgba(3, 128, 74, 0.3);
-}
-
-/* Icon styling */
-.save-button i {
-  font-size: 16px;
+  box-shadow:
+    0 0 0 4px rgba(157, 192, 169, 0.2),
+    0 4px 16px rgba(157, 192, 169, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
   .save-button {
     bottom: 15px;
-    right: 15px;
-    padding: 10px 16px;
-    font-size: 12px;
+    right: 60px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
   }
-  
-  .save-button i {
-    font-size: 14px;
+
+  .save-button svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
@@ -69,6 +84,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -76,7 +92,7 @@
 }
 
 .save-button {
-  animation: slideIn 0.3s ease-out;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 
@@ -280,15 +296,15 @@
     width: 95%;
     margin: 10px;
   }
-  
+
   .modal-header {
     padding: 1.25rem 1.5rem;
   }
-  
+
   .modal-body {
     padding: 1.5rem;
   }
-  
+
   .modal-title {
     font-size: 1.25rem;
   }

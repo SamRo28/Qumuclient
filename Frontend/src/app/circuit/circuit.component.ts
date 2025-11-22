@@ -17,35 +17,35 @@ import { Project } from '../model/Project';
 })
 export class CircuitComponent implements OnInit, OnDestroy {
 
-  url  : string = '';
+  url: string = '';
 
   private _circuitName: string = '';
   private _quirkCode: string = '';
 
   @Output() validityChange = new EventEmitter<boolean>();
-  
-  originalCircuitName? : string
-  hideQuirk : boolean = true
+
+  originalCircuitName?: string
+  hideQuirk: boolean = true
   selectedProject: Project | null = new Project();
   private subscription = new Subscription();
 
-  circuits : Project[] = []
+  circuits: Project[] = []
   selectedTab: string = 'circuit';
 
-  constructor(public sanitizer: DomSanitizer, private reper : ReperService, private manager : ManagerService, private qumugen : QumugenService, private qasm : QasmService) { 
+  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService) {
     this.url = '';
   }
   ngOnInit(): void {
     this.subscription.add(
-        this.manager.selectedProject$.subscribe(circuit => {
-          this.selectedProject = circuit;
-          this.loadCircuitFromManager();
-          this.selectTab('circuit');
-        })
-      );
+      this.manager.selectedProject$.subscribe(circuit => {
+        this.selectedProject = circuit;
+        this.loadCircuitFromManager();
+        this.selectTab('circuit');
+      })
+    );
   }
   ngOnChanges(): void {
-    this.loadCircuitFromManager();  
+    this.loadCircuitFromManager();
   }
 
   ngOnDestroy(): void {
@@ -58,7 +58,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
     if (!this.selectedProject) {
       this.selectedProject = new Project();
     }
-    
+
     // Cargar el nombre del circuito
     if (this.selectedProject.id) {
       this.originalCircuitName = this.selectedProject.name;
@@ -66,21 +66,21 @@ export class CircuitComponent implements OnInit, OnDestroy {
     } else {
       this._circuitName = '';
     }
-    
+
     // Cargar el código Quirk
     if (this.selectedProject.qProgram.qCircuit.textQuirkCode) {
       this._quirkCode = this.selectedProject.qProgram.qCircuit.textQuirkCode;
     } else {
       this._quirkCode = '';
     }
-    
+
     this.checkValidity();
   }
 
-checkValidity() {
-  const valid = this.circuitName.trim() !== '' && this.quirkCode.trim() !== '';
-  this.validityChange.emit(valid);
-}
+  checkValidity() {
+    const valid = this.circuitName.trim() !== '' && this.quirkCode.trim() !== '';
+    this.validityChange.emit(valid);
+  }
   get isCircuitValid(): boolean {
     return this.circuitName.trim() !== '' && this.quirkCode.trim() !== '';
   }
@@ -93,6 +93,8 @@ checkValidity() {
     if (this.selectedProject) {
       this.selectedProject.name = value;
       this.manager.setselectedProject(this.selectedProject);
+      // Marcar proyecto como modificado cuando cambia el nombre
+      this.manager.markProjectAsModified();
     }
     this.checkValidity();
   }
@@ -104,8 +106,8 @@ checkValidity() {
     this._quirkCode = value;
     if (this.selectedProject) {
       this.selectedProject.qProgram.qCircuit.textQuirkCode = value;
-  
-      
+
+
       // Solo parsear el JSON si el valor no está vacío
       if (value && value.trim() !== '') {
         try {
@@ -117,8 +119,10 @@ checkValidity() {
       } else {
         this.selectedProject.qProgram.qCircuit.quirkCode = null;
       }
-      
+
       this.manager.setselectedProject(this.selectedProject);
+      // Marcar proyecto como modificado cuando cambia el código Quirk
+      this.manager.markProjectAsModified();
     }
     this.checkValidity();
   }
@@ -128,15 +132,15 @@ checkValidity() {
       AppComponent.error = "No circuit selected";
       return;
     }
-    if (this.selectedProject.name!.trim().length==0) {
+    if (this.selectedProject.name!.trim().length == 0) {
       AppComponent.error = "Please, give a name to the circuit"
       return
     }
-    if (!this.selectedProject.qProgram.qCircuit.textQuirkCode || this.selectedProject.qProgram.qCircuit.textQuirkCode.trim().length==0) {
+    if (!this.selectedProject.qProgram.qCircuit.textQuirkCode || this.selectedProject.qProgram.qCircuit.textQuirkCode.trim().length == 0) {
       AppComponent.error = "Please, write the Quirk code of the circuit"
       return
     }
-    this.selectedProject.qProgram.qCircuit.quirkCode=JSON.parse(this.selectedProject.qProgram.qCircuit.textQuirkCode)
+    this.selectedProject.qProgram.qCircuit.quirkCode = JSON.parse(this.selectedProject.qProgram.qCircuit.textQuirkCode)
     this.reper.save(this.selectedProject).subscribe(
       result => {
         AppComponent.error = ""
@@ -157,10 +161,10 @@ checkValidity() {
   }
 
   selectCircuit() {
-    this.selectedProject = this.circuits.filter(c => c.id==this.originalCircuitName).at(0)!
+    this.selectedProject = this.circuits.filter(c => c.id == this.originalCircuitName).at(0)!
     this.manager.setselectedProject(this.selectedProject)
     this.qumugen.getQiskitCode(this.selectedProject.qProgram).then(
-      result=> {
+      result => {
         if (this.selectedProject) {
           this.selectedProject.qProgram.qCode!.code = result.wholeCode.split("\n")
         }
@@ -170,14 +174,14 @@ checkValidity() {
 
 
   onSubmit() {
-    if(this.selectedProject?.id){
+    if (this.selectedProject?.id) {
       this.circuitName = this.selectedProject.name || '';
     }
     else {
       this.circuitName = "Circuit1";
     }
 
-    if(this.selectedProject?.qProgram.qCircuit.quirkCode) {
+    if (this.selectedProject?.qProgram.qCircuit.quirkCode) {
       this.quirkCode = this.selectedProject.qProgram.qCircuit.quirkCode;
     }
   }

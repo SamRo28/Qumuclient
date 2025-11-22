@@ -16,8 +16,9 @@
     <div class="tree-header" *ngIf="menuAbierto">
       <div class="header-content">
         <h3>Circuits</h3>
-        <button class="new-btn" (click)="createNewCircuit()" aria-label="Create new circuit">
-          <i class="fas fa-plus"></i>
+        <button class="new-btn" (click)="createNewCircuit()" [disabled]="isCreatingProject"
+          [class.creating]="isCreatingProject" aria-label="Create new quantum circuit project">
+          <i class="fas" [ngClass]="isCreatingProject ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
         </button>
       </div>
     </div>
@@ -26,12 +27,14 @@
       <li *ngFor="let circuit of circuits" class="tree-item circuit-item">
         <!-- QProgram node -->
         <div class="tree-node" (click)="toggleCircuit(circuit.name)">
-          <i class="fas fa-chevron-right expand-icon" 
-             [class.expanded]="isCircuitExpanded(circuit.name)"></i>
+          <i class="fas fa-chevron-right expand-icon" [class.expanded]="isCircuitExpanded(circuit.name)"></i>
           <i class="fas fa-microchip circuit-icon"></i>
-          <span *ngIf="menuAbierto" class="node-label" 
-                (click)="selectCircuit(circuit); $event.stopPropagation()">
+          <span *ngIf="menuAbierto" class="node-label" (click)="selectCircuit(circuit); $event.stopPropagation()">
             {{ circuit.name }}
+            <!-- Indicador de no guardado -->
+            <span *ngIf="!circuit.saved" class="unsaved-indicator" title="Unsaved changes"
+              aria-label="This project has unsaved changes">
+            </span>
           </span>
           <span *ngIf="!menuAbierto" class="tooltip">{{ circuit.id }}</span>
         </div>
@@ -41,11 +44,11 @@
           <li *ngFor="let project of circuit.mutantCycles" class="tree-item project-item">
             <!-- Project node -->
             <div class="tree-node" (click)="toggleProject(getProjectKey(circuit.name, project.id))">
-              <i class="fas fa-chevron-right expand-icon" 
-                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
+              <i class="fas fa-chevron-right expand-icon"
+                [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
               <span *ngIf="menuAbierto" class="node-label"
-                    (click)="selectMutantCycle(project); $event.stopPropagation()">
+                (click)="selectMutantCycle(project); $event.stopPropagation()">
                 Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
               </span>
               <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>
@@ -57,7 +60,7 @@
                 <div class="tree-node" (click)="selectMutant(mutant)">
                   <i class="fas fa-bug mutant-icon"></i>
                   <span *ngIf="menuAbierto" class="node-label">
-                    Mutant {{ mutant.mutantIndex }} 
+                    Mutant {{ mutant.mutantIndex }}
                     <small>({{ mutant.mutationOperator }})</small>
                   </span>
                   <span *ngIf="!menuAbierto" class="tooltip">

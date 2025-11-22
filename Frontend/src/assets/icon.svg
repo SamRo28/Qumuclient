@@ -1,0 +1,22 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="qubit-glow-emerald" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#10b981" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    
+    <filter id="qubit-glow-lime" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-color="#84cc16" result="color"/> <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <path d="M35 50 Q 50 35, 65 50" stroke="rgba(16, 185, 129, 0.5)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <circle cx="35" cy="50" r="8" fill="#10b981" filter="url(#qubit-glow-emerald)" />
+  
+  <circle cx="65" cy="50" r="8" fill="#84cc16" filter="url(#qubit-glow-lime)" />
+</svg>

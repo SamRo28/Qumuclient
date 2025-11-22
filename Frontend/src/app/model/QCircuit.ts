@@ -2,11 +2,11 @@ export class QCircuit {
     id: string = crypto.randomUUID();
     quirkCode: any;
     textQuirkCode: string = "";
-    
-    
+
+
     mutableColumns: string = "-1,";
     mutableRows: string = "";
-    
+
 
     constructor(id?: string, quirkCode?: any) {
         if (id) {
@@ -15,7 +15,7 @@ export class QCircuit {
         if (quirkCode) {
             this.quirkCode = quirkCode;
             this.textQuirkCode = JSON.stringify(quirkCode);
-        
+
             if (quirkCode.cols && Array.isArray(quirkCode.cols)) {
                 for (let i = 0; i < quirkCode.cols.length; i++) {
                     this.mutableColumns += i + ",";
@@ -32,9 +32,34 @@ export class QCircuit {
                 }
             }
         }
+
+
     }
 
-    
+
+    calculateMutableColumns(): string {
+        let mutableColumns = "";
+        for (let i = 0; i < this.quirkCode.cols.length; i++) {
+            mutableColumns += i + ",";
+        }
+        if (mutableColumns.endsWith(",")) {
+            mutableColumns = mutableColumns.substring(0, mutableColumns.length - 1);
+        }
+        return mutableColumns;
+    }
+
+    calculateMutableRows(): string {
+        let mutableRows = "";
+        for (let i = 0; i < this.quirkCode.qubits; i++) {
+            mutableRows += i + ",";
+        }
+        if (mutableRows.endsWith(",")) {
+            mutableRows = mutableRows.substring(0, mutableRows.length - 1);
+        }
+        return mutableRows;
+    }
+
+
 
 
 }

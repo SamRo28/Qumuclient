@@ -30,6 +30,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   expandedProjects: Set<string> = new Set();
   loading = false;
   private subs = new Subscription();
+  isCreatingProject = false; // Protección contra doble-click (público para el template)
 
   private subscriptions: Subscription = new Subscription();
 
@@ -48,19 +49,16 @@ export class SideBarComponent implements OnInit, OnDestroy {
         this.mostrarInicio = this.router.url === '/home';
       }
     });
-
   }
 
-
-
   ngOnInit(): void {
-
     this.manager.sidebarExpanded = this.menuAbierto;
+
     if (sessionStorage.getItem('token')) {
       this.loadCircuitsFromService();
     }
 
-
+    // Suscribirse a eventos de login
     this.subs.add(
       this.userService.login$.subscribe(() => {
         this.loadCircuitsFromService();
@@ -68,18 +66,40 @@ export class SideBarComponent implements OnInit, OnDestroy {
     );
 
     // Suscribirse a cambios en el proyecto seleccionado
+    // Esta es la ÚNICA fuente de verdad para agregar proyectos nuevos
     this.subs.add(
       this.manager.selectedProject$.subscribe((project) => {
-        if (project && !this.circuits.find(c => c.id === project.id)) {
-          this.circuits.push(project);
-          // Expandir automáticamente el nuevo proyecto
-          this.expandedCircuits.add(project.name!);
+        if (project) {
+          // Buscar si ya existe por ID o por referencia
+          const existingIndex = this.circuits.findIndex(c =>
+            (c.id && project.id && c.id === project.id) || c === project
+          );
+
+          if (existingIndex === -1) {
+            // No existe, agregarlo
+            this.circuits.push(project);
+            // Expandir automáticamente el nuevo proyecto
+            if (project.name) {
+              this.expandedCircuits.add(project.name);
+            }
+          } else {
+            // Ya existe, actualizarlo en su posición
+            this.circuits[existingIndex] = project;
+          }
         }
       })
     );
 
-    if (this.manager.selectedProject && !this.circuits.includes(this.manager.selectedProject!)) {
-      this.circuits.push(this.manager.selectedProject!);
+    // Agregar el proyecto actual si existe y no está en la lista
+    if (this.manager.selectedProject) {
+      const exists = this.circuits.some(c =>
+        (c.id && this.manager.selectedProject!.id && c.id === this.manager.selectedProject!.id) ||
+        c === this.manager.selectedProject
+      );
+
+      if (!exists) {
+        this.circuits.push(this.manager.selectedProject);
+      }
     }
   }
 
@@ -98,27 +118,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     // Expandir automáticamente el circuito recién agregado
     this.expandedCircuits.add(circuit.name!);
   }
-
-  // Método opcional para cargar circuitos desde el servicio si es necesario
-  /*loadCircuitsFromService(): void {
-    if (!sessionStorage.getItem('email')) {
-      this.getuserEmail();
-    }
-
-    this.loading = true;
-    this.reperService.getCircuits(sessionStorage.getItem('email')!, sessionStorage.getItem('token')!).subscribe({
-      next: (data) => {
-        this.circuits = data.map((circuitData: any) => {
-          
-        });
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading circuits:', error);
-        this.loading = false;
-      }
-    });
-  }*/
 
   getuserEmail(): void {
     this.reperService.getUser(sessionStorage.getItem('token')!).subscribe({
@@ -204,8 +203,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return `${circuitId}_${projectId}`;
   }
 
-
-
   ngAfterViewInit() {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -230,17 +227,39 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.manager.sidebarExpanded = this.menuAbierto;
   }
 
+  /**
+   * Crea un nuevo proyecto/circuito
+   * IMPORTANTE: No agregamos manualmente a this.circuits aquí.
+   * La suscripción a selectedProject$ se encarga de eso automáticamente.
+   */
   createNewCircuit() {
+    // Protección contra doble-click
+    if (this.isCreatingProject) {
+      return;
+    }
+
+    this.isCreatingProject = true;
+
+    // Generar nombre único
     let name = 'Project' + (this.circuits.length + 1);
     let newCircuit = new Project();
     newCircuit.name = name;
+
+    // Configurar el manager
     this.manager.setNewselectedProject(newCircuit);
     this.manager.showCircuit = true;
     this.manager.showMutantsInfo = false;
     this.manager.showSaveButton = false;
     this.manager.showMutantCycleInfo = false;
-    this.circuits.push(newCircuit);
-    this.expandedCircuits.add(newCircuit.name!);
+
+    // ELIMINADO: this.circuits.push(newCircuit);
+    // ELIMINADO: this.expandedCircuits.add(newCircuit.name!);
+    // La suscripción a selectedProject$ se encarga de agregar el proyecto
+
+    // Resetear protección después de un breve delay
+    setTimeout(() => {
+      this.isCreatingProject = false;
+    }, 500);
   }
 
   goToHome() {
@@ -254,7 +273,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
     this.subs.unsubscribe();
   }
-
 
   loadCircuitsFromService(): void {
     const email = sessionStorage.getItem('email');
@@ -274,10 +292,9 @@ export class SideBarComponent implements OnInit, OnDestroy {
       next: (data) => {
         this.circuits = data.map((circuitData: any) => {
           // Mapeo profundo a clases
-          const project = new Project();
+          const project = new Project(undefined, undefined, undefined, undefined, true);
           project.id = circuitData.id;
           project.name = circuitData.name;
-
 
           // QProgram
           if (circuitData.qProgram) {
@@ -303,8 +320,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
             mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
               const mutant = new (require('../model/Mutant').Mutant)();
               mutant.id = mutantData.id;
-              /*let ope = new Operator(mutantData.operator);
-              mutant.operator = ope;*/
               mutant.mutantResults = mutantData.mutantResults;
               mutant.mutantIndex = mutantData.mutantIndex;
               mutant.mutatedColumn = mutantData.mutatedColumn;
@@ -317,7 +332,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
                 if (mutantData.circuit.qCircuit) {
                   const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
-
                   mutantQProgram.qCircuit = mutantQCircuit;
                 }
                 mutant.circuit = mutantQProgram;
@@ -338,5 +352,4 @@ export class SideBarComponent implements OnInit, OnDestroy {
       }
     });
   }
-
 }

@@ -1,94 +1,157 @@
-/* CSS for QProgram Configuration Component */
+/* Mutants Info Component - Glassmorphism Quantum */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Mutant Title Styles */
+:host {
+    display: block;
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: -0.01em;
+}
+
+/* Mutant Title */
 .mutant-title {
-    color: #4c5866;
+    color: #1a1f2e;
     font-size: 2rem;
     margin: 0 0 2rem 0;
-    font-weight: bold;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-weight: 700;
     text-align: center;
-    padding-bottom: 0.5rem;
-    border-bottom: 3px solid #9dc0a9;
-    letter-spacing: 0.02em;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(157, 192, 169, 0.3);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
 }
 
+.mutant-title svg {
+    color: #6fa882;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 4px rgba(111, 168, 130, 0.2));
+}
+
+/* Tabs Container */
 .tabs {
     display: flex;
-    border-bottom: 1px solid #ddd;
+    gap: 0.5rem;
     margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(157, 192, 169, 0.25);
+    border-radius: 12px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 12px rgba(157, 192, 169, 0.08);
 }
 
+/* Tab Buttons */
 .tab {
-    padding: 0.8rem 1.5rem;
-    background: none;
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
-    font-weight: bold;
-    color: #4c5866;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #4a5568;
     cursor: pointer;
-    transition: all 0.3s ease;
-    letter-spacing: 0.5px;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-.tab:hover:not([disabled]) {
-    color: #333;
-    border-bottom-color: #ddd;
+.tab svg {
+    flex-shrink: 0;
+    transition: transform 200ms;
+}
+
+.tab:hover:not([disabled]):not(.active) {
+    background: rgba(157, 192, 169, 0.1);
+    color: #1a1f2e;
+}
+
+.tab:hover:not([disabled]):not(.active) svg {
+    transform: scale(1.1);
 }
 
 .tab.active {
-    color: #333;
-    border-bottom-color: #9dc0a9;
+    background: linear-gradient(135deg, #9dc0a9 0%, #8ab095 100%);
+    color: white;
+    box-shadow:
+        0 4px 12px rgba(157, 192, 169, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.tab.active svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .tab[disabled] {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-/* Container for the tab content */
-:host {
-    display: block;
-    padding: 1rem;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* Tab Content Containers */
+.info-content,
+.code-content,
+.visualization-content {
+    animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Styles for the content of each tab */
-app-circuit, 
-app-operators {
-    display: block;
-    margin-top: 1rem;
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* Animation for tab switching */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-app-circuit,
-app-operators {
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-/* For responsive design */
+/* Responsive */
 @media (max-width: 768px) {
+    :host {
+        padding: 1rem;
+    }
+
+    .mutant-title {
+        font-size: 1.5rem;
+    }
+
     .tabs {
         flex-direction: column;
-        border-bottom: none;
+        gap: 0.5rem;
     }
-    
+
     .tab {
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        margin-bottom: 0.5rem;
         text-align: center;
     }
-    
+
     .tab.active {
-        background-color: #f0f7f3;
-        border-color: #9dc0a9;
+        background: linear-gradient(135deg, #9dc0a9 0%, #8ab095 100%);
     }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.tab:focus-visible {
+    outline: 2px solid #6fa882;
+    outline-offset: 2px;
 }

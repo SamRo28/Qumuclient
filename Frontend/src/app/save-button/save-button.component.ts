@@ -50,8 +50,12 @@ export class SaveButtonComponent {
 
     this.reperService.save(project).subscribe({
       next: (response) => {
+        // Marcar el proyecto como guardado
+        this.manager.markProjectAsSaved();
 
         this.saveClick.emit();
+
+        console.log('Project saved successfully');
       },
       error: (error) => {
         console.error('Error al guardar:', error);

@@ -10,51 +10,51 @@ import { Curl } from './model/Curl';
   providedIn: 'root'
 })
 export class QumugenService {
-  constructor(private dict : DictionaryService, private client : HttpClient, private manager : ManagerService) { }
+  constructor(private dict: DictionaryService, private client: HttpClient, private manager: ManagerService) { }
 
   getOperatorsByFamily() {
     return this.client.get<any>("http://localhost:8080/qumureper/getoperatorsByFamily")
   }
 
-  getOperators(family : string) {
+  getOperators(family: string) {
     return this.client.get(this.dict.getQumugenURL() + "getOperators/" + family)
   }
 
-  generateMutants(circuit : QProgram, selectedOperators : any[]) {
+  generateMutants(circuit: QProgram, selectedOperators: any[]) {
     let info = {
-      circuit : circuit.qCircuit.quirkCode,
-      operatorNames : selectedOperators,
-      mutableColumns : circuit.qCircuit.mutableColumns,
-      mutableRows : circuit.qCircuit.mutableRows,
-      inputQubits : this.manager.inputQubits,
-      generateWithAllInputs : this.manager.generateWithAllInputs
+      circuit: circuit.qCircuit.quirkCode,
+      operatorNames: selectedOperators,
+      mutableColumns: circuit.qCircuit.mutableColumns,
+      mutableRows: circuit.qCircuit.mutableRows,
+      inputQubits: this.manager.inputQubits,
+      generateWithAllInputs: this.manager.generateWithAllInputs
     }
-    return this.client.put<any>(this.dict.getQumugenURL() + "generateQuirkMutants", info) 
+    return this.client.put<any>(this.dict.getQumugenURL() + "generateQuirkMutants", info)
   }
 
-  async getQiskitCode(circuit : QProgram) {
+  async getQiskitCode(circuit: QProgram) {
     circuit.inputQubits = this.manager.inputQubits
     circuit.outputQubits = this.manager.outputQubits
     try {
-      let code : Promise<any> = this.client.put<any>(this.dict.getQumugenURL() + "getQiskitCode?useTemplate=true&shots=" + this.manager.shots + "&qiskitTemplate=" + this.dict.qiskitTemplate, circuit).toPromise()
+      let code: Promise<any> = this.client.put<any>(this.dict.getQumugenURL() + "getQiskitCode?useTemplate=true&shots=" + this.manager.shots + "&qiskitTemplate=" + this.dict.qiskitTemplate, circuit).toPromise()
       return code
-    } catch(error) {
+    } catch (error) {
       throw error
     }
   }
 
-  getMultipleQiskitCode(mutants : Mutant[]) {
+  getMultipleQiskitCode(mutants: Mutant[]) {
     let info = {
-      outputQubits : this.manager.outputQubits,
-      mutants : mutants
+      outputQubits: this.manager.outputQubits,
+      mutants: mutants
     }
     return this.client.put<any[]>(this.dict.getQumugenURL() + "getMultipleQiskitCode?shots=" + this.manager.shots + "&qiskitTemplate=" + this.dict.qiskitTemplate, info)
   }
 
   buildUnexCurls(id: string, mutants: Mutant[]) {
     let info = {
-      circuitId : id,
-      mutants : mutants
+      circuitId: id,
+      mutants: mutants
     }
     return this.client.post<Curl[]>(this.dict.getQumugenURL() + "buildUnexCurls", info)
   }

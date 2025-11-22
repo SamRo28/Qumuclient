@@ -21,6 +21,11 @@ export class ManagerService {
   private _selectedMutant = new BehaviorSubject<Mutant | null>(null);
   private _selectedProject = new BehaviorSubject<Project | null>(null);
   private _selectedMutantCycle = new BehaviorSubject<MutantCycle | null>(null);
+
+  // BehaviorSubject para el estado de guardado del proyecto actual
+  private _projectSavedState = new BehaviorSubject<boolean>(true);
+  public projectSavedState$ = this._projectSavedState.asObservable();
+
   // Observable público para suscribirse
   public selectedMutant$ = this._selectedMutant.asObservable();
 
@@ -44,6 +49,37 @@ export class ManagerService {
   showMutantsInfo: boolean = false;
   showMutantCycleInfo: boolean = false;
   showSaveButton: boolean = false;
+
+  /**
+   * Marca el proyecto actual como modificado (no guardado)
+   * y emite el cambio de estado
+   */
+  markProjectAsModified(): void {
+    if (this.selectedProject) {
+      this.selectedProject.markAsModified();
+      this._projectSavedState.next(false);
+      this.showSaveButton = true;
+    }
+  }
+
+  /**
+   * Marca el proyecto actual como guardado
+   * y emite el cambio de estado
+   */
+  markProjectAsSaved(): void {
+    if (this.selectedProject) {
+      this.selectedProject.markAsSaved();
+      this._projectSavedState.next(true);
+      this.showSaveButton = false;
+    }
+  }
+
+  /**
+   * Obtiene el estado de guardado del proyecto actual
+   */
+  get isProjectSaved(): boolean {
+    return this.selectedProject?.saved ?? true;
+  }
 
   setselectedProject(circuit: Project) {
     this.selectedProject = circuit
@@ -75,6 +111,10 @@ export class ManagerService {
       this.selectedProject.qProgram.outputQubits = ""
     }
 
+    // Emitir el estado de guardado del proyecto seleccionado
+    this._projectSavedState.next(circuit.saved);
+    this.showSaveButton = !circuit.saved;
+
     // Notificar a los suscriptores del cambio de circuito
     this._selectedProject.next(circuit);
   }
@@ -82,9 +122,25 @@ export class ManagerService {
   setNewselectedProject(circuit: Project) {
     this.selectedProject = circuit
 
+    // Inicializar valores por defecto para nuevo proyecto
+    this.qubitCount = 0
+    this.qubits = []
+    this.inputQubits = ""
+    this.outputQubits = ""
+
+    if (this.selectedProject.qProgram) {
+      this.selectedProject.qProgram.inputQubits = ""
+      this.selectedProject.qProgram.outputQubits = ""
+    }
+
     if (sessionStorage.getItem('token')) {
       this.showSidebar = true
     }
+
+    // Los proyectos nuevos no están guardados
+    this._projectSavedState.next(false);
+    this.showSaveButton = true;
+
     // Notificar a los suscriptores del nuevo circuito seleccionado
     this._selectedProject.next(circuit);
   }
@@ -99,6 +155,10 @@ export class ManagerService {
       let mutationOperator = mutants[i].mutationOperator;
       let circuit = new QProgram(crypto.randomUUID(), mutants[i].quirk);
       circuit.qubits = mutants[i].qubits;
+      circuit.inputQubits = this.inputQubits;
+      circuit.outputQubits = this.outputQubits;
+      circuit.qCircuit.mutableColumns = this.selectedProject?.qProgram.qCircuit.mutableColumns || "";
+      circuit.qCircuit.mutableRows = this.selectedProject?.qProgram.qCircuit.mutableRows || "";
       let mutant = new Mutant(mutantIndex, mutatedColumn, mutatedRow, mutationOperator, circuit);
       this.mutants.push(mutant)
 
@@ -106,6 +166,8 @@ export class ManagerService {
     let mutantPrj = new MutantCycle(this.mutants, this.selectedProject?.mutantCycles.length);
     this.selectedProject?.mutantCycles.push(mutantPrj);
 
+    // Marcar como modificado al agregar mutantes
+    this.markProjectAsModified();
   }
 
   getNumberOfInputQubits() {

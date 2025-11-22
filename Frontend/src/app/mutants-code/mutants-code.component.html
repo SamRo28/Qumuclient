@@ -2,19 +2,27 @@
     <div class="container">
         <!-- Original Code Section -->
         <div class="code-section">
-            <h2 class="section-title">ORIGINAL CODE</h2>
-            <textarea 
-                id="originalCode" 
-                class="code-textarea" 
-                readonly>{{ getOriginalCode() }}</textarea>
+            <h2 class="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                ORIGINAL CODE
+            </h2>
+            <textarea id="originalCode" class="code-textarea" readonly>{{ getOriginalCode() }}</textarea>
         </div>
 
         <!-- Mutant Code Section -->
         <div class="code-section">
-            <h2 class="section-title">MUTANT CODE</h2>
-            <div 
-                class="code-display"
-                [innerHTML]="highlightedMutantCode">
+            <h2 class="section-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <circle cx="12" cy="12" r="2" fill="currentColor" />
+                </svg>
+                MUTANT CODE
+            </h2>
+            <div class="code-display" [innerHTML]="highlightedMutantCode">
             </div>
         </div>
     </div>

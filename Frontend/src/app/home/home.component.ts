@@ -17,15 +17,16 @@ export class HomeComponent implements OnInit {
   }
 
   createCircuit() {
-
-    this.manager.showHome = false
-    this.manager.showCircuit = true
-    if (sessionStorage.getItem('token')) {
-      this.manager.showSidebar = true
-    }
     let circuit = new Project(crypto.randomUUID(), "Project1")
     this.manager.setNewselectedProject(circuit)
 
+    if (sessionStorage.getItem('token')) {
+      this.manager.showSidebar = true
+    }
+
+    // Cambiar visibilidad al final para asegurar que los datos estén listos
+    this.manager.showHome = false
+    this.manager.showCircuit = true
   }
 
 }
