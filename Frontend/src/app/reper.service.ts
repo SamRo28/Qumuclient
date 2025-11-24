@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { QProgram } from './model/QProgram';
-import { DictionaryService } from './dictionary.service';
+
 import { Mutant } from './model/Mutant';
 import { Project } from './model/Project';
 
@@ -11,27 +11,35 @@ import { Project } from './model/Project';
 export class ReperService {
   private right: string = "?db=quantum_mutation&collection="
 
-  constructor(private dict: DictionaryService, private client: HttpClient) { }
+  constructor(private client: HttpClient) { }
 
   getCircuits(email: string, token: string) {
     return this.client.post<any>("http://localhost:8080/projects/getAllByUser", { email, token })
   }
 
   save(circuit: Project) {
+    // Crear una copia del circuito para no modificar el original
+    const circuitToSend = { ...circuit };
+
+    // Filtrar ciclos de mutantes: solo enviar los nuevos
+    if (circuit.mutantCycles) {
+      circuitToSend.mutantCycles = circuit.mutantCycles.filter(mc => mc.newlyGenerated);
+    }
+
     return this.client.put<any>("http://localhost:8080/projects/save", {
-      circuit, user: {
+      circuit: circuitToSend, user: {
         id: sessionStorage.getItem('email')
       }
     })
   }
 
-  saveMutants(id: string, mutants: Mutant[]) {
+  /*saveMutants(id: string, mutants: Mutant[]) {
     let info = {
       circuitId: id,
       mutants: mutants
     }
     return this.client.put<any>(this.dict.getReperURL() + "saveJSONs" + this.right + "mutants", info)
-  }
+  }*/
 
   getUser(token: string) {
     return this.client.post<any>("http://localhost:8080/users/getUser", { token })

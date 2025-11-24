@@ -38,6 +38,9 @@ export class QCircuit {
 
 
     calculateMutableColumns(): string {
+        if (!this.quirkCode) {
+            return "";
+        }
         let mutableColumns = "";
         for (let i = 0; i < this.quirkCode.cols.length; i++) {
             mutableColumns += i + ",";
@@ -49,8 +52,22 @@ export class QCircuit {
     }
 
     calculateMutableRows(): string {
+        if (!this.quirkCode) {
+            return "";
+        }
+        let numQubits = 0;
+        if (this.quirkCode.qubits) {
+            numQubits = this.quirkCode.qubits;
+        } else if (this.quirkCode.cols) {
+            for (let i = 0; i < this.quirkCode.cols.length; i++) {
+                if (this.quirkCode.cols[i].length > numQubits) {
+                    numQubits = this.quirkCode.cols[i].length;
+                }
+            }
+        }
+
         let mutableRows = "";
-        for (let i = 0; i < this.quirkCode.qubits; i++) {
+        for (let i = 0; i < numQubits; i++) {
             mutableRows += i + ",";
         }
         if (mutableRows.endsWith(",")) {

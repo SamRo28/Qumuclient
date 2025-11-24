@@ -6,11 +6,11 @@ import { Injectable } from '@angular/core';
 export class DictionaryService {
 
   //private static readonly dictURL : string = "https://alarcosj.esi.uclm.es/dictionary/dict/getURL/"
-  private static readonly dictURL : string = "http://localhost:8503/dict/getURL/"
-  private qumugenUrl? : string 
-  private reperUrl?  : string 
-  private qiskitUrl? : string 
-  public qiskitTemplate? : string
+  private static readonly dictURL: string = "http://localhost:8503/dict/getURL/"
+  private qumugenUrl?: string
+  private reperUrl?: string
+  private qiskitUrl?: string
+  public qiskitTemplate?: string
 
   constructor() {
     this.getQumugenURL()
@@ -23,12 +23,12 @@ export class DictionaryService {
     if (!this.qumugenUrl) {
       let request = new XMLHttpRequest()
       request.open("GET", DictionaryService.dictURL + "qumugen", false)
-      request.onreadystatechange = function() {
+      request.onreadystatechange = function () {
         self.qumugenUrl = JSON.parse(request.responseText).url
       }
       request.send()
     }
-    if (this.qumugenUrl && this.qumugenUrl.indexOf("localhost")==-1)
+    if (this.qumugenUrl && this.qumugenUrl.indexOf("localhost") == -1)
       return this.qumugenUrl + "qumugen/"
     return this.qumugenUrl
   }
@@ -38,7 +38,7 @@ export class DictionaryService {
     if (!this.reperUrl) {
       let request = new XMLHttpRequest()
       request.open("GET", DictionaryService.dictURL + "reper", false)
-      request.onreadystatechange = function() {
+      request.onreadystatechange = function () {
         self.reperUrl = JSON.parse(request.responseText).url
       }
       request.send()
@@ -51,7 +51,7 @@ export class DictionaryService {
     if (!this.qiskitUrl) {
       let request = new XMLHttpRequest()
       request.open("GET", DictionaryService.dictURL + "qe", false)
-      request.onreadystatechange = function() {
+      request.onreadystatechange = function () {
         self.qiskitUrl = JSON.parse(request.responseText).url
         self.loadTargetSO()
       }
@@ -64,7 +64,7 @@ export class DictionaryService {
     let self = this
     let request = new XMLHttpRequest()
     request.open("GET", this.qiskitUrl + "simple/getQiskitTemplate", false)
-    request.onreadystatechange = function() {
+    request.onreadystatechange = function () {
       self.qiskitTemplate = request.responseText
     }
     request.send()

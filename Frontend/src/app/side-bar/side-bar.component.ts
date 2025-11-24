@@ -13,6 +13,7 @@ import { Project } from '../model/Project';
 import { QCircuit } from '../model/QCircuit';
 import { UserService } from '../user.service';
 import { Operator } from '../model/OperatorFamily';
+import { ProjectNote } from '../model/ProjectNote';
 
 @Component({
   selector: 'app-side-bar',
@@ -159,7 +160,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.manager.showMutantCycleInfo = false;
   }
 
-  selectMutant(mutant: Mutant): void {
+  selectMutant(mutant: Mutant, project: Project): void {
+    this.manager.setselectedProject(project);
     this.manager.setSelectedMutant(mutant);
     this.manager.showCircuit = false;
     this.manager.showHome = false;
@@ -252,10 +254,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.manager.showSaveButton = false;
     this.manager.showMutantCycleInfo = false;
 
-    // ELIMINADO: this.circuits.push(newCircuit);
-    // ELIMINADO: this.expandedCircuits.add(newCircuit.name!);
-    // La suscripción a selectedProject$ se encarga de agregar el proyecto
-
     // Resetear protección después de un breve delay
     setTimeout(() => {
       this.isCreatingProject = false;
@@ -272,6 +270,22 @@ export class SideBarComponent implements OnInit, OnDestroy {
     // Limpiar suscripciones para evitar memory leaks
     this.subscriptions.unsubscribe();
     this.subs.unsubscribe();
+  }
+
+  isLoggedIn(): boolean {
+    return !!sessionStorage.getItem('token');
+  }
+
+  refreshCircuits(): void {
+    // Verificar si hay cambios sin guardar en el proyecto actual
+    if (this.manager.selectedProject && !this.manager.selectedProject.saved) {
+      const confirmRefresh = confirm('You have unsaved changes in the current project. If you refresh, these changes will be lost. Do you want to continue?');
+      if (!confirmRefresh) {
+        return;
+      }
+    }
+
+    this.loadCircuitsFromService();
   }
 
   loadCircuitsFromService(): void {
@@ -324,6 +338,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
               mutant.mutantIndex = mutantData.mutantIndex;
               mutant.mutatedColumn = mutantData.mutatedColumn;
               mutant.mutatedRow = mutantData.mutatedRow;
+              mutant.operator.name = mutantData.operator.name;
+              mutant.mutationOperator = mutantData.operator.name; // <--- The fix
+              mutant.operator.id = mutantData.operator.type;
+              mutant.operator.enabled = mutantData.operator.enabled;
+              mutant.operator.description = mutantData.operator.description;
+
 
               // Circuit (QProgram)
               if (mutantData.circuit) {
@@ -342,6 +362,18 @@ export class SideBarComponent implements OnInit, OnDestroy {
             return mutantCycle;
           });
 
+          if (circuitData.projectNotes) {
+            project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
+              const note = new ProjectNote(
+                noteData.title,
+                noteData.text,
+                noteData.type,
+                noteData.id,
+                new Date(noteData.timestamp)
+              );
+              return note;
+            });
+          }
           return project;
         });
         this.loading = false;

@@ -1,0 +1,155 @@
+<!-- Botón Flotante (FAB) -->
+<div class="fab-container" *ngIf="hasProject">
+    <button class="fab-button" (click)="togglePanel()" [class.active]="isPanelOpen" title="Notas del Proyecto">
+        <!-- Icono de clipboard/notas -->
+        <svg class="fab-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M9 12h6m-6 4h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <div class="fab-glow"></div>
+    </button>
+</div>
+
+<!-- Panel Lateral de Notas - Overlay -->
+<div class="notes-panel-overlay" *ngIf="isPanelOpen" (click)="togglePanel()">
+</div>
+
+<!-- Panel Lateral de Notas -->
+<div class="notes-panel" [class.open]="isPanelOpen">
+    <!-- Header del Panel -->
+    <div class="panel-header">
+        <div class="panel-header-content">
+            <svg class="panel-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M9 12h6m-6 4h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <h2 class="panel-title">Notas del Proyecto</h2>
+        </div>
+        <button class="close-button" (click)="togglePanel()" title="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Lista de Notas -->
+    <div class="notes-list">
+        <div *ngFor="let note of sortedNotes" class="note-item" (click)="openEditNoteModal(note)">
+            <div class="note-header">
+                <h3 class="note-title">{{ note.title }}</h3>
+                <span class="note-type">({{ note.type }})</span>
+            </div>
+            <p class="note-preview">{{ note.text || 'Sin contenido' }}</p>
+            <div class="note-footer">
+                <span class="note-date">{{ formatDate(note.timestamp) }}</span>
+            </div>
+        </div>
+
+        <!-- Estado vacío -->
+        <div *ngIf="sortedNotes.length === 0" class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="2" />
+                <line x1="9" y1="9" x2="15" y2="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="9" y1="13" x2="15" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <line x1="9" y1="17" x2="12" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <p class="empty-text">No hay notas aún</p>
+            <p class="empty-subtext">Crea tu primera nota para comenzar</p>
+        </div>
+    </div>
+
+    <!-- Botón Agregar Nota -->
+    <div class="panel-footer">
+        <button class="add-note-button" (click)="openCreateNoteModal()">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span>Agregar Nota</span>
+        </button>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Nota -->
+<div class="modal-overlay" *ngIf="isModalOpen" (click)="closeModal()">
+    <div class="modal-content" (click)="stopPropagation($event)">
+        <!-- Header del Modal -->
+        <div class="modal-header">
+            <h2 class="modal-title">
+                <svg class="modal-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                {{ isEditMode ? 'Editar Nota' : 'Nueva Nota' }}
+            </h2>
+            <button class="modal-close-button" (click)="closeModal()" title="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Cuerpo del Modal -->
+        <div class="modal-body">
+            <!-- Título -->
+            <div class="form-group">
+                <label class="form-label" for="note-title">Título</label>
+                <input id="note-title" type="text" class="glass-input" [(ngModel)]="noteForm.title"
+                    placeholder="Escribe un título para la nota..." maxlength="100" autofocus>
+            </div>
+
+            <!-- Texto -->
+            <div class="form-group">
+                <label class="form-label" for="note-text">Contenido</label>
+                <textarea id="note-text" class="glass-textarea" [(ngModel)]="noteForm.text"
+                    placeholder="Escribe el contenido de la nota..." rows="8"></textarea>
+            </div>
+
+            <!-- Fecha de última modificación (solo en modo edición) -->
+            <div class="form-group" *ngIf="isEditMode && selectedNote">
+                <label class="form-label">Última modificación</label>
+                <div class="date-display">
+                    <svg class="date-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                        <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                        <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2" />
+                    </svg>
+                    <span>{{ formatDate(selectedNote.timestamp) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer del Modal -->
+        <div class="modal-footer">
+            <button *ngIf="isEditMode" class="delete-button" (click)="deleteNote()" title="Eliminar nota">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Eliminar
+            </button>
+            <div class="modal-actions">
+                <button class="cancel-button" (click)="closeModal()">
+                    Cancelar
+                </button>
+                <button class="save-button" (click)="saveNote()">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M17 21v-8H7v8M7 3v5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    {{ isEditMode ? 'Guardar Cambios' : 'Crear Nota' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

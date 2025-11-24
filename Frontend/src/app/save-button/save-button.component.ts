@@ -52,6 +52,7 @@ export class SaveButtonComponent {
       next: (response) => {
         // Marcar el proyecto como guardado
         this.manager.markProjectAsSaved();
+        this.manager.markMutantCyclesAsSaved();
 
         this.saveClick.emit();
 
@@ -74,28 +75,6 @@ export class SaveButtonComponent {
     this.isLoggingIn = false;
     this.pendingSave = false; // limpiar si cierra sin loguear
   }
-  /*
-  onLogin(): void {
-    if (this.username.trim() && this.password.trim()) {
-      this.isLoggingIn = true;
-
-      this.userService.login(this.username, this.password)
-      .subscribe({
-        next: (token) => {
-          
-          this.isLoggingIn = false;
-          console.log('Emitiendo saveClick desde SaveButtonComponent');
-          this.saveClick.emit(); // Emit the save click event after successful login
-          this.isLoginOpen = false;
-        },
-        error: (error) => {
-          console.error('Login failed:', error);
-          this.isLoggingIn = false;
-        }
-      });
-      
-    }
-  }*/
 
   onLogin(): void {
     if (this.username.trim() && this.password.trim()) {

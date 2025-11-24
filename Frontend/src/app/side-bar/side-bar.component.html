@@ -16,6 +16,12 @@
     <div class="tree-header" *ngIf="menuAbierto">
       <div class="header-content">
         <h3>Circuits</h3>
+        <!-- Refresh Button -->
+        <button *ngIf="isLoggedIn()" class="refresh-btn" (click)="refreshCircuits()" title="Refresh project list"
+          aria-label="Refresh project list">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+
         <button class="new-btn" (click)="createNewCircuit()" [disabled]="isCreatingProject"
           [class.creating]="isCreatingProject" aria-label="Create new quantum circuit project">
           <i class="fas" [ngClass]="isCreatingProject ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
@@ -57,7 +63,7 @@
             <!-- Mutants level -->
             <ul *ngIf="isProjectExpanded(getProjectKey(circuit.name, project.id))" class="tree-sublist">
               <li *ngFor="let mutant of project.mutants" class="tree-item mutant-item">
-                <div class="tree-node" (click)="selectMutant(mutant)">
+                <div class="tree-node" (click)="selectMutant(mutant, circuit)">
                   <i class="fas fa-bug mutant-icon"></i>
                   <span *ngIf="menuAbierto" class="node-label">
                     Mutant {{ mutant.mutantIndex }}

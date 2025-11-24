@@ -74,6 +74,12 @@ export class ManagerService {
     }
   }
 
+  markMutantCyclesAsSaved(): void {
+    if (this.selectedProject && this.selectedProject.mutantCycles) {
+      this.selectedProject.mutantCycles.forEach(mc => mc.newlyGenerated = false);
+    }
+  }
+
   /**
    * Obtiene el estado de guardado del proyecto actual
    */
@@ -164,6 +170,7 @@ export class ManagerService {
 
     }
     let mutantPrj = new MutantCycle(this.mutants, this.selectedProject?.mutantCycles.length);
+    mutantPrj.newlyGenerated = true;
     this.selectedProject?.mutantCycles.push(mutantPrj);
 
     // Marcar como modificado al agregar mutantes

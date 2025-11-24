@@ -18,6 +18,7 @@ import { MutantsVisualComponent } from './mutants-visual/mutants-visual.componen
 import { MutantsGeneralComponent } from './mutants-general/mutants-general.component';
 import { MutantCycleInfoComponent } from './mutant-cycle-info/mutant-cycle-info.component';
 import { SaveButtonComponent } from './save-button/save-button.component';
+import { ProjectNotesComponent } from './project-notes/project-notes.component';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { SaveButtonComponent } from './save-button/save-button.component';
     MutantsVisualComponent,
     MutantsGeneralComponent,
     MutantCycleInfoComponent,
-    SaveButtonComponent
+    SaveButtonComponent,
+    ProjectNotesComponent
   ],
   imports: [
     BrowserModule,

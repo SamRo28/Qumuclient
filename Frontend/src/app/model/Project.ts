@@ -1,5 +1,6 @@
 import { QProgram } from "./QProgram";
 import { MutantCycle } from "./MutantCycle";
+import { ProjectNote } from "./ProjectNote";
 
 export class Project {
 
@@ -8,6 +9,7 @@ export class Project {
     name: string = "";
     qProgram: QProgram = new QProgram();
     mutantCycles: MutantCycle[] = [];
+    projectNotes: ProjectNote[] = [];
 
     /**
      * Estado de guardado del proyecto (solo frontend, no se persiste en backend)
@@ -38,7 +40,7 @@ export class Project {
         this._saved = true;
     }
 
-    constructor(id?: string, name?: string, qProgram?: QProgram, mutantCycles?: MutantCycle[], fromServer: boolean = false) {
+    constructor(id?: string, name?: string, qProgram?: QProgram, mutantCycles?: MutantCycle[], fromServer: boolean = false, projectNotes?: ProjectNote[]) {
         if (id) {
             this.id = id;
         }
@@ -50,6 +52,9 @@ export class Project {
         }
         if (mutantCycles) {
             this.mutantCycles = mutantCycles;
+        }
+        if (projectNotes) {
+            this.projectNotes = projectNotes;
         }
 
         // Si viene del servidor, está guardado; si es nuevo, no lo está

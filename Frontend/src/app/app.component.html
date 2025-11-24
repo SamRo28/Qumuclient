@@ -2,17 +2,17 @@
   <span style="color : red">{{ getError() }}</span>
 
   <app-side-bar *ngIf="manager.showSidebar"></app-side-bar>
-  <div class="main-content" 
-       [class.with-sidebar]="manager.showSidebar" 
-       [class.sidebar-expanded]="manager.sidebarExpanded">
+  <div class="main-content" [class.with-sidebar]="manager.showSidebar"
+    [class.sidebar-expanded]="manager.sidebarExpanded">
     <app-home *ngIf="manager.showHome"></app-home>
-    
+
     <app-circuits-configuration *ngIf="manager.showCircuit"></app-circuits-configuration>
 
     <app-mutants-info *ngIf="manager.showMutantsInfo"></app-mutants-info>
-    
-    <app-mutant-cycle-info *ngIf="manager.showMutantCycleInfo" [mutantCycle]="manager.selectedMutantCycle"></app-mutant-cycle-info>
-    
+
+    <app-mutant-cycle-info *ngIf="manager.showMutantCycleInfo"
+      [mutantCycle]="manager.selectedMutantCycle"></app-mutant-cycle-info>
+
     <!--
     <app-mutant-code *ngIf="manager.showMutantCode"></app-mutant-code>
 
@@ -23,6 +23,9 @@
   </div>
 
   <!-- Save button - always visible in bottom right corner -->
-  <app-save-button *ngIf="manager.showSaveButton" ></app-save-button>
+  <app-save-button *ngIf="manager.showSaveButton"></app-save-button>
+
+  <!-- Project Notes - FAB and panel -->
+  <app-project-notes></app-project-notes>
 
 </div>
