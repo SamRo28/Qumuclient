@@ -3,14 +3,15 @@ import { Injectable } from '@angular/core';
 import { QProgram } from './model/QProgram';
 import { ManagerService } from './manager.service';
 import { Mutant } from './model/Mutant';
-import { DictionaryService } from './dictionary.service';
 import { Curl } from './model/Curl';
 
 @Injectable({
   providedIn: 'root'
 })
 export class QumugenService {
-  constructor(private client: HttpClient, private manager: ManagerService, private dict: DictionaryService) { }
+  constructor(private client: HttpClient, private manager: ManagerService) { }
+
+  qiskitTemplate = "qiskitTemplateWindows.txt"
 
   getOperatorsByFamily() {
     return this.client.get<any>("http://localhost:8080/qumureper/getoperatorsByFamily")
@@ -36,7 +37,7 @@ export class QumugenService {
     circuit.inputQubits = this.manager.inputQubits
     circuit.outputQubits = this.manager.outputQubits
     try {
-      let code: Promise<any> = this.client.put<any>("http://localhost:8500/qumugen/getQiskitCode?useTemplate=true&shots=" + this.manager.shots + "&qiskitTemplate=" + this.dict.qiskitTemplate, circuit).toPromise()
+      let code: Promise<any> = this.client.put<any>("http://localhost:8500/qumugen/getQiskitCode?useTemplate=true&shots=" + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, circuit).toPromise()
       return code
     } catch (error) {
       throw error
@@ -48,7 +49,7 @@ export class QumugenService {
       outputQubits: this.manager.outputQubits,
       mutants: mutants
     }
-    return this.client.put<any[]>("http://localhost:8500/qumugen/getMultipleQiskitCode?shots=" + this.manager.shots + "&qiskitTemplate=" + this.dict.qiskitTemplate, info)
+    return this.client.put<any[]>("http://localhost:8500/qumugen/getMultipleQiskitCode?shots=" + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, info)
   }
 
   buildUnexCurls(id: string, mutants: Mutant[]) {

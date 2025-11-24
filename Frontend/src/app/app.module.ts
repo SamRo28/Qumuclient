@@ -6,8 +6,6 @@ import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
 import { OperatorsComponent } from './operators/operators.component';
 import { CircuitComponent } from './circuit/circuit.component';
-import { SimpleResultsComponent } from './simple-results/simple-results.component';
-import { StrategyResultsComponent } from './strategy-results/strategy-results.component';
 import { SpinnerComponent } from './spinner/spinner.component';
 import { CircuitsConfigurationComponent } from './circuits-configuration/circuits-configuration.component';
 import { HomeComponent } from './home/home.component';
@@ -25,8 +23,6 @@ import { ProjectNotesComponent } from './project-notes/project-notes.component';
     AppComponent,
     OperatorsComponent,
     CircuitComponent,
-    SimpleResultsComponent,
-    StrategyResultsComponent,
     SpinnerComponent,
     CircuitsConfigurationComponent,
     HomeComponent,

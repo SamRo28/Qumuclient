@@ -4,7 +4,7 @@ import { Result } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ManagerService } from '../manager.service';
-import { QiskitExecutorService } from '../qiskit-executor.service';
+// import { QiskitExecutorService } from '../qiskit-executor.service'; // TODO: Reemplazar por ExecuterService
 import { QumugenService } from '../qumugen.service';
 import { AppComponent } from '../app.component';
 import { MutantsExecutor } from '../MutantsExecutor';
@@ -22,7 +22,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
 
   @Input() mutantCycle?: MutantCycle | null;
 
-  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService) {
+  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, /* public qe: QiskitExecutorService, */ private qumugen: QumugenService) {
     super(sanitizer);
   }
 
@@ -114,7 +114,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
 
     this.showModal("Executing original")
 
-    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
+    // TODO: Reemplazar con ExecuterService.runOne()
+    /* this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)
@@ -133,6 +134,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
         if (this.stopped)
           return
 
+        // TODO: Reemplazar con ExecuterService.getCores()
         this.qe.getCores().subscribe(
           result => {
             let chunkSize = 2 * result
@@ -144,7 +146,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
           }
         )
       }
-    )
+    ) */
   }
 
   private _runMutants(start: number, chunkSize: number) {
@@ -158,7 +160,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
     if (mutants.length > 0) {
       this.qumugen.getMultipleQiskitCode(mutants).subscribe(
         results => {
-          this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
+          // TODO: Reemplazar con ExecuterService.executeWithoutStrategy()
+          /* this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
             result => {
 
               start = start + chunkSize
@@ -175,7 +178,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
               this.hideModal()
               throw error
             }
-          )
+          ) */
         },
         error => {
           this.hideModal()
