@@ -9,15 +9,15 @@
 }
 
 .mutant-cycle-container {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--glass-bg-card);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(157, 192, 169, 0.3);
+  border: 1px solid var(--border-glass);
   border-radius: 16px;
   padding: 2rem;
   box-shadow:
-    0 4px 24px rgba(157, 192, 169, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 4px 24px var(--shadow-glass),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   max-width: 1100px;
   margin: 0 auto;
   animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -29,14 +29,14 @@
   align-items: center;
   margin-bottom: 2.5rem;
   padding-bottom: 1.5rem;
-  border-bottom: 2px solid rgba(157, 192, 169, 0.3);
+  border-bottom: 2px solid var(--border-glass);
 }
 
 .header h2 {
   margin: 0;
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1a1f2e;
+  color: var(--text-primary);
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
@@ -44,14 +44,14 @@
 }
 
 .header h2 svg {
-  color: #6fa882;
-  filter: drop-shadow(0 2px 4px rgba(111, 168, 130, 0.2));
+  color: var(--accent-primary);
+  filter: drop-shadow(0 2px 4px var(--shadow-glass));
 }
 
 .execute-btn {
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #9dc0a9 0%, #8ab095 100%);
+  background: var(--accent-gradient);
   color: white;
   border: none;
   border-radius: 12px;
@@ -62,15 +62,16 @@
   transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
   letter-spacing: 0.05em;
   box-shadow:
-    0 4px 12px rgba(157, 192, 169, 0.3),
+    0 4px 12px var(--shadow-glass),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .execute-btn:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 6px 16px rgba(157, 192, 169, 0.4),
+    0 6px 16px var(--shadow-glass-strong),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  filter: brightness(1.1);
 }
 
 .execute-btn:active {
@@ -101,7 +102,7 @@
   margin: 0 0 1.5rem 0;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1a1f2e;
+  color: var(--text-primary);
   letter-spacing: 0.01em;
   display: flex;
   align-items: center;
@@ -109,7 +110,7 @@
 }
 
 .section h3 svg {
-  color: #6fa882;
+  color: var(--accent-primary);
 }
 
 .form-row {
@@ -136,7 +137,7 @@
 
 .form-group label {
   font-weight: 600;
-  color: #4a5568;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -148,8 +149,8 @@
   border: 2px solid transparent;
   border-radius: 10px;
   font-size: 0.9375rem;
-  color: #1a1f2e;
-  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-primary);
+  background: var(--glass-bg-card);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 200ms ease;
@@ -159,17 +160,18 @@
 
 .form-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: inset 0 0 0 2px rgba(157, 192, 169, 0.5);
+  background: var(--glass-bg);
+  box-shadow: inset 0 0 0 2px var(--border-glass);
+  border-color: var(--accent-primary);
 }
 
 /* Killing Matrix Table Styles */
 .killing-matrix-container {
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(157, 192, 169, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 4px 16px var(--shadow-glass);
 }
 
 .killing-matrix-table {
@@ -179,8 +181,8 @@
 }
 
 .killing-matrix-table thead {
-  background: rgba(157, 192, 169, 0.15);
-  border-bottom: 1px solid rgba(157, 192, 169, 0.2);
+  background: var(--glass-bg-hover);
+  border-bottom: 1px solid var(--border-glass);
 }
 
 .killing-matrix-table th {
@@ -190,12 +192,12 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #1a1f2e;
+  color: var(--text-primary);
 }
 
 .killing-matrix-table tbody tr {
   transition: all 200ms ease;
-  border-bottom: 1px solid rgba(157, 192, 169, 0.1);
+  border-bottom: 1px solid var(--border-glass-light);
 }
 
 .killing-matrix-table tbody tr:last-child {
@@ -203,13 +205,13 @@
 }
 
 .killing-matrix-table tbody tr:hover {
-  background: rgba(157, 192, 169, 0.1);
+  background: var(--glass-bg-hover);
 }
 
 .killing-matrix-table td {
   padding: 0.875rem 0.75rem;
   vertical-align: middle;
-  color: #4a5568;
+  color: var(--text-secondary);
 }
 
 /* Column specific styles */
@@ -217,7 +219,7 @@
   width: 80px;
   text-align: center;
   font-weight: 600;
-  color: #1a1f2e;
+  color: var(--text-primary);
 }
 
 .killing-matrix-table .operator-column {
@@ -239,7 +241,7 @@
 
 /* Empty cell styling */
 .killing-matrix-table .empty-cell {
-  color: #9ca3af;
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -289,11 +291,11 @@
 
 /* Empty state */
 .killing-matrix-empty {
-  border: 2px dashed rgba(157, 192, 169, 0.3);
+  border: 2px dashed var(--border-glass);
   border-radius: 12px;
   padding: 3rem;
   text-align: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--glass-bg-card);
   min-height: 200px;
   display: flex;
   flex-direction: column;
@@ -304,17 +306,17 @@
 }
 
 .killing-matrix-empty:hover {
-  border-color: rgba(157, 192, 169, 0.5);
-  background: rgba(255, 255, 255, 0.3);
+  border-color: var(--accent-primary);
+  background: var(--glass-bg-hover);
 }
 
 .killing-matrix-empty svg {
-  color: #9dc0a9;
+  color: var(--accent-primary);
   opacity: 0.5;
 }
 
 .empty-text {
-  color: #4a5568;
+  color: var(--text-secondary);
   font-style: italic;
   margin: 0;
   font-weight: 500;
@@ -326,20 +328,20 @@
   align-items: center;
   justify-content: center;
   height: 400px;
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--glass-bg-card);
   backdrop-filter: blur(8px);
   border-radius: 16px;
-  border: 2px dashed rgba(157, 192, 169, 0.3);
+  border: 2px dashed var(--border-glass);
   gap: 1.5rem;
 }
 
 .no-selection svg {
-  color: #9dc0a9;
+  color: var(--accent-primary);
   opacity: 0.4;
 }
 
 .no-selection p {
-  color: #4a5568;
+  color: var(--text-secondary);
   font-size: 1.125rem;
   margin: 0;
   font-weight: 500;

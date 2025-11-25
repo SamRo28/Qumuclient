@@ -1,0 +1,8 @@
+<button class="theme-toggle" [class.dark]="isDarkMode$ | async" (click)="toggle()"
+    [attr.aria-label]="(isDarkMode$ | async) ? 'Switch to light mode' : 'Switch to dark mode'">
+    <div class="toggle-track">
+        <span class="icon sun"><i class="fas fa-sun"></i></span>
+        <span class="icon moon"><i class="fas fa-moon"></i></span>
+    </div>
+    <div class="toggle-thumb"></div>
+</button>

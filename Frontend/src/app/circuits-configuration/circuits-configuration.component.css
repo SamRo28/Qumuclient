@@ -23,12 +23,12 @@
     gap: 1rem;
     margin-bottom: 0.5rem;
     padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 20px;
-    border: 1px solid rgba(111, 168, 130, 0.2);
-    box-shadow: 0 4px 20px rgba(111, 168, 130, 0.05);
+    border: 1px solid var(--border-glass);
+    box-shadow: 0 4px 20px var(--shadow-glass);
 }
 
 /* Glass Tab Button */
@@ -38,8 +38,8 @@
     align-items: center;
     gap: 1rem;
     padding: 1.25rem;
-    background: rgba(255, 255, 255, 0.4);
-    border: 1px solid rgba(111, 168, 130, 0.15);
+    background: var(--glass-bg-card);
+    border: 1px solid var(--border-glass-light);
     border-radius: 16px;
     cursor: pointer;
     transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -49,22 +49,22 @@
 }
 
 .glass-tab:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.65);
+    background: var(--glass-bg-hover);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(111, 168, 130, 0.12);
-    border-color: rgba(111, 168, 130, 0.3);
+    box-shadow: 0 8px 24px var(--shadow-glass);
+    border-color: var(--border-glass);
 }
 
 .glass-tab.active {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-    border-color: #6fa882;
-    box-shadow: 0 12px 32px rgba(111, 168, 130, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1);
+    background: var(--glass-bg-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 12px 32px var(--shadow-glass-strong), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-tab:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--glass-bg);
     border-color: transparent;
 }
 
@@ -73,22 +73,22 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(111, 168, 130, 0.1);
-    color: #6fa882;
+    background: var(--shadow-glass);
+    color: var(--accent-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 0.9375rem;
     transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(111, 168, 130, 0.1);
+    border: 1px solid var(--border-glass-light);
     flex-shrink: 0;
 }
 
 .glass-tab.active .step-number {
-    background: linear-gradient(135deg, #6fa882 0%, #5d8f6f 100%);
+    background: var(--accent-gradient);
     color: white;
-    box-shadow: 0 4px 12px rgba(111, 168, 130, 0.3);
+    box-shadow: 0 4px 12px var(--shadow-glass);
     border-color: transparent;
     transform: scale(1.1);
 }
@@ -101,14 +101,14 @@
 
 /* Tab Icon */
 .tab-icon {
-    color: #718096;
+    color: var(--text-muted);
     transition: all 300ms;
     width: 24px;
     height: 24px;
 }
 
 .glass-tab.active .tab-icon {
-    color: #6fa882;
+    color: var(--accent-primary);
     transform: scale(1.1);
 }
 
@@ -124,17 +124,17 @@
 .tab-title {
     font-size: 1rem;
     font-weight: 600;
-    color: #4a5568;
+    color: var(--text-secondary);
     transition: color 300ms;
 }
 
 .glass-tab.active .tab-title {
-    color: #1a1f2e;
+    color: var(--text-primary);
 }
 
 .tab-description {
     font-size: 0.75rem;
-    color: #718096;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -147,8 +147,8 @@
     align-items: center;
     justify-content: center;
     transition: all 300ms;
-    background: rgba(111, 168, 130, 0.1);
-    color: #718096;
+    background: var(--shadow-glass);
+    color: var(--text-muted);
 }
 
 .tab-badge.valid {
@@ -158,7 +158,7 @@
 
 /* Lock Icon */
 .tab-lock {
-    color: #a0aec0;
+    color: var(--text-muted);
     opacity: 0.7;
     display: flex;
     align-items: center;
@@ -174,7 +174,7 @@
     left: 0;
     width: 100%;
     height: 3px;
-    background: linear-gradient(90deg, #6fa882, #5d8f6f);
+    background: var(--accent-gradient);
     transform: scaleX(0);
     transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
@@ -238,6 +238,6 @@
 }
 
 .glass-tab:focus-visible {
-    outline: 2px solid #6fa882;
+    outline: 2px solid var(--accent-primary);
     outline-offset: 2px;
 }
