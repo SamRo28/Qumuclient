@@ -11,6 +11,7 @@ export class QProgram {
     outputQubits? : string
     inputQubits? : string
     qCircuit: QCircuit
+    qiskitCode? : string
     
 
 

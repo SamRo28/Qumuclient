@@ -4,28 +4,40 @@ import { Result } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ManagerService } from '../manager.service';
-// import { QiskitExecutorService } from '../qiskit-executor.service'; // TODO: Reemplazar por ExecuterService
 import { QumugenService } from '../qumugen.service';
 import { AppComponent } from '../app.component';
 import { MutantsExecutor } from '../MutantsExecutor';
 import { QProgram } from '../model/QProgram';
+import { QiskitExecutorService } from '../qiskit-executor.service';
+import { QCode } from '../model/QCode';
 
 @Component({
   selector: 'app-mutant-cycle-info',
   templateUrl: './mutant-cycle-info.component.html',
   styleUrls: ['./mutant-cycle-info.component.css']
 })
-export class MutantCycleInfoComponent extends MutantsExecutor {
+export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit {
   override runOne(circuit: QProgram, program?: string): void {
     throw new Error('Method not implemented.');
   }
 
   @Input() mutantCycle?: MutantCycle | null;
 
-  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, /* public qe: QiskitExecutorService, */ private qumugen: QumugenService) {
+  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService) {
     super(sanitizer);
   }
 
+  ngOnInit(): void {
+      this.qumugen.getQiskitCode(this.manager.selectedProject!.qProgram).then(
+        code => {
+          this.manager.selectedProject!.qProgram.qCode = new QCode()
+          this.manager.selectedProject!.qProgram.qCode.code = code.wholeCode.split("\n")
+        },
+        error=> {
+          console.log(error)
+        }
+      )
+  }
 
 
   onExecute(): void {
@@ -112,17 +124,17 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
     if (this.stopped)
       return
 
-    this.showModal("Executing original")
+    //this.showModal("Executing original")
 
     // TODO: Reemplazar con ExecuterService.runOne()
-    /* this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
+    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)
           return
 
         this.originalResults = originalResults
-        let header1 = document.getElementById("header1")
+       /* let header1 = document.getElementById("header1")
         let header2 = document.getElementById("header2")
         let children = header1!.childElementCount
         for (let i = 1; i < children; i++) {
@@ -130,11 +142,10 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
           header1?.removeChild(child!)
           child = header2?.childNodes.item(3)
           header2?.removeChild(child!)
-        }
+        }*/
         if (this.stopped)
           return
 
-        // TODO: Reemplazar con ExecuterService.getCores()
         this.qe.getCores().subscribe(
           result => {
             let chunkSize = 2 * result
@@ -146,7 +157,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
           }
         )
       }
-    ) */
+    ) 
   }
 
   private _runMutants(start: number, chunkSize: number) {
@@ -161,7 +172,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
       this.qumugen.getMultipleQiskitCode(mutants).subscribe(
         results => {
           // TODO: Reemplazar con ExecuterService.executeWithoutStrategy()
-          /* this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
+          this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
             result => {
 
               start = start + chunkSize
@@ -178,7 +189,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
               this.hideModal()
               throw error
             }
-          ) */
+          ) 
         },
         error => {
           this.hideModal()
