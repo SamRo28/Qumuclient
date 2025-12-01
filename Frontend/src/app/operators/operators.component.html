@@ -1,46 +1,175 @@
-<div class="form-group">
-  <label for="qubits">QUBITS</label>
-  <input type="number" [(ngModel)]="qubitCount" class="form-control">
-  <label>OUTPUT QUBITS</label>
-  <div class="checkbox-group">
-    <label *ngFor="let q of outputQubitsArray; index as i">
-      <input type="checkbox" [(ngModel)]="manager.qubits[i]"> Qubit {{ i }}
-    </label>
+<!-- Operators Component - Glassmorphism -->
+<div class="operators-container">
+
+  <!-- Configuration Section - TODO EN UNA FILA -->
+  <div class="glass-card config-section">
+    <div class="card-header">
+      <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+      <h3 class="card-title">Circuit Configuration</h3>
+    </div>
+
+    <div class="config-grid-horizontal">
+      <!-- Qubits Count -->
+      <div class="config-item">
+        <label for="qubits" class="config-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+          Qubits
+        </label>
+        <input type="number" id="qubits" [(ngModel)]="qubitCount" class="glass-input" min="1" readonly>
+      </div>
+
+      <!-- Mutable Columns -->
+      <div class="config-item">
+        <label for="mutableColumns" class="config-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Mutable Columns
+        </label>
+        <input type="text" id="mutableColumns" [(ngModel)]="manager.selectedProject!.qProgram.qCircuit.mutableColumns"
+          class="glass-input" placeholder="-1,0,1,2">
+        <span class="input-hint">(-1 for all)</span>
+      </div>
+
+      <!-- Mutable Rows -->
+      <div class="config-item">
+        <label for="mutableRows" class="config-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M6 4v16M12 4v16M18 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Mutable Rows
+        </label>
+        <input type="text" id="mutableRows" [(ngModel)]="manager.selectedProject!.qProgram.qCircuit.mutableRows"
+          class="glass-input" placeholder="0,1,2">
+        <span class="input-hint">(qubit indices)</span>
+      </div>
+
+      <!-- Output Qubits -->
+      <div class="config-item" *ngIf="manager.outputQubits && manager.outputQubits.trim() !== ''">
+        <label class="config-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Output Qubits
+        </label>
+        <div class="output-qubits-inline">
+          <label *ngFor="let qubitIndex of getOutputQubitsIndices()" class="qubit-checkbox">
+            <input type="checkbox" [(ngModel)]="outputQubitsSelection[qubitIndex]" class="glass-checkbox">
+            <span>Q{{ qubitIndex }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-
-<!-- Families dynamically loaded -->
-<div *ngFor="let family of families" class="family-box">
-  <label>
-    {{ family.name }}
-    <button (click)="showInfo(family)" class="info-button">i</button>
-  </label>
-  <div class="checkbox-group">
-    <label *ngFor="let op of getEnabledOperators(family)">
-      <input type="checkbox" [(ngModel)]="op.selected"> {{ op.name }}
-    </label>
+  <!-- Operator Families Section -->
+  <div class="operators-header">
+    <h3 class="operators-title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor"
+          stroke-width="2" />
+        <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      Mutation Operators
+    </h3>
+    <button class="select-all-btn" (click)="selectAll()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+        <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Select All
+    </button>
   </div>
-</div>
 
-<div class="form-actions">
-  <button class="btn" (click)="selectAll()">Select All</button>
-  <button class="btn btn-primary" (click)="generateMutants()">Generate Mutants</button>
+  <!-- Operator Families -->
+  <div class="families-grid">
+    <div *ngFor="let family of families" class="glass-card family-card">
+      <div class="family-header">
+        <h4 class="family-name">{{ family.name }}</h4>
+        <div class="family-actions">
+          <button (click)="selectFamily(family)" class="select-family-btn" title="Select all operators in this family">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Select All
+          </button>
+          <button (click)="showInfo(family)" class="info-btn" title="View operator descriptions">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="operators-list-horizontal">
+        <label *ngFor="let op of getEnabledOperators(family)" class="operator-label">
+          <input type="checkbox" [(ngModel)]="op.selected" class="glass-checkbox">
+          <span class="operator-name">{{ op.name }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-bar">
+    <button class="generate-btn" (click)="generateMutants()" [disabled]="!hasSelectedOperators()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor"
+          stroke-width="2" />
+        <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      <span>Generate Mutants</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+    </button>
+  </div>
+
 </div>
 
 <!-- Modal -->
 <div *ngIf="isModalOpen" class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h5 class="modal-title">{{ selectedFamily?.name }} Operators</h5>
-      <button type="button" class="close" (click)="closeModal()">×</button>
+      <h5 class="modal-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+        </svg>
+        {{ selectedFamily?.name }} Operators
+      </h5>
+      <button type="button" class="modal-close" (click)="closeModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </button>
     </div>
     <div class="modal-body">
-      <ul>
-        <li *ngFor="let op of getEnabledOperators(selectedFamily!)">
-          <strong>{{ op.name }}:</strong> {{ op.description }}
-        </li>
-      </ul>
+      <div *ngFor="let op of getEnabledOperators(selectedFamily!)" class="operator-info">
+        <div class="operator-info-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+          <strong>{{ op.name }}</strong>
+        </div>
+        <p>{{ op.description }}</p>
+      </div>
     </div>
   </div>
 </div>

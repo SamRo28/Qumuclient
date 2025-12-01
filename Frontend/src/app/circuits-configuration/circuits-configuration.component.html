@@ -1,20 +1,87 @@
-<div class="tabs">
-  <button class="tab" [class.active]="selectedTab === 'circuit'" (click)="selectTab('circuit')">
-    CIRCUIT
-  </button>
-  <button class="tab" 
-          [disabled]="!isCircuitValid" 
-          [class.active]="selectedTab === 'mutants'" 
-          (click)="selectTab('mutants')">
-    GENERATE MUTANTS
-  </button>
-</div>
+<!-- Glass Configuration Container -->
+<div class="glass-config-container">
 
-<div *ngIf="selectedTab === 'circuit'">
-  <app-circuit (validityChange)="isCircuitValid = $event"></app-circuit>
-</div>
+  <!-- Glass Tabs Navigation with Integrated Steps -->
+  <div class="glass-tabs">
+    <button class="glass-tab" [class.active]="selectedTab === 'circuit'" (click)="selectTab('circuit')">
 
-<div *ngIf="selectedTab === 'mutants'">
-  <app-operators></app-operators>
-</div>
+      <!-- Step Number -->
+      <div class="step-number" [class.completed]="isCircuitValid">
+        <span *ngIf="!isCircuitValid">1</span>
+        <svg *ngIf="isCircuitValid" width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </div>
 
+      <!-- Circuit Icon -->
+      <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2v4M12 18v4M22 12h-4M6 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3" opacity="0.4" />
+      </svg>
+
+      <div class="tab-content">
+        <span class="tab-title">Circuit Design</span>
+        <span class="tab-description">Define quantum program</span>
+      </div>
+
+      <!-- Status Badge -->
+      <div class="tab-badge" [class.valid]="isCircuitValid">
+        <svg *ngIf="isCircuitValid" width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+        <svg *ngIf="!isCircuitValid" width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+          <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <!-- Active Indicator -->
+      <div class="tab-indicator"></div>
+    </button>
+
+    <button class="glass-tab" [disabled]="!isCircuitValid" [class.active]="selectedTab === 'mutants'"
+      (click)="selectTab('mutants')">
+
+      <!-- Mutants Icon -->
+      <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor"
+          stroke-width="2" />
+        <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+        <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+        <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+        <circle cx="16" cy="16" r="1.5" fill="currentColor" />
+      </svg>
+
+      <div class="tab-content">
+        <span class="tab-title">Generate Mutants</span>
+        <span class="tab-description">Select mutation operators</span>
+      </div>
+
+      <!-- Lock Icon for Disabled State -->
+      <div class="tab-lock" *ngIf="!isCircuitValid">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2" />
+          <path d="M7 11V7a5 5 0 0110 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <!-- Active Indicator -->
+      <div class="tab-indicator"></div>
+    </button>
+  </div>
+
+  <!-- Tab Content with Transition -->
+  <div class="tab-content-wrapper">
+    <div class="tab-panel" [hidden]="selectedTab !== 'circuit'">
+      <app-circuit (validityChange)="isCircuitValid = $event"></app-circuit>
+    </div>
+
+    <div class="tab-panel" *ngIf="selectedTab === 'mutants'">
+      <app-operators></app-operators>
+    </div>
+  </div>
+
+</div>

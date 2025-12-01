@@ -1,17 +1,46 @@
 import { QProgram } from "./QProgram";
 import { MutantCycle } from "./MutantCycle";
+import { ProjectNote } from "./ProjectNote";
 
 export class Project {
-    
+
 
     id?: string = crypto.randomUUID();
     name: string = "";
     qProgram: QProgram = new QProgram();
     mutantCycles: MutantCycle[] = [];
+    projectNotes: ProjectNote[] = [];
 
+    /**
+     * Estado de guardado del proyecto (solo frontend, no se persiste en backend)
+     * - false: El proyecto tiene cambios sin guardar
+     * - true: El proyecto está guardado y sincronizado
+     */
+    private _saved: boolean = false;
 
+    get saved(): boolean {
+        return this._saved;
+    }
 
-    constructor(id?: string, name?: string, qProgram?: QProgram, mutantCycles?: MutantCycle[]) {
+    set saved(value: boolean) {
+        this._saved = value;
+    }
+
+    /**
+     * Marca el proyecto como modificado (no guardado)
+     */
+    markAsModified(): void {
+        this._saved = false;
+    }
+
+    /**
+     * Marca el proyecto como guardado
+     */
+    markAsSaved(): void {
+        this._saved = true;
+    }
+
+    constructor(id?: string, name?: string, qProgram?: QProgram, mutantCycles?: MutantCycle[], fromServer: boolean = false, projectNotes?: ProjectNote[]) {
         if (id) {
             this.id = id;
         }
@@ -24,6 +53,12 @@ export class Project {
         if (mutantCycles) {
             this.mutantCycles = mutantCycles;
         }
+        if (projectNotes) {
+            this.projectNotes = projectNotes;
+        }
+
+        // Si viene del servidor, está guardado; si es nuevo, no lo está
+        this._saved = fromServer;
     }
 
     addMutantCycle(mutantCycle: MutantCycle) {
@@ -31,7 +66,7 @@ export class Project {
     }
 
     getQubits(): number {
-      return this.qProgram.getQubits();
+        return this.qProgram.getQubits();
     }
 
 }

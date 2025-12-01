@@ -1,127 +1,371 @@
-/* CSS for QProgram Component */
+/* Circuit Component - Glassmorphism */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 * {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     letter-spacing: -0.01em;
 }
 
-.form-container {
+.glass-form-container {
+    width: 100%;
     max-width: 100%;
-    margin: 0 auto;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-label {
-    display: block;
-    color: #374151;
-    font-weight: 500;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.name-input {
-    width: 100%;
-    padding: 0.75rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 400;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.name-input:focus {
-    outline: none;
-    border-color: #9dc0a9;
-    box-shadow: 0 0 0 3px rgba(157, 192, 169, 0.1);
-}
-
-.circuit-code {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 1.5rem;
+    box-sizing: border-box;
+}
+
+/* Header Section */
+.glass-header {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.header-content {
+    display: flex;
     align-items: center;
-    margin-bottom: 0.5rem;
-    padding: 4px;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-.visualize-btn {
-    background-color: #9dc0a9;
-    color: #1f2937;
-    border: 2px solid #9dc0a9;
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
-    border-radius: 8px;
+.header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+}
+
+/* Delete Button */
+.delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
     cursor: pointer;
+    transition: all 200ms ease;
+    padding: 0;
+    margin-left: 0.5rem;
+}
+
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.delete-btn:active {
+    transform: scale(0.95);
+}
+
+.delete-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Glass Cards */
+.glass-card {
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 16px var(--shadow-glass),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.glass-card:hover {
+    box-shadow: 0 8px 24px var(--shadow-glass-strong), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-primary);
+}
+
+/* Card Header */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.card-icon {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.card-label {
+    font-size: 1.125rem;
     font-weight: 600;
-    letter-spacing: 0.025em;
-    transition: all 0.2s ease;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
 }
 
-.visualize-btn:hover {
-    background-color: #8ab095;
-    border-color: #8ab095;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(157, 192, 169, 0.3);
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: all 200ms ease;
 }
 
-.quirk-container {
-    width: 98%;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    background-color: #f0f7f3;
-    padding: 0.75rem;
-    transition: border-color 0.2s ease;
+.status-indicator.valid {
+    background: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(111, 168, 130, 0.2);
 }
 
-.quirk-container:focus-within {
-    border-color: #9dc0a9;
-}
-
-.quirk-textarea {
+/* Input Wrapper */
+.input-wrapper {
+    position: relative;
     width: 100%;
-    min-height: 150px;
-    border: none;
-    background-color: transparent;
-    resize: vertical;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
-    font-size: 14px;
-    line-height: 1.5;
-    font-weight: 400;
 }
 
-.quirk-textarea:focus {
+.input-underline {
+    height: 2px;
+    width: 0;
+    background: var(--accent-gradient);
+    transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: -2px;
+}
+
+.glass-input:focus+.input-underline {
+    width: 100%;
+}
+
+/* Glass Input */
+.glass-input {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.75rem 1rem;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px var(--shadow-glass);
     outline: none;
 }
 
-/* Form validation styles */
-input.ng-invalid.ng-touched,
-textarea.ng-invalid.ng-touched {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+.glass-input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0.8;
 }
 
-.validation-error {
-    color: #ef4444;
-    font-size: 0.8rem;
-    font-weight: 500;
-    margin-top: 0.25rem;
+.glass-input:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--border-glass);
 }
 
-/* For responsive design */
+.glass-input:focus {
+    background: var(--glass-bg);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px var(--shadow-glass), inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px var(--shadow-glass-strong);
+    transform: translateY(-1px);
+}
+
+/* Code Container */
+.code-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.code-container {
+    width: 100%;
+    position: relative;
+}
+
+.glass-textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 300px;
+    padding: 1rem;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    resize: vertical;
+    outline: none;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-textarea::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.glass-textarea:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--border-glass);
+}
+
+.glass-textarea:focus {
+    background: var(--glass-bg);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px var(--shadow-glass), inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Visualize Button */
+.glass-visualize-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px var(--shadow-glass), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.glass-visualize-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    transition: left 600ms ease;
+}
+
+.glass-visualize-btn:hover::before {
+    left: 100%;
+}
+
+.glass-visualize-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--shadow-glass-strong), 0 3px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    filter: brightness(1.1);
+}
+
+.glass-visualize-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px var(--shadow-glass), inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.glass-visualize-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.glass-visualize-btn:disabled {
+    background: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+/* Visualize button on the left (below textarea) */
+.visualize-left-btn {
+    margin-top: 1rem;
+    margin-left: 0;
+}
+
+/* Floating Particles */
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, var(--accent-primary) 0%, rgba(111, 168, 130, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float 10s infinite ease-in-out;
+}
+
+.particle-1 {
+    top: 10%;
+    right: 10%;
+    animation-delay: 0s;
+}
+
+.particle-2 {
+    bottom: 20%;
+    left: 5%;
+    animation-delay: 5s;
+}
+
+.particle-3 {
+    top: 50%;
+    right: 5%;
+    animation-delay: 3s;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: translate(20px, -20px);
+        opacity: 0.8;
+    }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .circuit-code {
+    .header-content {
         flex-direction: column;
         align-items: flex-start;
     }
-    
-    .visualize-btn {
-        margin-top: 0.5rem;
+
+    .glass-card {
+        padding: 1.25rem;
     }
+
+    .visualize-left-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.glass-input:focus-visible,
+.glass-textarea:focus-visible,
+.glass-visualize-btn:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
 }

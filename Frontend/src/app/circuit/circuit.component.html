@@ -1,43 +1,87 @@
+<form #circuitForm="ngForm" (ngSubmit)="onSubmit()" class="glass-form-container" *ngIf="selectedTab !== 'mutants'">
 
-<form #circuitForm="ngForm" (ngSubmit)="onSubmit()" class="form-container" *ngIf="selectedTab !== 'mutants'">
-  <div class="form-group">
-    <label for="circuitName">NAME</label>
-    <input 
-      class="name-input"
-      type="text" 
-      id="circuitName" 
-      name="circuitName" 
-      [(ngModel)]="circuitName" 
-      class="form-control"
-      placeholder="QProgram name"
-      required>
-  </div>
-      
-  <div class="form-group">
-    <div class = "circuit-code">
+  <!-- Header Section -->
+  <div class="glass-header">
+    <div class="header-content">
+      <svg class="quantum-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+        xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+        <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3" opacity="0.5" />
+        <circle cx="12" cy="12" r="10.5" stroke="currentColor" stroke-width="1" stroke-dasharray="1 2" opacity="0.3" />
+      </svg>
+      <h2 class="header-title">Quantum Circuit Builder</h2>
 
-      <label for="quirkCode" style="margin-top: 12px;">QUIRK CODE</label>
-
-      <button 
-          type="button" 
-          class="visualize-btn"
-          (click)="visualizeCircuit()">
-          Visualize Circuit
-        </button>
+      <!-- Delete Button -->
+      <button type="button" class="delete-btn" *ngIf="isLoggedIn()" (click)="onDeleteCircuit()" title="Delete Project">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+      </button>
     </div>
-    
-    <div class="quirk-container">
-      <textarea 
-        id="quirkCode" 
-        name="quirkCode" 
-        [(ngModel)]="quirkCode"
-        placeholder="Paste Quirk code here"
-        class="quirk-textarea"
-        required></textarea>
+    <div class="header-divider"></div>
+  </div>
 
-      
+  <!-- Circuit Identity Card -->
+  <div class="glass-card">
+    <div class="card-header">
+      <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 8h10M7 12h10M7 16h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none" />
+      </svg>
+      <label for="circuitName" class="card-label">Project Name</label>
+      <div class="status-indicator" [class.valid]="circuitName.trim() !== ''"></div>
     </div>
 
+    <div class="input-wrapper">
+      <input type="text" id="circuitName" name="circuitName" [(ngModel)]="circuitName" class="glass-input"
+        placeholder="Enter quantum program name..." required>
+      <div class="input-underline"></div>
+    </div>
   </div>
+
+  <!-- Quirk Code Card -->
+  <div class="glass-card code-card">
+    <div class="card-header">
+      <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 6L4 12L8 18M16 6L20 12L16 18M14 4L10 20" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <label for="quirkCode" class="card-label">Quirk Source Code</label>
+      <div class="status-indicator" [class.valid]="quirkCode.trim() !== ''"></div>
+    </div>
+
+    <div class="code-wrapper">
+      <div class="code-container">
+        <textarea id="quirkCode" name="quirkCode" [(ngModel)]="quirkCode" placeholder='{ "cols": [["H"], ["•", "X"]] }'
+          class="glass-textarea" required></textarea>
+      </div>
+
+      <!-- Visualize Button aligned to the left below textarea -->
+      <button type="button" class="glass-visualize-btn visualize-left-btn" (click)="visualizeCircuit()"
+        [disabled]="!quirkCode.trim()">
+        <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2" />
+          <path
+            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+            stroke="currentColor" stroke-width="2" />
+        </svg>
+        <span>Visualize in Quirk</span>
+        <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating particles decoration (optional) -->
+  <div class="particle particle-1"></div>
+  <div class="particle particle-2"></div>
+  <div class="particle particle-3"></div>
 
 </form>

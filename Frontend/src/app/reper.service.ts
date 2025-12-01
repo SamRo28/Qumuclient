@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { QProgram } from './model/QProgram';
-import { DictionaryService } from './dictionary.service';
+
 import { Mutant } from './model/Mutant';
 import { Project } from './model/Project';
 
@@ -9,29 +9,39 @@ import { Project } from './model/Project';
   providedIn: 'root'
 })
 export class ReperService {
-  private right : string = "?db=quantum_mutation&collection="
+  private right: string = "?db=quantum_mutation&collection="
 
-  constructor(private dict : DictionaryService, private client : HttpClient) { }
+  constructor(private client: HttpClient) { }
 
-  getCircuits(email: string, token : string) {
+  getCircuits(email: string, token: string) {
     return this.client.post<any>("http://localhost:8080/projects/getAllByUser", { email, token })
   }
 
-  save(circuit : Project) {
-    return this.client.put<any>("http://localhost:8080/projects/save", {circuit, user: {
-        id: sessionStorage.getItem('email')
-      }})
-  }
+  save(circuit: Project) {
+    // Crear una copia del circuito para no modificar el original
+    const circuitToSend = { ...circuit };
 
-  saveMutants(id: string, mutants: Mutant[]) {
-    let info = {
-      circuitId : id,
-      mutants : mutants
+    // Filtrar ciclos de mutantes: solo enviar los nuevos
+    if (circuit.mutantCycles) {
+      circuitToSend.mutantCycles = circuit.mutantCycles.filter(mc => mc.newlyGenerated);
     }
-    return this.client.put<any>(this.dict.getReperURL() + "saveJSONs" + this.right + "mutants", info)
+
+    return this.client.put<any>("http://localhost:8080/projects/save", {
+      circuit: circuitToSend, user: {
+        id: sessionStorage.getItem('email')
+      }
+    })
   }
 
-  getUser(token:string){
+  delete(projectId: string) {
+    return this.client.post<any>("http://localhost:8080/projects/delete", { projectId })
+  }
+
+  getUser(token: string) {
     return this.client.post<any>("http://localhost:8080/users/getUser", { token })
+  }
+
+  getProjects(token: string, id: string) {
+    return this.client.post<any>("http://localhost:8080/projects/getAllByUser", { token, email: sessionStorage.getItem('email')!, id })
   }
 }

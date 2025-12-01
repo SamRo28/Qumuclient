@@ -67,7 +67,7 @@ public class GenController {
 		Map<String, Object> result = this.qiskitService.getCode(quirk, outputQubits, totalQubits);
 		if (useTemplate) {
 			try {
-				result.put("wholeCode", this.qiskitService.getWholeCode(result, shots, qiskitTemplate));
+				result.put("wholeCode", this.qiskitService.getWholeCode(result, shots, qiskitTemplate, totalQubits, outputQubits));
 			} catch (IOException e) {
 				result.put("wholeCode", "There was an error opening the template file qiskitTemplate.txt: " + e.getMessage());
 			}
@@ -89,7 +89,7 @@ public class GenController {
 				int totalQubits = (int) mutantCircuit.get("qubits");
 				Map<String, Object> mutantResult = this.qiskitService.getCode(quirk, outputQubits, totalQubits);
 				try {
-					String code = this.qiskitService.getWholeCode(mutantResult, shots, qiskitTemplate);
+					String code = this.qiskitService.getWholeCode(mutantResult, shots, qiskitTemplate, totalQubits, outputQubits);
 					mutantResult.put("wholeCode", code);
 					mutantResult.put("mutantIndex", mutant.get("mutantIndex"));
 					result.add(mutantResult);

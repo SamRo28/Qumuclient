@@ -1,39 +1,36 @@
-### PLANTILLA PARA WINDOWS
-
-from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, transpile
-from qiskit.circuit.library.standard_gates import *
-from qiskit_aer import AerSimulator
-from qiskit.visualization import plot_histogram
-from qiskit.quantum_info.operators import Operator
+from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit
 from math import pi
-import numpy 
-from qiskit.visualization import plot_state_city 
-from qiskit.visualization import plot_histogram
-from qiskit.circuit.library import MCMT
+
+qubits = #QUBITS#
+outputQubits = #OUTPUT_QUBITS#
+shots = #SHOTS#
 
 
-#DECLARATION#
-#INITIALIZATION#
+#EXPECTED#
+	
+#CIRCUITS_DECLARATION#
+
+	  
+ONE = [0, 1]
+ZERO = [1, 0]
+
+#INITIALIZE#
+
+startQubit = qubits-outputQubits
+
+########### OJO: dependiendo del problema, es posible que necesites que los cúbits se pongan en superposición al principio.
+########### Si lo necesitas y el algoritmo no lo ha hecho, descomenta las líneas siguientes. ¡Feliz ejecución 🤪!
+
+
+#for i in range(0, len(circuit)) :
+#	for j in range(startQubit, qubits) :
+#		circuit[i].h(j)
+
 #CALCULUS#
-#MEASURES#
 
-# For execution
-simulator = AerSimulator()
-compiled_circuit = transpile(circuit, simulator)
-result = simulator.run(compiled_circuit).result()
-histogram = result.get_counts()
+for i in range(0, len(circuit)) :
+	for j in range(startQubit, qubits) :
+		circuit[i].measure(j, qubits-j-1)
 
-
-#backend = Aer.get_backend('statevector_simulator')
-#job = backend.run(circuit, shots=100) 
-#result = job.result()
-#histogram = result.get_counts()
-
-#outputstate = result.get_statevector(circuit, decimals=1) 
-
-print(histogram)
-
-#plot_histogram(histogram)
-#print(circuit)
-#with open('C:/Program Files/Apache Software Foundation/Tomcat 9.0/temp/o.txt', 'w') as file:
-#     file.write(json.dumps(histogram))
+#expanded = circuit[0].decompose(reps=2)   # Esto es para pintar el circuit. A mayor reps, más detalla.
+#print(expanded)

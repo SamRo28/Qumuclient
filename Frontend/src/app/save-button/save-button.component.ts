@@ -1,115 +1,3 @@
-/*import { Component, Output, EventEmitter } from '@angular/core';
-import { ManagerService } from '../manager.service';
-import { UserService } from '../user.service';
-import { ReperService } from '../reper.service';
-
-@Component({
-  selector: 'app-save-button',
-  templateUrl: './save-button.component.html',
-  styleUrls: ['./save-button.component.css']
-})
-export class SaveButtonComponent {
-
-  isLoginOpen: boolean = false;
-  username: string = '';
-  password: string = '';
-  isLoggingIn: boolean = false;
-
-  @Output() saveClick = new EventEmitter<void>();
-
-  constructor(public manager : ManagerService, private userService : UserService, private reperService : ReperService){
-
-  }
-  
-
-  onSave(): void {
-    
-    if (!sessionStorage.getItem('token')) {
-      this.openLoginModal();
-    }
-    else {
-    console.log('Login successful:', sessionStorage.getItem('token'));
-    this.reperService.save(this.manager.selectedProject!).subscribe({
-      next: (response) => {
-
-    },
-      error: (error) => {
-      console.error('Error al guardar:', error);
-    }
-      
-    });
-
-}
-         
-  }
-
-  openLoginModal(): void {
-    this.isLoginOpen = true;
-  }
-
-  closeModal() {
-    this.isLoginOpen = false;
-    this.username = '';
-    this.password = '';
-    this.isLoggingIn = false;
-    
-  }
-  /*
-  onLogin(): void {
-    if (this.username.trim() && this.password.trim()) {
-      this.isLoggingIn = true;
-
-      this.userService.login(this.username, this.password)
-      .subscribe({
-        next: (token) => {
-          
-          this.isLoggingIn = false;
-          console.log('Emitiendo saveClick desde SaveButtonComponent');
-          this.saveClick.emit(); // Emit the save click event after successful login
-          this.isLoginOpen = false;
-        },
-        error: (error) => {
-          console.error('Login failed:', error);
-          this.isLoggingIn = false;
-        }
-      });
-      
-    }
-  }
-
-onLogin(): void {
-    if (this.username.trim() && this.password.trim()) {
-      this.isLoggingIn = true;
-
-      this.userService.login(this.username, this.password)
-      .subscribe({
-        next: (token) => {
-          
-          this.isLoggingIn = false;
-          // Guardar token si el servicio lo devuelve
-          if (token) {
-            sessionStorage.setItem('token', token as unknown as string);
-          }
-          this.isLoginOpen = false;
-
-          console.log('Emitiendo saveClick desde SaveButtonComponent (después de cerrar modal)');
-          // emitir con pequeño retardo para garantizar que el cierre del modal se procese
-          setTimeout(() => this.saveClick.emit(), 0);
-        },
-        error: (error) => {
-          console.error('Login failed:', error);
-          this.isLoggingIn = false;
-        }
-      });
-      
-    }
-  }
-
-
-}
-*/
-
-// ...existing code...
 import { Component, Output, EventEmitter } from '@angular/core';
 import { ManagerService } from '../manager.service';
 import { UserService } from '../user.service';
@@ -132,13 +20,13 @@ export class SaveButtonComponent {
 
   @Output() saveClick = new EventEmitter<void>();
 
-  constructor(public manager : ManagerService, private userService : UserService, private reperService : ReperService){
+  constructor(public manager: ManagerService, private userService: UserService, private reperService: ReperService) {
 
   }
-  
+
 
   onSave(): void {
-    
+
     if (!sessionStorage.getItem('token')) {
       // marcar intención de guardar y abrir modal
       this.pendingSave = true;
@@ -147,13 +35,14 @@ export class SaveButtonComponent {
     }
     else {
       this.performSave();
-    }     
+    }
   }
 
   // Nuevo método centralizado para realizar el guardado
   private performSave(): void {
-    console.log('Login successful:', sessionStorage.getItem('token'));
+
     const project = this.manager.selectedProject;
+
     if (!project) {
       console.warn('No project selected to save.');
       return;
@@ -161,9 +50,13 @@ export class SaveButtonComponent {
 
     this.reperService.save(project).subscribe({
       next: (response) => {
-        console.log('Guardado completado', response);
-        // Notificar a quien escuche el evento
+        // Marcar el proyecto como guardado
+        this.manager.markProjectAsSaved();
+        this.manager.markMutantCyclesAsSaved();
+
         this.saveClick.emit();
+
+        console.log('Project saved successfully');
       },
       error: (error) => {
         console.error('Error al guardar:', error);
@@ -182,37 +75,15 @@ export class SaveButtonComponent {
     this.isLoggingIn = false;
     this.pendingSave = false; // limpiar si cierra sin loguear
   }
-  /*
+
   onLogin(): void {
     if (this.username.trim() && this.password.trim()) {
       this.isLoggingIn = true;
 
       this.userService.login(this.username, this.password)
-      .subscribe({
-        next: (token) => {
-          
-          this.isLoggingIn = false;
-          console.log('Emitiendo saveClick desde SaveButtonComponent');
-          this.saveClick.emit(); // Emit the save click event after successful login
-          this.isLoginOpen = false;
-        },
-        error: (error) => {
-          console.error('Login failed:', error);
-          this.isLoggingIn = false;
-        }
-      });
-      
-    }
-  }*/
-
-  onLogin(): void {
-      if (this.username.trim() && this.password.trim()) {
-        this.isLoggingIn = true;
-
-        this.userService.login(this.username, this.password)
         .subscribe({
           next: (token) => {
-            
+
             this.isLoggingIn = false;
             // Guardar token si el servicio lo devuelve
             if (token) {
@@ -237,9 +108,9 @@ export class SaveButtonComponent {
             this.isLoggingIn = false;
           }
         });
-        
-      }
+
     }
+  }
 
 
 }

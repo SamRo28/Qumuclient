@@ -11,16 +11,22 @@ import { Project } from '../model/Project';
 export class HomeComponent implements OnInit {
 
 
-  constructor(public manager : ManagerService) { }
+  constructor(public manager: ManagerService) { }
 
   ngOnInit(): void {
   }
 
   createCircuit() {
+    let circuit = new Project(crypto.randomUUID(), "Project1")
+    this.manager.setNewselectedProject(circuit)
+
+    if (sessionStorage.getItem('token')) {
+      this.manager.showSidebar = true
+    }
+
+    // Cambiar visibilidad al final para asegurar que los datos estén listos
     this.manager.showHome = false
     this.manager.showCircuit = true
-    let circuit = new Project(crypto.randomUUID(),"Project1")
-    this.manager.setNewselectedProject(circuit)
   }
 
 }
