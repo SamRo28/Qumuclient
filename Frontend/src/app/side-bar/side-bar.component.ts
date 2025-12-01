@@ -35,7 +35,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription = new Subscription();
 
-
   constructor(
     private router: Router,
     private el: ElementRef,
@@ -67,7 +66,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     );
 
     // Suscribirse a cambios en el proyecto seleccionado
-    // Esta es la ÚNICA fuente de verdad para agregar proyectos nuevos
     this.subs.add(
       this.manager.selectedProject$.subscribe((project) => {
         if (project) {
@@ -91,6 +89,18 @@ export class SideBarComponent implements OnInit, OnDestroy {
       })
     );
 
+    // Suscribirse a eliminación de proyectos
+    this.subs.add(
+      this.manager.projectDeleted$.subscribe((projectId) => {
+        this.circuits = this.circuits.filter(c => c.id !== projectId);
+        if (this.circuits.length > 0) {
+          this.selectCircuit(this.circuits[0]);
+        } else {
+          this.createNewCircuit();
+        }
+      })
+    );
+
     // Agregar el proyecto actual si existe y no está en la lista
     if (this.manager.selectedProject) {
       const exists = this.circuits.some(c =>
@@ -104,28 +114,35 @@ export class SideBarComponent implements OnInit, OnDestroy {
     }
   }
 
-  itToList(circuit: Project): void {
-    // Verificar si el circuito ya existe en la lista
-    const existingIndex = this.circuits.findIndex(c => c.id === circuit.id);
-
-    if (existingIndex >= 0) {
-      // Si existe, reemplazarlo
-      this.circuits[existingIndex] = circuit;
-    } else {
-      // Si no existe, agregarlo
-      this.circuits.push(circuit);
-    }
-
-    // Expandir automáticamente el circuito recién agregado
-    this.expandedCircuits.add(circuit.name!);
+  toggleMenu() {
+    this.menuAbierto = !this.menuAbierto;
+    this.manager.sidebarExpanded = this.menuAbierto;
   }
 
-  getuserEmail(): void {
-    this.reperService.getUser(sessionStorage.getItem('token')!).subscribe({
-      next: (data) => {
-        sessionStorage.setItem('email', data);
-      }
-    });
+  createNewCircuit() {
+    // Protección contra doble-click
+    if (this.isCreatingProject) {
+      return;
+    }
+
+    this.isCreatingProject = true;
+
+    // Generar nombre único
+    let name = 'Project' + (this.circuits.length + 1);
+    let newCircuit = new Project();
+    newCircuit.name = name;
+
+    // Configurar el manager
+    this.manager.setNewselectedProject(newCircuit);
+    this.manager.showCircuit = true;
+    this.manager.showMutantsInfo = false;
+    this.manager.showSaveButton = false;
+    this.manager.showMutantCycleInfo = false;
+
+    // Resetear protección después de un breve delay
+    setTimeout(() => {
+      this.isCreatingProject = false;
+    }, 500);
   }
 
   toggleCircuit(circuitId: string): void {
@@ -224,42 +241,6 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.mostrarInicio = false;
   }
 
-  toggleMenu() {
-    this.menuAbierto = !this.menuAbierto;
-    this.manager.sidebarExpanded = this.menuAbierto;
-  }
-
-  /**
-   * Crea un nuevo proyecto/circuito
-   * IMPORTANTE: No agregamos manualmente a this.circuits aquí.
-   * La suscripción a selectedProject$ se encarga de eso automáticamente.
-   */
-  createNewCircuit() {
-    // Protección contra doble-click
-    if (this.isCreatingProject) {
-      return;
-    }
-
-    this.isCreatingProject = true;
-
-    // Generar nombre único
-    let name = 'Project' + (this.circuits.length + 1);
-    let newCircuit = new Project();
-    newCircuit.name = name;
-
-    // Configurar el manager
-    this.manager.setNewselectedProject(newCircuit);
-    this.manager.showCircuit = true;
-    this.manager.showMutantsInfo = false;
-    this.manager.showSaveButton = false;
-    this.manager.showMutantCycleInfo = false;
-
-    // Resetear protección después de un breve delay
-    setTimeout(() => {
-      this.isCreatingProject = false;
-    }, 500);
-  }
-
   goToHome() {
     this.manager.showHome = true;
     this.manager.showCircuit = false;
@@ -339,7 +320,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
               mutant.mutatedColumn = mutantData.mutatedColumn;
               mutant.mutatedRow = mutantData.mutatedRow;
               mutant.operator.name = mutantData.operator.name;
-              mutant.mutationOperator = mutantData.operator.name; // <--- The fix
+              mutant.mutationOperator = mutantData.operator.name;
               mutant.operator.id = mutantData.operator.type;
               mutant.operator.enabled = mutantData.operator.enabled;
               mutant.operator.description = mutantData.operator.description;

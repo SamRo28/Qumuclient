@@ -33,13 +33,9 @@ export class ReperService {
     })
   }
 
-  /*saveMutants(id: string, mutants: Mutant[]) {
-    let info = {
-      circuitId: id,
-      mutants: mutants
-    }
-    return this.client.put<any>(this.dict.getReperURL() + "saveJSONs" + this.right + "mutants", info)
-  }*/
+  delete(projectId: string) {
+    return this.client.post<any>("http://localhost:8080/projects/delete", { projectId })
+  }
 
   getUser(token: string) {
     return this.client.post<any>("http://localhost:8080/users/getUser", { token })

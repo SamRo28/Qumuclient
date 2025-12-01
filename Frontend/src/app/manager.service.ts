@@ -18,6 +18,10 @@ export class ManagerService {
   private newCircuitSubject = new Subject<QProgram>();
   public newCircuit$ = this.newCircuitSubject.asObservable();
 
+  // Subject para notificar cuando se elimina un proyecto
+  private projectDeletedSubject = new Subject<string>();
+  public projectDeleted$ = this.projectDeletedSubject.asObservable();
+
   private _selectedMutant = new BehaviorSubject<Mutant | null>(null);
   private _selectedProject = new BehaviorSubject<Project | null>(null);
   private _selectedMutantCycle = new BehaviorSubject<MutantCycle | null>(null);
@@ -78,6 +82,10 @@ export class ManagerService {
     if (this.selectedProject && this.selectedProject.mutantCycles) {
       this.selectedProject.mutantCycles.forEach(mc => mc.newlyGenerated = false);
     }
+  }
+
+  notifyProjectDeleted(projectId: string): void {
+    this.projectDeletedSubject.next(projectId);
   }
 
   /**

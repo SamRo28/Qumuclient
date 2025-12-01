@@ -37,13 +37,38 @@
     flex: 1;
 }
 
-.quantum-icon {
-    color: var(--accent-primary);
+/* Delete Button */
+.delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 200ms ease;
+    padding: 0;
+    margin-left: 0.5rem;
 }
 
-.header-divider {
-    height: 2px;
-    background: linear-gradient(90deg, transparent 0%, rgba(111, 168, 130, 0.3) 50%, transparent 100%);
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.delete-btn:active {
+    transform: scale(0.95);
+}
+
+.delete-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* Glass Cards */
@@ -54,7 +79,8 @@
     border: 1px solid var(--border-glass);
     border-radius: 16px;
     padding: 1.5rem;
-    box-shadow: 0 4px 16px var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px var(--shadow-glass),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
     max-width: 100%;
     box-sizing: border-box;

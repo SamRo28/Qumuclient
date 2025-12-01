@@ -186,6 +186,28 @@ export class CircuitComponent implements OnInit, OnDestroy {
     }
   }
 
+  isLoggedIn(): boolean {
+    return !!sessionStorage.getItem('token');
+  }
+
+  onDeleteCircuit(): void {
+    if (!this.selectedProject || !this.selectedProject.id) {
+      return;
+    }
+
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      this.reper.delete(this.selectedProject.id).subscribe({
+        next: () => {
+          this.manager.notifyProjectDeleted(this.selectedProject!.id!);
+        },
+        error: (error) => {
+          console.error('Error deleting project:', error);
+          AppComponent.error = "Error deleting project";
+        }
+      });
+    }
+  }
+
   selectTab(tab: 'circuit' | 'mutants') {
     if (tab === 'mutants' && !this.isCircuitValid) return;
     this.selectedTab = tab;
