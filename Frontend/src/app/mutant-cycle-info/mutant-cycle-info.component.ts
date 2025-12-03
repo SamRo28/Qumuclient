@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { MutantCycle } from '../model/MutantCycle';
 import { Result } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
@@ -9,24 +9,85 @@ import { QumugenService } from '../qumugen.service';
 import { AppComponent } from '../app.component';
 import { MutantsExecutor } from '../MutantsExecutor';
 import { QProgram } from '../model/QProgram';
+import { QCode } from '../model/QCode';
+import { QiskitExecutorService } from '../qiskit-executor.service';
 
 @Component({
   selector: 'app-mutant-cycle-info',
   templateUrl: './mutant-cycle-info.component.html',
   styleUrls: ['./mutant-cycle-info.component.css']
 })
-export class MutantCycleInfoComponent extends MutantsExecutor {
+export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit, OnChanges {
   override runOne(circuit: QProgram, program?: string): void {
     throw new Error('Method not implemented.');
   }
 
   @Input() mutantCycle?: MutantCycle | null;
 
-  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, /* public qe: QiskitExecutorService, */ private qumugen: QumugenService) {
+  // Pagination properties
+  currentPage: number = 1;
+  pageSize: number = 10;
+  totalPages: number = 0;
+  paginatedMutants: Mutant[] = [];
+
+  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService) {
     super(sanitizer);
   }
 
+  ngOnInit(): void {
+    if (this.manager.selectedProject?.qProgram) {
+      this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
+        code => {
+          this.manager.selectedProject!.qProgram.qCode = new QCode()
+          this.manager.selectedProject!.qProgram.qCode.code = code.wholeCode.split("\n")
+        },
+        error => {
+          console.log(error)
+        }
+      )
+    }
+    this.updatePagination();
+  }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['mutantCycle']) {
+      this.currentPage = 1; // Reset to first page on new cycle
+      this.updatePagination();
+    }
+  }
+
+  updatePagination(): void {
+    if (!this.mutantCycle || !this.mutantCycle.mutants) {
+      this.paginatedMutants = [];
+      this.totalPages = 0;
+      return;
+    }
+    this.totalPages = Math.ceil(this.mutantCycle.mutants.length / this.pageSize);
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedMutants = this.mutantCycle.mutants.slice(startIndex, endIndex);
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.updatePagination();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.updatePagination();
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePagination();
+    }
+  }
 
   onExecute(): void {
     console.log('Executing mutant cycle:', this.mutantCycle);
@@ -112,10 +173,9 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
     if (this.stopped)
       return
 
-    this.showModal("Executing original")
+    //this.showModal("Executing original")
 
-    // TODO: Reemplazar con ExecuterService.runOne()
-    /* this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
+    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)
@@ -146,7 +206,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
           }
         )
       }
-    ) */
+    )
   }
 
   private _runMutants(start: number, chunkSize: number) {
@@ -161,7 +221,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
       this.qumugen.getMultipleQiskitCode(mutants).subscribe(
         results => {
           // TODO: Reemplazar con ExecuterService.executeWithoutStrategy()
-          /* this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
+          this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
             result => {
 
               start = start + chunkSize
@@ -178,7 +238,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor {
               this.hideModal()
               throw error
             }
-          ) */
+          )
         },
         error => {
           this.hideModal()
