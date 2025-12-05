@@ -135,7 +135,7 @@
 }
 
 .algorithm-group {
-  flex: 3;
+  flex: 2;
   min-width: 0;
 }
 
@@ -463,4 +463,8 @@
 .total-pages {
   color: var(--text-primary);
   font-weight: 700;
+}
+.tolerated-error-group {
+  flex: 1;
+  min-width: 0;
 }

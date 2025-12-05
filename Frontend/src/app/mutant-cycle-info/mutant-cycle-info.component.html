@@ -52,6 +52,12 @@
             [value]="mutantCycle.execConfiguration?.execAlgorithm || ''" (input)="updateExecAlgorithm($event)"
             class="form-input algorithm-input" placeholder="Enter execution algorithm">
         </div>
+
+        <div class="form-group tolerated-error-group">
+          <label for="toleratedError">Tolerated Error</label>
+          <input type="number" id="toleratedError" name="toleratedError" [value]="manager.toleratedError"
+            (change)="updateToleratedError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05">
+        </div>
       </div>
     </div>
 

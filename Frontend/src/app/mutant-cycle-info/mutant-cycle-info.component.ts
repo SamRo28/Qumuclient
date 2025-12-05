@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { MutantCycle } from '../model/MutantCycle';
-import { Result } from '../model/MutantResult';
+import { Result, MutantResult } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ManagerService } from '../manager.service';
@@ -121,6 +121,17 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     }
   }
 
+  updateToleratedError(event: any): void {
+    const value = parseFloat(event.target.value);
+    if (isNaN(value) || value < 0 || value > 1) {
+      AppComponent.error = "Tolerated Error must be between 0 and 1";
+      event.target.value = this.manager.toleratedError; // Revert to previous value
+    } else {
+      this.manager.toleratedError = value;
+      AppComponent.error = ""; // Clear error if valid
+    }
+  }
+
   getFormattedDate(): string {
     if (!this.mutantCycle?.execConfiguration?.executionDate) return '';
     const date = this.mutantCycle.execConfiguration.executionDate;
@@ -148,17 +159,17 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   getResultDisplayText(result?: Result): string {
-    if (!result) return 'Pendiente';
+    if (!result) return 'Pending';
 
     switch (result) {
       case Result.KILLED:
-        return 'Eliminado';
+        return 'Killed';
       case Result.ALIVE:
-        return 'Vivo';
+        return 'Alive';
       case Result.ZOMBIE:
         return 'Zombie';
       default:
-        return 'Pendiente';
+        return 'Pending';
     }
   }
 
@@ -182,7 +193,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
           return
 
         this.originalResults = originalResults
-        let header1 = document.getElementById("header1")
+        /*let header1 = document.getElementById("header1")
         let header2 = document.getElementById("header2")
         let children = header1!.childElementCount
         for (let i = 1; i < children; i++) {
@@ -190,7 +201,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
           header1?.removeChild(child!)
           child = header2?.childNodes.item(3)
           header2?.removeChild(child!)
-        }
+        }*/
         if (this.stopped)
           return
 
@@ -216,14 +227,15 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
     this.showModal(`Running mutants from ${start} to ${end}`); // Mostrar el modal con el rango de mutantes
 
-    let mutants = this.manager.mutants.slice(start, end)
-    if (mutants.length > 0) {
-      this.qumugen.getMultipleQiskitCode(mutants).subscribe(
+    let mutantsToFormat = this.manager.mutants.slice(start, end)
+    let formattedMutants = this._formatMutantsforCode(mutantsToFormat)
+    if (mutantsToFormat.length > 0) {
+      this.qumugen.getMultipleQiskitCode(formattedMutants).subscribe(
         results => {
           // TODO: Reemplazar con ExecuterService.executeWithoutStrategy()
           this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
             result => {
-
+              this.processMutantResults(result)
               start = start + chunkSize
               if (this.stopped)
                 return
@@ -246,6 +258,39 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         }
       )
     }
+  }
+
+  processMutantResults(results: any[]) {
+    for (let result of results) {
+      let mutant = this.manager.mutants.find(m => m.mutantIndex == result.mutantIndex)
+      if (mutant) {
+        let mutantResult = new MutantResult({})
+        if (result.killed) {
+          mutantResult.result = Result.KILLED
+          this.killedMutants++
+        } else {
+          mutantResult.result = Result.ALIVE
+          this.aliveMutants++
+        }
+        mutant.result = mutantResult
+      }
+    }
+  }
+
+  private _formatMutantsforCode(mutants: Mutant[]) {
+    let formattedMutants: any[] = []
+    for (let mutant of mutants) {
+      let formattedCircuit = {
+        quirkCode: mutant.circuit?.qCircuit.quirkCode,
+        qubits: mutant.circuit?.qubits
+      }
+      let formattedMutant: any = {
+        mutantIndex: mutant.mutantIndex,
+        circuit: formattedCircuit
+      }
+      formattedMutants.push(formattedMutant)
+    }
+    return formattedMutants
   }
 
 }
