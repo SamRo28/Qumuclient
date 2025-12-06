@@ -195,23 +195,28 @@ export class CircuitComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      this.reper.delete(this.selectedProject.id).subscribe({
-        next: () => {
-          this.manager.notifyProjectDeleted(this.selectedProject!.id!);
-        },
-        error: (error) => {
-          console.error('Error deleting project:', error);
-          AppComponent.error = "Error deleting project";
-        }
-      });
-    }
+    this.manager.openConfirmationModal({
+      title: 'Delete Project',
+      message: 'Are you sure you want to delete this project? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: () => {
+        this.reper.delete(this.selectedProject!.id!).subscribe({
+          next: () => {
+            this.manager.notifyProjectDeleted(this.selectedProject!.id!);
+          },
+          error: (error) => {
+            console.error('Error deleting project:', error);
+            AppComponent.error = "Error deleting project";
+          }
+        });
+      }
+    });
   }
 
   selectTab(tab: 'circuit' | 'mutants') {
     if (tab === 'mutants' && !this.isCircuitValid) return;
     this.selectedTab = tab;
   }
-
-
 }

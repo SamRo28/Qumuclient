@@ -12,7 +12,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Project } from '../model/Project';
 import { QCircuit } from '../model/QCircuit';
 import { UserService } from '../user.service';
-import { Operator } from '../model/OperatorFamily';
 import { ProjectNote } from '../model/ProjectNote';
 
 @Component({
@@ -260,10 +259,17 @@ export class SideBarComponent implements OnInit, OnDestroy {
   refreshCircuits(): void {
     // Verificar si hay cambios sin guardar en el proyecto actual
     if (this.manager.selectedProject && !this.manager.selectedProject.saved) {
-      const confirmRefresh = confirm('You have unsaved changes in the current project. If you refresh, these changes will be lost. Do you want to continue?');
-      if (!confirmRefresh) {
-        return;
-      }
+      this.manager.openConfirmationModal({
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes in the current project. If you refresh, these changes will be lost. Do you want to continue?',
+        confirmText: 'Refresh',
+        cancelText: 'Cancel',
+        type: 'warning',
+        onConfirm: () => {
+          this.loadCircuitsFromService();
+        }
+      });
+      return;
     }
 
     this.loadCircuitsFromService();

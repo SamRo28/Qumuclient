@@ -152,18 +152,27 @@ export class ProjectNotesComponent implements OnInit, OnDestroy {
     /**
      * Elimina una nota
      */
+    /**
+     * Elimina una nota
+     */
     deleteNote(): void {
         if (!this.currentProject || !this.selectedNote) return;
 
-        const confirmDelete = confirm(`¿Estás seguro de que quieres eliminar la nota "${this.selectedNote.title}"?`);
-        if (!confirmDelete) return;
-
-        const index = this.currentProject.projectNotes.findIndex(n => n.id === this.selectedNote!.id);
-        if (index !== -1) {
-            this.currentProject.projectNotes.splice(index, 1);
-            this.manager.markProjectAsModified();
-            this.closeModal();
-        }
+        this.manager.openConfirmationModal({
+            title: 'Delete Note',
+            message: 'Are you sure you want to delete this note? This action cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger',
+            onConfirm: () => {
+                const index = this.currentProject!.projectNotes.findIndex(n => n.id === this.selectedNote!.id);
+                if (index !== -1) {
+                    this.currentProject!.projectNotes.splice(index, 1);
+                    this.manager.markProjectAsModified();
+                    this.closeModal();
+                }
+            }
+        });
     }
 
     /**

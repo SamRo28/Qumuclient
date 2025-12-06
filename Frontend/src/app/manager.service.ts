@@ -208,4 +208,56 @@ export class ManagerService {
   setSelectedMutantCycle(mutantCycle: MutantCycle | null): void {
     this._selectedMutantCycle.next(mutantCycle);
   }
+
+  // --- Global Confirmation Modal Management ---
+
+  modalState = {
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    type: 'info' as 'info' | 'warning' | 'danger',
+    onConfirm: () => { },
+    onCancel: () => { }
+  };
+
+  openConfirmationModal(config: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    type?: 'info' | 'warning' | 'danger';
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }) {
+    this.modalState = {
+      isOpen: true,
+      title: config.title,
+      message: config.message,
+      confirmText: config.confirmText || 'Confirm',
+      cancelText: config.cancelText || 'Cancel',
+      type: config.type || 'info',
+      onConfirm: config.onConfirm,
+      onCancel: config.onCancel || (() => { })
+    };
+  }
+
+  closeConfirmationModal() {
+    this.modalState.isOpen = false;
+  }
+
+  confirmModal() {
+    if (this.modalState.onConfirm) {
+      this.modalState.onConfirm();
+    }
+    this.closeConfirmationModal();
+  }
+
+  cancelModal() {
+    if (this.modalState.onCancel) {
+      this.modalState.onCancel();
+    }
+    this.closeConfirmationModal();
+  }
 }
