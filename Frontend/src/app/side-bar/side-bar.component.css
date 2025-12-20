@@ -7,11 +7,12 @@
   top: 0;
   height: 100vh;
   width: 70px;
-  background: var(--glass-bg-sidebar);
+  /* Green Theme (Restored) */
+  background: linear-gradient(180deg, rgba(6, 95, 70, 0.85) 0%, rgba(6, 78, 59, 0.9) 100%);
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border-right: 1px solid var(--border-glass);
-  box-shadow: 2px 0 24px var(--shadow-glass);
+  border-right: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow: 4px 0 24px rgba(6, 78, 59, 0.25);
   transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease;
   z-index: 1000;
   overflow-x: hidden;
@@ -19,6 +20,8 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   display: flex;
   flex-direction: column;
+  color: #ecfdf5;
+  /* Light green-white text for contrast */
 }
 
 .sidebar.open {
@@ -34,15 +37,15 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  border: 1px solid var(--border-glass);
-  background: var(--glass-bg);
-  color: var(--accent-primary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ecfdf5;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 200ms;
-  box-shadow: 0 2px 8px var(--shadow-glass);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 10;
   margin: 1rem auto;
   flex-shrink: 0;
@@ -56,8 +59,8 @@
 }
 
 .toggle-btn:hover {
-  background: var(--glass-bg-hover);
-  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ecfdf5;
   transform: translateX(-50%) scale(1.05);
   box-shadow: 0 4px 12px var(--shadow-glass-strong);
 }
@@ -101,8 +104,8 @@
 /* Tree Header */
 .tree-header {
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-glass-light);
-  background: var(--glass-bg-card);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.2);
+  background: rgba(6, 78, 59, 0.4);
   flex-shrink: 0;
 }
 
@@ -116,7 +119,7 @@
 .tree-header h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #ecfdf5;
   margin: 0;
   flex: 1;
 }
@@ -164,9 +167,8 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: none;
-  background: var(--shadow-glass);
-  color: var(--accent-secondary);
+  background: rgba(0, 0, 0, 0.2);
+  color: #d1fae5;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -174,15 +176,15 @@
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid var(--border-glass-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .refresh-btn:hover {
-  background: var(--shadow-glass-strong);
-  color: var(--accent-primary);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
   transform: rotate(180deg);
-  box-shadow: 0 0 12px var(--shadow-glass);
-  border-color: var(--border-glass);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.3);
+  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .refresh-btn:active {
@@ -292,7 +294,7 @@
 /* Node Label */
 .node-label {
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: #d1fae5;
   font-weight: 500;
   flex: 1;
   white-space: nowrap;
@@ -316,19 +318,19 @@
   opacity: 0.7;
 }
 
-/* Unsaved Indicator - High Visibility Neon */
+/* Unsaved Indicator - High Visibility Amber/Orange */
 .unsaved-indicator {
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0077ff 0%, #0156a5 100%);
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
   margin-left: 0.5rem;
   position: relative;
   animation: pulse-glow 1.5s ease-in-out infinite;
   box-shadow:
-    0 0 6px rgba(63, 117, 233, 0.8),
-    0 0 10px rgba(10, 51, 128, 0.4);
+    0 0 6px rgba(251, 191, 36, 0.8),
+    0 0 10px rgba(217, 119, 6, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
@@ -336,13 +338,12 @@
   content: '';
   position: absolute;
   top: 50%;
-
   left: 50%;
   transform: translate(-50%, -50%);
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: rgba(10, 51, 128, 0.3);
+  background: rgba(217, 119, 6, 0.3);
   animation: pulse-ring 1.5s ease-in-out infinite;
 }
 
