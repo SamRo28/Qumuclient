@@ -10,7 +10,9 @@ import { QumugenService } from './qumugen.service';
 })
 export class QiskitExecutorService {
 
-    qeUrl = "http://localhost:8502/"
+    //    qeUrl = "http://localhost:8502/"
+    qeUrl = "https://ljwztzh3-8502.uks1.devtunnels.ms/"
+
 
     constructor(private client: HttpClient, private manager: ManagerService) { }
 
@@ -19,6 +21,7 @@ export class QiskitExecutorService {
         let program = {
             qubits: qprogram.qubits,
             qiskitCode: qprogram.qCode.code,
+            inputQubits: inputQubits,
             outputQubits: qprogram.outputQubits
         }
 
@@ -37,8 +40,9 @@ export class QiskitExecutorService {
         return this.client.put(url, info)
     }
 
-    getCores() {
-        return this.client.get<number>(this.qeUrl + "strategy/getCores")
+    getCores(): any {
+        //return this.client.get<number>(this.qeUrl + "strategy/getCores")
+        return 1
     }
 
     executeWithoutStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number) {
@@ -66,7 +70,8 @@ export class QiskitExecutorService {
         for (let i = 0; i < mutants.length; i++) {
             capped.push({
                 wholeCode: mutants[i].wholeCode,
-                mutantIndex: mutants[i].mutantIndex
+                mutantIndex: mutants[i].mutantIndex,
+                inputQubits: mutants[i].inputQubits
             })
         }
         let info = {

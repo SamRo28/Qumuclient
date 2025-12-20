@@ -209,7 +209,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     }
   }
 
-  selectMutantCycle(mutantCycle: MutantCycle): void {
+  selectMutantCycle(mutantCycle: MutantCycle, project: Project): void {
+    this.manager.setselectedProject(project);
     this.manager.setSelectedMutantCycle(mutantCycle);
     this.manager.showCircuit = false;
     this.manager.showHome = false;

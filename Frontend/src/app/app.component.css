@@ -73,3 +73,72 @@ h1 {
   right: 80px;
   z-index: 10000;
 }
+
+/* Execution Status Notification */
+.execution-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2100;
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.notification-glass {
+  background: var(--glass-bg-card, rgba(30, 30, 40, 0.6));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 16px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary, #ffffff);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.spinner-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-glow, #7da88a);
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+.success-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary-glow, #7da88a);
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

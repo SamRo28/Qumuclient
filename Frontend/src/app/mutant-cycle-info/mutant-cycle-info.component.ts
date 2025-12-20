@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
 import { MutantCycle } from '../model/MutantCycle';
 import { Result, MutantResult } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
@@ -28,10 +28,53 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   currentPage: number = 1;
   pageSize: number = 10;
   totalPages: number = 0;
+
   paginatedMutants: Mutant[] = [];
+
+  // Matrix properties
+  matrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, error: number }[] }[] = [];
+  paginatedMatrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, error: number }[] }[] = [];
+  inputHeaders: string[] = [];
+
+  // Dropdown UI state
+  showMachineDropdown = false;
+  showAlgoDropdown = false;
 
   constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService) {
     super(sanitizer);
+  }
+
+  toggleMachineDropdown(event: Event) {
+    event.stopPropagation();
+    this.showMachineDropdown = !this.showMachineDropdown;
+    this.showAlgoDropdown = false;
+  }
+
+  toggleAlgoDropdown(event: Event) {
+    event.stopPropagation();
+    this.showAlgoDropdown = !this.showAlgoDropdown;
+    this.showMachineDropdown = false;
+  }
+
+  selectMachine(machine: string) {
+    if (this.mutantCycle?.execConfiguration) {
+      this.mutantCycle.execConfiguration.machine = machine;
+    }
+    this.showMachineDropdown = false;
+  }
+
+  selectAlgorithm(algo: string) {
+    if (this.mutantCycle?.execConfiguration) {
+      this.mutantCycle.execConfiguration.execAlgorithm = algo;
+    }
+    this.showAlgoDropdown = false;
+  }
+
+  // Close dropdowns when clicking outside
+  @HostListener('document:click')
+  closeDropdowns() {
+    this.showMachineDropdown = false;
+    this.showAlgoDropdown = false;
   }
 
   ngOnInit(): void {
@@ -50,8 +93,17 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['mutantCycle']) {
+    if (changes['mutantCycle'] && this.mutantCycle?.mutants) {
       this.currentPage = 1; // Reset to first page on new cycle
+
+      // Initialize matrix rows
+      this.matrixRows = this.mutantCycle.mutants.map(m => ({
+        mutant: m,
+        cells: []
+      }));
+      this.inputHeaders = [];
+
+      this.loadKillingMatrixFromExistingResults();
       this.updatePagination();
     }
   }
@@ -65,7 +117,9 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.totalPages = Math.ceil(this.mutantCycle.mutants.length / this.pageSize);
     const startIndex = (this.currentPage - 1) * this.pageSize;
     const endIndex = startIndex + this.pageSize;
+
     this.paginatedMutants = this.mutantCycle.mutants.slice(startIndex, endIndex);
+    this.paginatedMatrixRows = this.matrixRows.slice(startIndex, endIndex);
   }
 
   nextPage(): void {
@@ -143,6 +197,10 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     return mutant.mutantIndex || index;
   }
 
+  trackByMatrixRow(index: number, row: { mutant: Mutant }): any {
+    return row.mutant?.mutantIndex || index;
+  }
+
   getResultBadgeClass(result?: Result): string {
     if (!result) return 'pending';
 
@@ -174,6 +232,12 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   override runMutants() {
+    if (this.mutantCycle && this.mutantCycle.execConfiguration) {
+      this.mutantCycle.execConfiguration.executionDate = new Date();
+      if (this.mutantCycle.execConfiguration.execAlgorithm) {
+        this.manager.executionAlgorithm = this.mutantCycle.execConfiguration.execAlgorithm;
+      }
+    }
     AppComponent.error = ""
     this.runningMutants = true
     this.originalResults = []
@@ -181,12 +245,17 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.aliveMutants = 0
     this.killedMutants = 0
 
+    if (this.hasExecutionResults()) {
+      this.manager.showNotification("This mutant cycle has already been executed.", 'success', 3000);
+      return;
+    }
+
     if (this.stopped)
       return
 
-    //this.showModal("Executing original")
+    this.showModal("The mutants are running; you can continue using the application. Do not close the window.");
 
-    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm, this.manager.selectedProject!.qProgram.qubits, false).subscribe(
+    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, "AllAgainstAll", this.manager.selectedProject!.qProgram.qubits, false).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)
@@ -205,43 +274,46 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         if (this.stopped)
           return
 
-        // TODO: Reemplazar con ExecuterService.getCores()
-        this.qe.getCores().subscribe(
-          result => {
-            let chunkSize = 2 * result
-            this._runMutants(0, chunkSize)
-          },
-          error => {
-            this.hideModal()
-            throw error
-          }
-        )
+        this._runMutants(0, 5)
+
       }
     )
   }
 
+  protected override showModal(message: string) {
+    this.manager.setExecutionStatus(message);
+  }
+
+  protected override hideModal() {
+    this.manager.clearExecutionStatus();
+  }
+
   private _runMutants(start: number, chunkSize: number) {
     let end = start + chunkSize
-    if (end > this.manager.mutants.length)
-      end = this.manager.mutants.length
+    if (end > this.manager.selectedMutantCycle!.mutants.length)
+      end = this.manager.selectedMutantCycle!.mutants.length
 
-    this.showModal(`Running mutants from ${start} to ${end}`); // Mostrar el modal con el rango de mutantes
 
-    let mutantsToFormat = this.manager.mutants.slice(start, end)
+
+    let mutantsToFormat = this.manager.selectedMutantCycle!.mutants.slice(start, end)
     let formattedMutants = this._formatMutantsforCode(mutantsToFormat)
     if (mutantsToFormat.length > 0) {
       this.qumugen.getMultipleQiskitCode(formattedMutants).subscribe(
         results => {
           // TODO: Reemplazar con ExecuterService.executeWithoutStrategy()
-          this.qe.executeWithoutStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError).subscribe(
+          this.qe.executeWithStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError, false, undefined).subscribe(
             result => {
-              this.processMutantResults(result)
+              this.processMutantResults(result, start)
               start = start + chunkSize
               if (this.stopped)
                 return
 
-              if (start >= this.manager.mutants.length) {
+              if (start >= this.manager.selectedMutantCycle!.mutants.length) {
                 this.hideModal(); // Ocultar el modal cuando termine la ejecución de todos los mutantes
+                this.hideModal(); // Ocultar el modal cuando termine la ejecución de todos los mutantes
+                this.manager.showNotification("The mutants execution has finished", 'success', 5000); // Mostrar notificación de éxito
+                this.manager.selectedMutantCycle!.newlyGenerated = true; // Ensure it's included in save payload
+                this.manager.markProjectAsModified(); // Enable save button
               } else {
                 this._runMutants(start, chunkSize); // Continuar con el siguiente lote de mutantes
               }
@@ -257,23 +329,6 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
           throw error
         }
       )
-    }
-  }
-
-  processMutantResults(results: any[]) {
-    for (let result of results) {
-      let mutant = this.manager.mutants.find(m => m.mutantIndex == result.mutantIndex)
-      if (mutant) {
-        let mutantResult = new MutantResult({})
-        if (result.killed) {
-          mutantResult.result = Result.KILLED
-          this.killedMutants++
-        } else {
-          mutantResult.result = Result.ALIVE
-          this.aliveMutants++
-        }
-        mutant.result = mutantResult
-      }
     }
   }
 
@@ -293,4 +348,148 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     return formattedMutants
   }
 
+  processMutantResults(results: any[][], start: number) {
+    // results is a list of lists.
+    // results[m] contains the list of execution results for Mutant 'm'.
+    // Outer List = Mutants
+    // Inner List = Inputs (Execution Cases)
+
+    // Iterate over Mutants (Outer List)
+    for (let m = 0; m < results.length; m++) {
+      // Calculate global mutant index based on order in the batch + start offset
+      const globalIndex = m + start;
+      const row = this.matrixRows[globalIndex];
+
+      if (!row) continue;
+
+      const mutantExecutionResults = results[m]; // List of inputs for this mutant
+
+      // Iterate over Inputs (Inner List)
+      for (let i = 0; i < mutantExecutionResults.length; i++) {
+        // Define Input Header from Index 'i' (as per user's inner list structure)
+        const binaryInput = (i).toString(2);
+
+        // global header collection (check only once per batch or just allow redundancy check)
+        if (!this.inputHeaders.includes(binaryInput)) {
+          this.inputHeaders.push(binaryInput);
+          this.inputHeaders.sort((a, b) => parseInt(a, 2) - parseInt(b, 2));
+        }
+
+        const batchResult = mutantExecutionResults[i];
+        if (!batchResult) continue;
+
+        // Use properties directly
+        const killed = batchResult.killed;
+        const error = batchResult.error;
+
+        // Create and associate MutantResult
+        const mr = new MutantResult({
+          id: i,
+          result: killed ? Result.KILLED : Result.ALIVE
+        });
+
+        if (!row.mutant.mutantResults) {
+          row.mutant.mutantResults = [];
+        }
+        row.mutant.mutantResults[i] = mr;
+
+        // Update Cell
+        let cell = row.cells.find(c => c.input === binaryInput);
+        if (cell) {
+          cell.killed = killed;
+          cell.error = error;
+        } else {
+          row.cells.push({
+            input: binaryInput,
+            killed: killed,
+            error: error
+          });
+        }
+      }
+
+      // Update Overall Status for this mutant
+      if (!row.mutant.result) {
+        row.mutant.result = new MutantResult({ result: Result.ALIVE });
+      }
+
+      const anyKilled = row.cells.some(c => c.killed);
+      if (anyKilled) {
+        row.mutant.result.result = Result.KILLED;
+      } else {
+        row.mutant.result.result = Result.ALIVE;
+      }
+    }
+
+    // Re-calculate global stats
+    this.recalculateStats();
+  }
+
+  recalculateStats() {
+    this.killedMutants = 0;
+    this.aliveMutants = 0;
+    this.matrixRows.forEach(row => {
+      if (row.mutant.result?.result === Result.KILLED) {
+        this.killedMutants++;
+      } else if (row.mutant.result?.result === Result.ALIVE) {
+        this.aliveMutants++;
+      }
+    });
+  }
+
+
+
+
+  loadKillingMatrixFromExistingResults() {
+    if (!this.mutantCycle || !this.mutantCycle.mutants) return;
+
+    // Only proceed if at least some mutants have results
+    const hasResults = this.mutantCycle.mutants.some(m => m.mutantResults && m.mutantResults.length > 0);
+    if (!hasResults) return;
+
+    this.inputHeaders = [];
+
+    this.mutantCycle.mutants.forEach((mutant, index) => {
+      const row = this.matrixRows[index];
+      if (!row || !mutant.mutantResults) return;
+
+      mutant.mutantResults.forEach(result => {
+        if (result.id === undefined) return;
+
+        const binaryInput = (result.id).toString(2);
+
+        if (!this.inputHeaders.includes(binaryInput)) {
+          this.inputHeaders.push(binaryInput);
+          this.inputHeaders.sort((a, b) => parseInt(a, 2) - parseInt(b, 2));
+        }
+
+        const killed = result.result === Result.KILLED;
+        const error = 0; // Defaulting to 0 as it is not persisted
+
+        let cell = row.cells.find(c => c.input === binaryInput);
+        if (cell) {
+          cell.killed = killed;
+          cell.error = error;
+        } else {
+          row.cells.push({
+            input: binaryInput,
+            killed: killed, // boolean
+            error: error
+          });
+        }
+      });
+
+      // Ensure overall result is set if not already
+      if (!mutant.result && mutant.mutantResults.length > 0) {
+        const anyKilled = mutant.mutantResults.some(r => r.result === Result.KILLED);
+        mutant.result = new MutantResult({ result: anyKilled ? Result.KILLED : Result.ALIVE });
+      }
+    });
+
+    this.recalculateStats();
+  }
+
+  hasExecutionResults(): boolean {
+    return (this.killedMutants > 0 || this.aliveMutants > 0) &&
+      (this.mutantCycle?.mutants?.some(m => m.result !== undefined && m.result !== null) ?? false);
+  }
 }

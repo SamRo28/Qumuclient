@@ -260,4 +260,54 @@ export class ManagerService {
     }
     this.closeConfirmationModal();
   }
+
+  // --- Execution Status Notification ---
+
+  notification = {
+    message: '',
+    type: 'loading' as 'loading' | 'success',
+    visible: false
+  };
+
+  private notificationTimeout: any;
+
+  showNotification(message: string, type: 'loading' | 'success', duration: number = 0): void {
+    if (this.notificationTimeout) {
+      clearTimeout(this.notificationTimeout);
+    }
+
+    this.notification = {
+      message,
+      type,
+      visible: true
+    };
+
+    if (duration > 0) {
+      this.notificationTimeout = setTimeout(() => {
+        this.closeNotification();
+      }, duration);
+    }
+  }
+
+  closeNotification(): void {
+    this.notification.visible = false;
+  }
+
+  // Legacy support for simple string binding if needed, or mapped to new system
+  get executionStatus(): string | null {
+    return this.notification.visible ? this.notification.message : null;
+  }
+
+  setExecutionStatus(message: string): void {
+    // Default legacy call maps to loading with 5s timeout as per user request for "Running"
+    // But better to control explicitly. For backward compatibility with what I just wrote:
+    this.showNotification(message, 'loading', 5000);
+  }
+
+  clearExecutionStatus(): void {
+    this.closeNotification();
+  }
 }
+
+
+

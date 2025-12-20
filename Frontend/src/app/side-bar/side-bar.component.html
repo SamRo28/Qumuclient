@@ -54,7 +54,7 @@
                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
               <span *ngIf="menuAbierto" class="node-label"
-                (click)="selectMutantCycle(project); $event.stopPropagation()">
+                (click)="selectMutantCycle(project, circuit); $event.stopPropagation()">
                 Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
               </span>
               <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>
@@ -138,7 +138,7 @@
                       [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
                     <i class="fas fa-folder project-icon"></i>
                     <span *ngIf="menuAbierto" class="node-label"
-                      (click)="selectMutantCycle(project); $event.stopPropagation()">
+                      (click)="selectMutantCycle(project, circuit); $event.stopPropagation()">
                       Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
                     </span>
                     <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>

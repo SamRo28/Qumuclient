@@ -29,4 +29,27 @@
     [cancelText]="manager.modalState.cancelText" [type]="manager.modalState.type" (confirm)="manager.confirmModal()"
     (cancel)="manager.cancelModal()">
   </app-confirmation-modal>
+
+  <!-- Execution Status Notification -->
+  <div class="execution-notification" *ngIf="manager.notification.visible">
+    <div class="notification-glass">
+      <div class="notification-content">
+        <!-- Loading Spinner -->
+        <svg *ngIf="manager.notification.type === 'loading'" class="spinner-icon" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="32"
+            stroke-dashoffset="32" stroke-linecap="round" />
+        </svg>
+
+        <!-- Success Tick -->
+        <svg *ngIf="manager.notification.type === 'success'" class="success-icon" viewBox="0 0 24 24" fill="none"
+          xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+            stroke-linejoin="round" />
+        </svg>
+
+        <span>{{ manager.notification.message }}</span>
+      </div>
+    </div>
+  </div>
 </div>

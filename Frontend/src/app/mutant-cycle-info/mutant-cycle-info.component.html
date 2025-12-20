@@ -7,7 +7,7 @@
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
       <span class="title-text">Mutant Cycle: {{ mutantCycle.id }}</span>
-      <button class="execute-btn" (click)="runMutants()">
+      <button class="execute-btn" (click)="runMutants()" [disabled]="runningMutants || hasExecutionResults()">
         <span class="execute-text">EXECUTE</span>
         <span class="execute-icon">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -40,17 +40,42 @@
 
         <div class="form-group machine-group">
           <label for="machine">Machine</label>
-          <input type="text" id="machine" name="machine" [value]="mutantCycle.execConfiguration?.machine || ''"
-            (input)="updateMachine($event)" class="form-input machine-input" placeholder="Enter machine name">
+          <div class="custom-select" [class.open]="showMachineDropdown" (click)="toggleMachineDropdown($event)">
+            <div class="select-trigger">
+              {{ mutantCycle.execConfiguration?.machine || 'AerSimulator' }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="select-options" *ngIf="showMachineDropdown">
+              <div class="option" [class.selected]="mutantCycle.execConfiguration?.machine === 'AerSimulator'"
+                (click)="selectMachine('AerSimulator')">AerSimulator</div>
+              <!-- Add more options here if needed in future -->
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group algorithm-group">
           <label for="execAlgorithm">Execution Algorithm</label>
-          <input type="text" id="execAlgorithm" name="execAlgorithm"
-            [value]="mutantCycle.execConfiguration?.execAlgorithm || ''" (input)="updateExecAlgorithm($event)"
-            class="form-input algorithm-input" placeholder="Enter execution algorithm">
+          <div class="custom-select" [class.open]="showAlgoDropdown" (click)="toggleAlgoDropdown($event)">
+            <div class="select-trigger">
+              {{ mutantCycle.execConfiguration?.execAlgorithm || 'AllAgainstAll' }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="select-options" *ngIf="showAlgoDropdown">
+              <div class="option" [class.selected]="mutantCycle.execConfiguration?.execAlgorithm === 'AllAgainstAll'"
+                (click)="selectAlgorithm('AllAgainstAll')">AllAgainstAll</div>
+              <!-- Add more options here if needed -->
+            </div>
+          </div>
         </div>
 
         <div class="form-group tolerated-error-group">
@@ -72,46 +97,33 @@
 
       <div *ngIf="mutantCycle.mutants && mutantCycle.mutants.length > 0; else emptyMatrix">
         <div class="killing-matrix-container">
-          <table class="killing-matrix-table">
-            <thead>
-              <tr>
-                <th class="index-column">Índice</th>
-                <th class="operator-column">Operador</th>
-                <th class="position-column">Fila</th>
-                <th class="position-column">Columna</th>
-                <th class="result-column">Resultado</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let mutant of paginatedMutants; trackBy: trackByMutantIndex">
-                <td class="index-column">
-                  <span [class.empty-cell]="mutant.mutantIndex === undefined">
-                    {{ mutant.mutantIndex !== undefined ? mutant.mutantIndex : '-' }}
-                  </span>
-                </td>
-                <td class="operator-column">
-                  <span [class.empty-cell]="!mutant.mutationOperator">
-                    {{ mutant.mutationOperator || 'N/A' }}
-                  </span>
-                </td>
-                <td class="position-column">
-                  <span [class.empty-cell]="mutant.mutatedRow === undefined">
-                    {{ mutant.mutatedRow !== undefined ? mutant.mutatedRow : '-' }}
-                  </span>
-                </td>
-                <td class="position-column">
-                  <span [class.empty-cell]="mutant.mutatedColumn === undefined">
-                    {{ mutant.mutatedColumn !== undefined ? mutant.mutatedColumn : '-' }}
-                  </span>
-                </td>
-                <td class="result-column">
-                  <span class="result-badge" [ngClass]="getResultBadgeClass(mutant.result?.result)">
-                    {{ getResultDisplayText(mutant.result?.result) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="killing-matrix-scroll-wrapper">
+            <table class="killing-matrix-table matrix-table">
+              <thead>
+                <tr>
+                  <th class="index-column sticky-col">Index</th>
+                  <th *ngFor="let header of inputHeaders" class="input-header">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of paginatedMatrixRows; trackBy: trackByMatrixRow">
+                  <td class="index-column sticky-col">
+                    <span [class.empty-cell]="row.mutant.mutantIndex === undefined">
+                      {{ row.mutant.mutantIndex !== undefined ? row.mutant.mutantIndex : '-' }}
+                    </span>
+                  </td>
+                  <td *ngFor="let header of inputHeaders" class="result-cell">
+                    <ng-container *ngFor="let cell of row.cells">
+                      <span *ngIf="cell.input === header" class="matrix-cell-badge"
+                        [ngClass]="cell.killed ? 'killed' : 'alive'" [title]="'Error: ' + cell.error">
+                        {{ cell.killed ? 'K' : 'A' }}
+                      </span>
+                    </ng-container>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <!-- Pagination Controls -->
           <div class="pagination-controls" *ngIf="totalPages > 1">

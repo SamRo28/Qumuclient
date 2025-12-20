@@ -29,26 +29,26 @@ public class SimpleRunner implements Runnable {
 	private int outputsSize;
 	private String outputDirectory;
 	private String workingDirectory;
-	
-	public SimpleRunner(ProgramExecutionConf pec, String outputDirectory, String workingDirectory) { 
+
+	public SimpleRunner(ProgramExecutionConf pec, String outputDirectory, String workingDirectory) {
 		this.pec = pec;
 		this.outputsSize = pec.getOutputsSize();
 		this.outputDirectory = outputDirectory;
 		this.workingDirectory = workingDirectory;
 	}
-	
+
 	public SimpleRunner(Mutant mutant, int outputsSize, String outputDirectory, String workingDirectory) {
 		this.mutant = mutant;
 		this.outputsSize = outputsSize;
 		this.outputDirectory = outputDirectory;
 		this.workingDirectory = workingDirectory;
 	}
-	
+
 	@Override
 	public void run() {
 		String code;
 		int mutantIndex;
-		if (this.pec!=null) {
+		if (this.pec != null) {
 			code = this.pec.getCode();
 			mutantIndex = 0;
 		} else {
@@ -65,19 +65,19 @@ public class SimpleRunner implements Runnable {
 		ProcessBuilder pb = new ProcessBuilder();
 		Map<String, String> env = pb.environment();
 		env.put("PATH", this.pythonPath);
-		
+
 		pb.redirectOutput(fOutput);
 		pb.redirectError(fErrors);
-		
+
 		pb.directory(new File(this.workingDirectory));
-		
+
 		int returnCode = 0;
 		String lastCommand = fProgram.getAbsolutePath();
-		this.commands[this.commands.length-1] = this.commands[this.commands.length-1] + " " + lastCommand;
+		this.commands[this.commands.length - 1] = this.commands[this.commands.length - 1] + " " + lastCommand;
 		pb.command(commands);
 		try {
 			Process process = pb.start();
-			returnCode=process.waitFor();
+			returnCode = process.waitFor();
 			return this.analyze(fProgram, fOutput, fErrors, outputs, mutantIndex);
 		} catch (IOException e) {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -86,20 +86,20 @@ public class SimpleRunner implements Runnable {
 			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
 		}
 	}
-	
-	private ProgramExecutionResult analyze(File fProgram, File fOutput, File fErrors, int outputs, int mutantIndex) throws FileNotFoundException, IOException {
-		List<Map<String, Object>> executionResults = new ArrayList<>();
-		
 
-		for (int i=0; i<outputs; i++) {
+	private ProgramExecutionResult analyze(File fProgram, File fOutput, File fErrors, int outputs, int mutantIndex)
+			throws FileNotFoundException, IOException {
+		List<Map<String, Object>> executionResults = new ArrayList<>();
+
+		for (int i = 0; i < outputs; i++) {
 			Map<String, Object> line = new HashMap<>();
 			line.put("order", i);
 			line.put("binary", Integer.toBinaryString(i));
 			line.put("frequency", 0);
 			executionResults.add(line);
 		}
-		
-		try(BufferedReader reader = new BufferedReader(new FileReader(fOutput))) {
+
+		try (BufferedReader reader = new BufferedReader(new FileReader(fOutput))) {
 			JSONObject jso = null;
 			try {
 				jso = new JSONObject(reader.readLine());
@@ -112,7 +112,8 @@ public class SimpleRunner implements Runnable {
 					line.put("frequency", frequency);
 				}
 			} catch (Exception e) {
-				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error with file " + fOutput.getAbsolutePath());
+				throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+						"Error with file " + fOutput.getAbsolutePath());
 			}
 		}
 		fProgram.delete();
@@ -123,13 +124,13 @@ public class SimpleRunner implements Runnable {
 		result.setExecutionResults(executionResults);
 		return result;
 	}
-	
+
 	private File[] createFiles(String code, int mutantIndex) {
 		File fProgram, fOutput, fErrors;
-		if (this.outputDirectory.trim().equalsIgnoreCase("temp")) { 
+		if (this.outputDirectory.trim().equalsIgnoreCase("temp")) {
 			try {
 				fProgram = File.createTempFile("mutant" + mutantIndex + "_", ".py");
-				try(FileOutputStream fos = new FileOutputStream(fProgram)) {
+				try (FileOutputStream fos = new FileOutputStream(fProgram)) {
 					fos.write(code.getBytes());
 				}
 				fOutput = File.createTempFile("output" + mutantIndex + "_", ".txt");
@@ -140,7 +141,7 @@ public class SimpleRunner implements Runnable {
 		} else {
 			try {
 				fProgram = new File(this.outputDirectory + "m" + mutantIndex + ".py");
-				try(FileOutputStream fos = new FileOutputStream(fProgram)) {
+				try (FileOutputStream fos = new FileOutputStream(fProgram)) {
 					fos.write(code.getBytes());
 				}
 				fOutput = new File(this.outputDirectory + "o" + mutantIndex + ".txt");
@@ -158,7 +159,7 @@ public class SimpleRunner implements Runnable {
 
 	public void setCommands(String[] commands) {
 		this.commands = new String[commands.length];
-		for (int i=0; i<commands.length; i++)
+		for (int i = 0; i < commands.length; i++)
 			this.commands[i] = commands[i];
 	}
 
