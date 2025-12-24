@@ -35,12 +35,13 @@
         <div class="form-group">
           <label for="executionDate">Execution Date</label>
           <input type="date" id="executionDate" name="executionDate" [value]="getFormattedDate()"
-            (change)="updateExecutionDate($event)" class="form-input">
+            (change)="updateExecutionDate($event)" class="form-input" [disabled]="hasExecutionResults()">
         </div>
 
         <div class="form-group machine-group">
           <label for="machine">Machine</label>
-          <div class="custom-select" [class.open]="showMachineDropdown" (click)="toggleMachineDropdown($event)">
+          <div class="custom-select" [class.open]="showMachineDropdown" [class.disabled]="hasExecutionResults()"
+            (click)="toggleMachineDropdown($event)">
             <div class="select-trigger">
               {{ mutantCycle.execConfiguration?.machine || 'AerSimulator' }}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +62,8 @@
       <div class="form-row">
         <div class="form-group algorithm-group">
           <label for="execAlgorithm">Execution Algorithm</label>
-          <div class="custom-select" [class.open]="showAlgoDropdown" (click)="toggleAlgoDropdown($event)">
+          <div class="custom-select" [class.open]="showAlgoDropdown" [class.disabled]="hasExecutionResults()"
+            (click)="toggleAlgoDropdown($event)">
             <div class="select-trigger">
               {{ mutantCycle.execConfiguration?.execAlgorithm || 'AllAgainstAll' }}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +75,31 @@
             <div class="select-options" *ngIf="showAlgoDropdown">
               <div class="option" [class.selected]="mutantCycle.execConfiguration?.execAlgorithm === 'AllAgainstAll'"
                 (click)="selectAlgorithm('AllAgainstAll')">AllAgainstAll</div>
+              <div class="option" [class.selected]="mutantCycle.execConfiguration?.execAlgorithm === 'TestSuite'"
+                (click)="selectAlgorithm('TestSuite')">TestSuite</div>
               <!-- Add more options here if needed -->
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group test-suite-group" *ngIf="mutantCycle.execConfiguration?.execAlgorithm === 'TestSuite'">
+          <label for="testSuite">Test Suite</label>
+          <div class="custom-select" [class.open]="showTestSuiteDropdown" [class.disabled]="hasExecutionResults()"
+            (click)="toggleTestSuiteDropdown($event)">
+            <div class="select-trigger">
+              {{ getSelectedTestSuiteName() }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="select-options" *ngIf="showTestSuiteDropdown">
+              <div class="option" *ngFor="let suite of manager.selectedProject?.testSuites"
+                [class.selected]="mutantCycle.execConfiguration?.testSuiteId === suite.id"
+                (click)="selectTestSuite(suite)">
+                {{ suite.id }}
+              </div>
             </div>
           </div>
         </div>
@@ -81,7 +107,8 @@
         <div class="form-group tolerated-error-group">
           <label for="toleratedError">Tolerated Error</label>
           <input type="number" id="toleratedError" name="toleratedError" [value]="manager.toleratedError"
-            (change)="updateToleratedError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05">
+            (change)="updateToleratedError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05"
+            [disabled]="hasExecutionResults()">
         </div>
       </div>
     </div>
@@ -102,6 +129,7 @@
               <thead>
                 <tr>
                   <th class="index-column sticky-col">Index</th>
+                  <th class="operator-column">Operator</th>
                   <th *ngFor="let header of inputHeaders" class="input-header">{{ header }}</th>
                 </tr>
               </thead>
@@ -110,6 +138,11 @@
                   <td class="index-column sticky-col">
                     <span [class.empty-cell]="row.mutant.mutantIndex === undefined">
                       {{ row.mutant.mutantIndex !== undefined ? row.mutant.mutantIndex : '-' }}
+                    </span>
+                  </td>
+                  <td class="operator-column">
+                    <span class="operator-text" [title]="row.mutant.mutationOperator">
+                      {{ row.mutant.mutationOperator || '-' }}
                     </span>
                   </td>
                   <td *ngFor="let header of inputHeaders" class="result-cell">

@@ -13,6 +13,10 @@ import { Project } from '../model/Project';
 import { QCircuit } from '../model/QCircuit';
 import { UserService } from '../user.service';
 import { ProjectNote } from '../model/ProjectNote';
+import { TestSuite } from '../model/TestSuite';
+import { TestCase } from '../model/TestCase';
+import { Deterministic } from '../model/Deterministic';
+import { Stochastic } from '../model/Stochastic';
 
 @Component({
   selector: 'app-side-bar',
@@ -362,8 +366,55 @@ export class SideBarComponent implements OnInit, OnDestroy {
               return note;
             });
           }
+
+          // TestSuites
+          if (circuitData.testSuites) {
+            project.testSuites = (circuitData.testSuites || []).map((testSuiteData: any) => {
+              const testSuite = new TestSuite();
+              testSuite.id = testSuiteData.id;
+              testSuite.error_range = testSuiteData.error_range;
+
+              // TestCases
+              testSuite.testCases = (testSuiteData.testCases || []).map((testCaseData: any) => {
+                let testCase: TestCase | null = null;
+                if (testCaseData.type === 'DETERMINISTIC') {
+                  testCase = new Deterministic();
+                  (testCase as Deterministic).entryValues = testCaseData.entryValues;
+                  (testCase as Deterministic).expectedValues = testCaseData.expectedValues;
+                } else if (testCaseData.type === 'STOCHASTIC') {
+                  testCase = new Stochastic();
+                  (testCase as Stochastic).probabilityDistribution = testCaseData.probabilityDistribution;
+                }
+
+                if (testCase) {
+                  testCase.id = testCaseData.id;
+                  testCase.entryIndexes = testCaseData.entryIndexes;
+                  testCase.outputIndexes = testCaseData.outputIndexes;
+                }
+                return testCase;
+              }).filter((tc: any) => tc !== null);
+
+              return testSuite;
+            });
+          }
+
+          if (circuitData.projectNotes) {
+            project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
+              const note = new ProjectNote(
+                noteData.title,
+                noteData.text,
+                noteData.type,
+                noteData.id,
+                new Date(noteData.timestamp)
+              );
+              return note;
+            });
+          }
+
           return project;
         });
+
+
         this.loading = false;
       },
       error: (error) => {

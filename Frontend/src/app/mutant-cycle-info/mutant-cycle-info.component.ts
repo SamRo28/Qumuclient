@@ -11,6 +11,8 @@ import { MutantsExecutor } from '../MutantsExecutor';
 import { QProgram } from '../model/QProgram';
 import { QCode } from '../model/QCode';
 import { QiskitExecutorService } from '../qiskit-executor.service';
+import { TestSuite } from '../model/TestSuite';
+import { Deterministic } from '../model/Deterministic';
 
 @Component({
   selector: 'app-mutant-cycle-info',
@@ -39,21 +41,33 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   // Dropdown UI state
   showMachineDropdown = false;
   showAlgoDropdown = false;
+  showTestSuiteDropdown = false;
 
   constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService) {
     super(sanitizer);
   }
 
   toggleMachineDropdown(event: Event) {
+    if (this.hasExecutionResults()) return;
     event.stopPropagation();
     this.showMachineDropdown = !this.showMachineDropdown;
     this.showAlgoDropdown = false;
   }
 
   toggleAlgoDropdown(event: Event) {
+    if (this.hasExecutionResults()) return;
     event.stopPropagation();
     this.showAlgoDropdown = !this.showAlgoDropdown;
     this.showMachineDropdown = false;
+    this.showTestSuiteDropdown = false;
+  }
+
+  toggleTestSuiteDropdown(event: Event) {
+    if (this.hasExecutionResults()) return;
+    event.stopPropagation();
+    this.showTestSuiteDropdown = !this.showTestSuiteDropdown;
+    this.showMachineDropdown = false;
+    this.showAlgoDropdown = false;
   }
 
   selectMachine(machine: string) {
@@ -70,11 +84,27 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.showAlgoDropdown = false;
   }
 
+  selectTestSuite(testSuite: TestSuite) {
+    if (this.mutantCycle?.execConfiguration) {
+      this.mutantCycle.execConfiguration.testSuiteId = testSuite.id;
+    }
+    this.showTestSuiteDropdown = false;
+  }
+
+  getSelectedTestSuiteName(): string {
+    if (this.mutantCycle?.execConfiguration?.testSuiteId && this.manager.selectedProject?.testSuites) {
+      const suite = this.manager.selectedProject.testSuites.find(ts => ts.id === this.mutantCycle!.execConfiguration!.testSuiteId);
+      return suite ? suite.id : 'Select TestSuite'; // Using ID as name since TestSuite doesn't have a name property visible in model
+    }
+    return 'Select TestSuite';
+  }
+
   // Close dropdowns when clicking outside
   @HostListener('document:click')
   closeDropdowns() {
     this.showMachineDropdown = false;
     this.showAlgoDropdown = false;
+    this.showTestSuiteDropdown = false;
   }
 
   ngOnInit(): void {
@@ -253,9 +283,26 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     if (this.stopped)
       return
 
+    let inputs: string[] | undefined = undefined;
+
+    if (this.manager.executionAlgorithm === 'TestSuite' && this.mutantCycle?.execConfiguration?.testSuiteId) {
+      const testSuite = this.manager.selectedProject?.testSuites.find(ts => ts.id === this.mutantCycle!.execConfiguration!.testSuiteId);
+
+      if (testSuite) {
+        inputs = [];
+        testSuite.testCases.forEach(testCase => {
+          if (testCase.type === 'DETERMINISTIC') {
+            const deterministicCase = testCase as Deterministic;
+            // Transform inputs to string format "000"
+            inputs!.push(deterministicCase.entryIndexes.join(''));
+          }
+        });
+      }
+    }
+
     this.showModal("The mutants are running; you can continue using the application. Do not close the window.");
 
-    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, "AllAgainstAll", this.manager.selectedProject!.qProgram.qubits, false).subscribe(
+    this.qe.runOne(this.manager.selectedProject!.qProgram, this.manager.inputQubits, this.manager.outputQubits, this.manager.executionAlgorithm || "AllAgainstAll", this.manager.selectedProject!.qProgram.qubits, false, inputs).subscribe(
       originalResults => {
         this.hideModal()
         if (this.stopped)
@@ -274,7 +321,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         if (this.stopped)
           return
 
-        this._runMutants(0, 5)
+        this._runMutants(0, 5, inputs)
 
       }
     )
@@ -288,7 +335,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.manager.clearExecutionStatus();
   }
 
-  private _runMutants(start: number, chunkSize: number) {
+  private _runMutants(start: number, chunkSize: number, inputs?: string[]) {
     let end = start + chunkSize
     if (end > this.manager.selectedMutantCycle!.mutants.length)
       end = this.manager.selectedMutantCycle!.mutants.length
@@ -301,9 +348,9 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       this.qumugen.getMultipleQiskitCode(formattedMutants).subscribe(
         results => {
           // TODO: Reemplazar con ExecuterService.executeWithoutStrategy()
-          this.qe.executeWithStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError, false, undefined).subscribe(
+          this.qe.executeWithStrategy(results, this.originalResults, this.manager.executionAlgorithm, this.manager.toleratedError, false, inputs).subscribe(
             result => {
-              this.processMutantResults(result, start)
+              this.processMutantResults(result, start, inputs)
               start = start + chunkSize
               if (this.stopped)
                 return
@@ -315,7 +362,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
                 this.manager.selectedMutantCycle!.newlyGenerated = true; // Ensure it's included in save payload
                 this.manager.markProjectAsModified(); // Enable save button
               } else {
-                this._runMutants(start, chunkSize); // Continuar con el siguiente lote de mutantes
+                this._runMutants(start, chunkSize, inputs); // Continuar con el siguiente lote de mutantes
               }
             },
             error => {
@@ -348,7 +395,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     return formattedMutants
   }
 
-  processMutantResults(results: any[][], start: number) {
+  processMutantResults(results: any[][], start: number, inputs?: string[]) {
     // results is a list of lists.
     // results[m] contains the list of execution results for Mutant 'm'.
     // Outer List = Mutants
@@ -366,8 +413,13 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
       // Iterate over Inputs (Inner List)
       for (let i = 0; i < mutantExecutionResults.length; i++) {
-        // Define Input Header from Index 'i' (as per user's inner list structure)
-        const binaryInput = (i).toString(2);
+        // Define Input Header
+        let binaryInput = "";
+        if (inputs && i < inputs.length) {
+          binaryInput = inputs[i];
+        } else {
+          binaryInput = (i).toString(2);
+        }
 
         // global header collection (check only once per batch or just allow redundancy check)
         if (!this.inputHeaders.includes(binaryInput)) {

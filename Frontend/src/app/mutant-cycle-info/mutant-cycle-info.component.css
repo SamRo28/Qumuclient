@@ -82,6 +82,20 @@
   margin-right: 0.75rem;
 }
 
+.execute-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  filter: grayscale(100%);
+}
+
+.execute-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  filter: grayscale(100%);
+}
+
 .execute-icon {
   display: flex;
   justify-content: center;
@@ -267,6 +281,33 @@
   font-weight: 600;
 }
 
+/* Disabled State for Custom Select */
+.custom-select.disabled .select-trigger {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--glass-bg-hover);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.custom-select.disabled .select-trigger:hover {
+  background: var(--glass-bg-hover);
+  border-color: transparent;
+}
+
+.custom-select.disabled .arrow-icon {
+  opacity: 0.5;
+}
+
+/* Disabled State for Inputs */
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--glass-bg-hover);
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
 /* Killing Matrix Scroll Wrapper */
 .killing-matrix-scroll-wrapper {
   overflow-x: auto;
@@ -310,7 +351,25 @@
   background: var(--glass-bg-hover);
 }
 
-/* Removed operator-column styles */
+/* Operator Column */
+.killing-matrix-table .operator-column {
+  width: 150px;
+  text-align: center;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 0.875rem 0.5rem;
+}
+
+.operator-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 150px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent-secondary);
+}
 
 /* Input Headers */
 .input-header {
