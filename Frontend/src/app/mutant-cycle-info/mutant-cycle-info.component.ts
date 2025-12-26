@@ -1,4 +1,6 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges, HostListener } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MutantCycle } from '../model/MutantCycle';
 import { Result, MutantResult } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
@@ -19,7 +21,7 @@ import { Deterministic } from '../model/Deterministic';
   templateUrl: './mutant-cycle-info.component.html',
   styleUrls: ['./mutant-cycle-info.component.css']
 })
-export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit, OnChanges {
+export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit, OnChanges, OnDestroy {
   override runOne(circuit: QProgram, program?: string): void {
     throw new Error('Method not implemented.');
   }
@@ -43,7 +45,10 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   showAlgoDropdown = false;
   showTestSuiteDropdown = false;
 
-  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService) {
+  // Subscription management
+  private subscriptions = new Subscription();
+
+  constructor(public override sanitizer: DomSanitizer, public manager: ManagerService, public qe: QiskitExecutorService, private qumugen: QumugenService, private route: ActivatedRoute) {
     super(sanitizer);
   }
 
@@ -108,9 +113,41 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   ngOnInit(): void {
+    this.subscriptions.add(
+      this.route.paramMap.subscribe(params => {
+        const projectId = params.get('projectId');
+        const cycleId = params.get('cycleId'); // String from URL
+
+        if (projectId && cycleId) {
+          this.subscriptions.add(
+            this.manager.projects$.subscribe(projects => {
+              const project = projects.find(p => p.id === projectId);
+              if (project) {
+                if (this.manager.selectedProject !== project) {
+                  this.manager.setselectedProject(project);
+                }
+
+                // Find cycle by ID (assuming ID is number or string match)
+                // cycleId from URL is string, cycle.id might be number. Check loose equality or conversion.
+                const cycle = project.mutantCycles.find(c => c.id == Number(cycleId));
+                if (cycle) {
+                  this.manager.setSelectedMutantCycle(cycle);
+                  this.mutantCycle = cycle;
+
+                  // Initialization logic that was in ngOnChanges
+                  this.initializeCycleView();
+                }
+              }
+            })
+          );
+        }
+      })
+    );
+
     if (this.manager.selectedProject?.qProgram) {
       this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
         code => {
+          // ... existing init logic
           this.manager.selectedProject!.qProgram.qCode = new QCode()
           this.manager.selectedProject!.qProgram.qCode.code = code.wholeCode.split("\n")
         },
@@ -120,6 +157,24 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       )
     }
     this.updatePagination();
+  }
+
+  initializeCycleView() {
+    this.currentPage = 1; // Reset to first page on new cycle
+
+    // Initialize matrix rows
+    this.matrixRows = this.mutantCycle!.mutants.map(m => ({
+      mutant: m,
+      cells: []
+    }));
+    this.inputHeaders = [];
+
+    this.loadKillingMatrixFromExistingResults();
+    this.updatePagination();
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.unsubscribe();
   }
 
   ngOnChanges(changes: SimpleChanges): void {

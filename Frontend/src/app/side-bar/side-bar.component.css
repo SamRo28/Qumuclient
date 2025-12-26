@@ -28,15 +28,11 @@
   width: 320px;
 }
 
-/* Toggle Button */
+/* Toggle Button Base Styles - Positioning handled by header now */
 .toggle-btn {
-  position: sticky;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.1);
   color: #ecfdf5;
@@ -45,17 +41,7 @@
   align-items: center;
   justify-content: center;
   transition: all 200ms;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-  margin: 1rem auto;
   flex-shrink: 0;
-}
-
-.sidebar.open .toggle-btn {
-  left: auto;
-  right: 0;
-  transform: none;
-  margin: 1rem 1rem 1rem auto;
 }
 
 .toggle-btn:hover {
@@ -101,12 +87,61 @@
   overflow: hidden;
 }
 
-/* Tree Header */
-.tree-header {
+/* Unified Sidebar Header */
+.sidebar-header {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid rgba(52, 211, 153, 0.2);
-  background: rgba(6, 78, 59, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  /* Ensure consistent height */
   flex-shrink: 0;
+}
+
+.sidebar-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ecfdf5;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  /* Push actions to the right */
+}
+
+/* Adjust toggle button to fit in header */
+.toggle-btn {
+  position: static;
+  transform: none;
+  margin: 0;
+  box-shadow: none;
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+}
+
+/* When sidebar is closed, center the toggle button */
+.sidebar:not(.open) .sidebar-header {
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.sidebar:not(.open) .header-actions {
+  margin: 0;
+  width: 100%;
+  justify-content: center;
 }
 
 .header-content {
@@ -244,6 +279,27 @@
 
 .tree-node:active {
   background: var(--shadow-glass-strong);
+}
+
+.tree-node.selected {
+  background: rgba(6, 78, 59, 0.6);
+  /* Darker green background */
+  border-left: 3px solid #10b981;
+  /* Green accent border */
+  padding-left: calc(0.75rem - 3px);
+  /* Adjust padding to interpret border */
+  box-shadow: 0 0 15px rgba(6, 78, 59, 0.4);
+}
+
+.tree-node.selected .node-label {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.tree-node.selected .node-icon {
+  color: #10b981;
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.4));
 }
 
 /* Expand Icon */

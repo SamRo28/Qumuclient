@@ -1,16 +1,23 @@
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject, Observable } from 'rxjs';
+import { Subject, BehaviorSubject, Observable, of, tap, switchMap } from 'rxjs';
 import { QProgram } from './model/QProgram';
 import { Mutant } from './model/Mutant';
 import { MutantCycle } from './model/MutantCycle';
 import { Project } from './model/Project';
 import { Operator } from './model/OperatorFamily';
+import { ReperService } from './reper.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ManagerService {
   selectedProject?: Project;
+
+  // List of all loaded projects
+  projects: Project[] = [];
+  private _projects = new BehaviorSubject<Project[]>([]);
+  public projects$ = this._projects.asObservable();
+  loadingProjects = false;
 
   mutants: Mutant[] = []
 
@@ -53,6 +60,30 @@ export class ManagerService {
   showMutantsInfo: boolean = false;
   showMutantCycleInfo: boolean = false;
   showSaveButton: boolean = false;
+
+  constructor(private reperService: ReperService) { }
+
+  /**
+   * Loads projects from the backend for the current user (by email).
+   */
+  loadProjects(email: string): Observable<Project[]> {
+    this.loadingProjects = true;
+    return this.reperService.getCircuits(email).pipe(
+      tap(data => {
+        this.projects = this.processProjectData(data);
+        this._projects.next(this.projects);
+        this.loadingProjects = false;
+      })
+    );
+  }
+
+  /**
+   * Gets a project by ID, loading it if necessary (though simplified for now, assumes loaded).
+   * Typically called after loadProjects ensures data is there.
+   */
+  getProjectById(id: string): Project | undefined {
+    return this.projects.find(p => p.id === id);
+  }
 
   /**
    * Marca el proyecto actual como modificado (no guardado)
@@ -154,6 +185,12 @@ export class ManagerService {
     // Los proyectos nuevos no están guardados
     this._projectSavedState.next(false);
     this.showSaveButton = true;
+
+    // Add to local projects list if not present
+    if (!this.projects.some(p => p.id === circuit.id)) {
+      this.projects = [...this.projects, circuit];
+      this._projects.next(this.projects);
+    }
 
     // Notificar a los suscriptores del nuevo circuito seleccionado
     this._selectedProject.next(circuit);
@@ -307,7 +344,118 @@ export class ManagerService {
   clearExecutionStatus(): void {
     this.closeNotification();
   }
+
+  // Helper method to process loaded projects (moved from SideBarComponent)
+  processProjectData(data: any[]): Project[] {
+    return data.map((circuitData: any) => {
+      // Deep mapping to classes
+      const project = new Project(undefined, undefined, undefined, undefined, true);
+      project.id = circuitData.id;
+      project.name = circuitData.name;
+
+      // QProgram
+      if (circuitData.qProgram) {
+        const qProgram = new QProgram();
+        Object.assign(qProgram, circuitData.qProgram);
+
+        // QCircuit
+        if (circuitData.qProgram.qCircuit) {
+          const qCircuit = new (require('./model/QCircuit').QCircuit)(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
+          qProgram.qCircuit = qCircuit;
+        }
+        project.qProgram = qProgram;
+      }
+
+      // MutantCycles
+      project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
+        const mutantCycle = new (require('./model/MutantCycle').MutantCycle)();
+        mutantCycle.id = cycleData.id;
+        mutantCycle.date = cycleData.date;
+        mutantCycle.execConfig = cycleData.execConfig;
+
+        // Mutants
+        mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
+          const mutant = new (require('./model/Mutant').Mutant)();
+          mutant.id = mutantData.id;
+          mutant.mutantResults = mutantData.mutantResults;
+          mutant.mutantIndex = mutantData.mutantIndex;
+          mutant.mutatedColumn = mutantData.mutatedColumn;
+          mutant.mutatedRow = mutantData.mutatedRow;
+          if (mutantData.operator) {
+            mutant.operator.name = mutantData.operator.name;
+            mutant.mutationOperator = mutantData.operator.name;
+            mutant.operator.id = mutantData.operator.type;
+            mutant.operator.enabled = mutantData.operator.enabled;
+            mutant.operator.description = mutantData.operator.description;
+          }
+
+
+          // Circuit (QProgram)
+          if (mutantData.circuit) {
+            const mutantQProgram = new QProgram();
+            Object.assign(mutantQProgram, mutantData.circuit);
+
+            if (mutantData.circuit.qCircuit) {
+              const mutantQCircuit = new (require('./model/QCircuit').QCircuit)(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
+              mutantQProgram.qCircuit = mutantQCircuit;
+            }
+            mutant.circuit = mutantQProgram;
+          }
+          return mutant;
+        });
+
+        return mutantCycle;
+      });
+
+      if (circuitData.projectNotes) {
+        project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
+          const note = new (require('./model/ProjectNote').ProjectNote)(
+            noteData.title,
+            noteData.text,
+            noteData.type,
+            noteData.id,
+            new Date(noteData.timestamp)
+          );
+          return note;
+        });
+      }
+
+      // TestSuites
+      if (circuitData.testSuites) {
+        project.testSuites = (circuitData.testSuites || []).map((testSuiteData: any) => {
+          const testSuite = new (require('./model/TestSuite').TestSuite)();
+          testSuite.id = testSuiteData.id;
+          testSuite.error_range = testSuiteData.error_range;
+
+          // TestCases
+          testSuite.testCases = (testSuiteData.testCases || []).map((testCaseData: any) => {
+            let testCase: any = null; // Typing loosely to avoid circular dep issues in this snippet
+            if (testCaseData.type === 'DETERMINISTIC') {
+              testCase = new (require('./model/Deterministic').Deterministic)();
+              testCase.entryValues = testCaseData.entryValues;
+              testCase.expectedValues = testCaseData.expectedValues;
+            } else if (testCaseData.type === 'STOCHASTIC') {
+              testCase = new (require('./model/Stochastic').Stochastic)();
+              testCase.probabilityDistribution = testCaseData.probabilityDistribution;
+            }
+
+            if (testCase) {
+              testCase.id = testCaseData.id;
+              testCase.entryIndexes = testCaseData.entryIndexes;
+              testCase.outputIndexes = testCaseData.outputIndexes;
+            }
+            return testCase;
+          }).filter((tc: any) => tc !== null);
+
+          return testSuite;
+        });
+      }
+
+      return project;
+    });
+  }
 }
+
 
 
 

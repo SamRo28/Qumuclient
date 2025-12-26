@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { ManagerService } from '../manager.service';
 import { Subscription } from 'rxjs';
 import { CircuitComponent } from '../circuit/circuit.component';
@@ -35,9 +36,28 @@ export class CircuitsConfigurationComponent implements OnInit, OnDestroy {
 
   @ViewChild(CircuitComponent) circuitComponent!: CircuitComponent;
 
-  constructor(public manager: ManagerService) { }
+  constructor(public manager: ManagerService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
+    // Suscribirse a cambios en la ruta
+    this.subscription.add(
+      this.route.paramMap.subscribe(params => {
+        const projectId = params.get('projectId');
+        if (projectId) {
+          // Suscribirse a los proyectos cargados para encontrar el seleccionado
+          // Importante: Esto maneja tanto la navegación directa como la recarga donde projects$ emite tarde
+          this.subscription.add(
+            this.manager.projects$.subscribe(projects => {
+              const project = projects.find(p => p.id === projectId);
+              if (project && this.manager.selectedProject !== project) {
+                this.manager.setselectedProject(project);
+              }
+            })
+          );
+        }
+      })
+    );
+
     this.subscription.add(
       this.manager.selectedProject$.subscribe(project => {
         this.selectedCircuit = project;

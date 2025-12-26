@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ManagerService } from '../manager.service';
 import { QProgram } from '../model/QProgram';
 import { Project } from '../model/Project';
@@ -12,7 +13,7 @@ import { UserService } from '../user.service';
 export class HomeComponent implements OnInit {
 
 
-  constructor(public manager: ManagerService, private userService: UserService) { }
+  constructor(public manager: ManagerService, private userService: UserService, private router: Router) { }
 
   ngOnInit(): void {
     if (this.userService.isAuthenticated$.value) {
@@ -33,9 +34,8 @@ export class HomeComponent implements OnInit {
       this.manager.showSidebar = true
     }
 
-    // Cambiar visibilidad al final para asegurar que los datos estén listos
-    this.manager.showHome = false
-    this.manager.showCircuit = true
+    // Navigate to the new project
+    this.router.navigate(['/project', circuit.id]);
   }
 
 }

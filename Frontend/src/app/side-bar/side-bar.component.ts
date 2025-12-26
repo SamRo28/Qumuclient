@@ -29,7 +29,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   menuAbierto = false;
   mostrarInicio = true;
-  circuits: Project[] = [];
+  // circuits: Project[] = []; // Removed: using getter from ManagerService
   expandedCircuits: Set<string> = new Set();
   expandedProjects: Set<string> = new Set();
   loading = false;
@@ -75,21 +75,14 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.manager.selectedProject$.subscribe((project) => {
         if (project) {
-          // Buscar si ya existe por ID o por referencia
-          const existingIndex = this.circuits.findIndex(c =>
-            (c.id && project.id && c.id === project.id) || c === project
-          );
-
-          if (existingIndex === -1) {
-            // No existe, agregarlo
-            this.circuits.push(project);
-            // Expandir automáticamente el nuevo proyecto
-            if (project.name) {
-              this.expandedCircuits.add(project.name);
-            }
-          } else {
-            // Ya existe, actualizarlo en su posición
-            this.circuits[existingIndex] = project;
+          // Si el proyecto no está en la lista (ej. creado nuevo), agregarlo
+          const exists = this.circuits.some(c => c.id === project.id);
+          if (!exists) {
+            // Re-load circuits to ensure sync or push to manager
+            // For now, assuming manager handles the list state
+          }
+          if (project.name) {
+            this.expandedCircuits.add(project.name);
           }
         }
       })
@@ -98,26 +91,14 @@ export class SideBarComponent implements OnInit, OnDestroy {
     // Suscribirse a eliminación de proyectos
     this.subs.add(
       this.manager.projectDeleted$.subscribe((projectId) => {
-        this.circuits = this.circuits.filter(c => c.id !== projectId);
-        if (this.circuits.length > 0) {
-          this.selectCircuit(this.circuits[0]);
-        } else {
-          this.createNewCircuit();
-        }
+        // Refresh list
+        this.loadCircuitsFromService();
       })
     );
+  }
 
-    // Agregar el proyecto actual si existe y no está en la lista
-    if (this.manager.selectedProject) {
-      const exists = this.circuits.some(c =>
-        (c.id && this.manager.selectedProject!.id && c.id === this.manager.selectedProject!.id) ||
-        c === this.manager.selectedProject
-      );
-
-      if (!exists) {
-        this.circuits.push(this.manager.selectedProject);
-      }
-    }
+  get circuits(): Project[] {
+    return this.manager.projects;
   }
 
   toggleMenu() {
@@ -126,28 +107,16 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   createNewCircuit() {
-    // Protección contra doble-click
     if (this.isCreatingProject) {
       return;
     }
-
     this.isCreatingProject = true;
 
-    // Generar nombre único
-    let name = 'Project' + (this.circuits.length + 1);
-    let newCircuit = new Project();
-    newCircuit.name = name;
-
-    // Configurar el manager
-    this.manager.setNewselectedProject(newCircuit);
-    this.manager.showCircuit = true;
-    this.manager.showMutantsInfo = false;
-    this.manager.showSaveButton = false;
-    this.manager.showMutantCycleInfo = false;
-
-    // Resetear protección después de un breve delay
     setTimeout(() => {
+      let circuit = new Project(crypto.randomUUID(), "Project" + (this.circuits.length + 1));
+      this.manager.setNewselectedProject(circuit);
       this.isCreatingProject = false;
+      this.router.navigate(['/project', circuit.id]);
     }, 500);
   }
 
@@ -175,54 +144,31 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return this.expandedProjects.has(projectKey);
   }
 
-  selectCircuit(circuit: Project): void {
-    this.manager.setselectedProject(circuit);
-    this.manager.showCircuit = true;
-    this.manager.showHome = false;
-    this.manager.showMutantsInfo = false;
-    this.manager.showMutantCycleInfo = false;
+  isCircuitSelected(circuit: Project): boolean {
+    // Exact match for project route
+    return this.router.isActive(`/project/${circuit.id}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
   }
 
-  selectMutant(mutant: Mutant, project: Project): void {
-    this.manager.setselectedProject(project);
-    this.manager.setSelectedMutant(mutant);
-    this.manager.showCircuit = false;
-    this.manager.showHome = false;
-    this.manager.showMutantsInfo = true;
-    this.manager.showMutantCycleInfo = false;
+  isMutantCycleSelected(cycle: MutantCycle, project: Project): boolean {
+    // Exact match for cycle route
+    return this.router.isActive(`/project/${project.id}/cycle/${cycle.id}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
+  }
 
-    //Modificar para que no se haga aqui
-    if (this.manager.selectedProject) {
-      this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
-        code => {
-          this.manager.selectedProject!.qProgram.qCode!.code = code.wholeCode.split("\n")
-        }
-      ).catch(error => {
-        console.error('Error getting qiskit code for selected circuit:', error);
-      })
-    }
+  isMutantSelected(mutant: Mutant, cycle: MutantCycle, project: Project): boolean {
+    // Exact match for mutant route
+    return this.router.isActive(`/project/${project.id}/cycle/${cycle.id}/mutant/${mutant.mutantIndex}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
+  }
 
-    if (mutant.circuit && mutant.circuit.qCircuit.textQuirkCode) {
-      this.qumugen.getQiskitCode(mutant.circuit).then(
-        code => {
-          this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.qCircuit.textQuirkCode)
-          mutant.circuit!.qCode!.code = code.wholeCode.split("\n")
-        }
-      ).catch(error => {
-        console.error('Error getting qiskit code for mutant circuit:', error);
-      })
-    } else {
-      console.warn('Cannot process mutant: circuit or quirk code not available');
-    }
+  selectCircuit(circuit: Project): void {
+    this.router.navigate(['/project', circuit.id]);
+  }
+
+  selectMutant(mutant: Mutant, mutantCycle: MutantCycle, project: Project): void {
+    this.router.navigate(['/project', project.id, 'cycle', mutantCycle.id, 'mutant', mutant.mutantIndex]);
   }
 
   selectMutantCycle(mutantCycle: MutantCycle, project: Project): void {
-    this.manager.setselectedProject(project);
-    this.manager.setSelectedMutantCycle(mutantCycle);
-    this.manager.showCircuit = false;
-    this.manager.showHome = false;
-    this.manager.showMutantsInfo = false;
-    this.manager.showMutantCycleInfo = true;
+    this.router.navigate(['/project', project.id, 'cycle', mutantCycle.id]);
   }
 
   getProjectKey(circuitId: string, projectId: number): string {
@@ -249,9 +195,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   goToHome() {
-    this.manager.showHome = true;
-    this.manager.showCircuit = false;
-    this.manager.showMutantsInfo = false;
+    this.router.navigate(['/']);
   }
 
   ngOnDestroy(): void {
@@ -285,139 +229,11 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   loadCircuitsFromService(): void {
     const email = sessionStorage.getItem('email');
-
+    if (!email) return;
 
     this.loading = true;
-
-    let email$ = email
-      ? of(email)
-      : this.reperService.getUser().pipe(
-        tap(userEmail => sessionStorage.setItem('email', userEmail))
-      );
-
-    email$.pipe(
-      switchMap(userEmail => this.reperService.getCircuits(userEmail))
-    ).subscribe({
-      next: (data) => {
-        this.circuits = data.map((circuitData: any) => {
-          // Mapeo profundo a clases
-          const project = new Project(undefined, undefined, undefined, undefined, true);
-          project.id = circuitData.id;
-          project.name = circuitData.name;
-
-          // QProgram
-          if (circuitData.qProgram) {
-            const qProgram = new QProgram();
-            Object.assign(qProgram, circuitData.qProgram);
-
-            // QCircuit
-            if (circuitData.qProgram.qCircuit) {
-              const qCircuit = new QCircuit(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
-              qProgram.qCircuit = qCircuit;
-            }
-            project.qProgram = qProgram;
-          }
-
-          // MutantCycles
-          project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
-            const mutantCycle = new (require('../model/MutantCycle').MutantCycle)();
-            mutantCycle.id = cycleData.id;
-            mutantCycle.date = cycleData.date;
-            mutantCycle.execConfig = cycleData.execConfig;
-
-            // Mutants
-            mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
-              const mutant = new (require('../model/Mutant').Mutant)();
-              mutant.id = mutantData.id;
-              mutant.mutantResults = mutantData.mutantResults;
-              mutant.mutantIndex = mutantData.mutantIndex;
-              mutant.mutatedColumn = mutantData.mutatedColumn;
-              mutant.mutatedRow = mutantData.mutatedRow;
-              mutant.operator.name = mutantData.operator.name;
-              mutant.mutationOperator = mutantData.operator.name;
-              mutant.operator.id = mutantData.operator.type;
-              mutant.operator.enabled = mutantData.operator.enabled;
-              mutant.operator.description = mutantData.operator.description;
-
-
-              // Circuit (QProgram)
-              if (mutantData.circuit) {
-                const mutantQProgram = new QProgram();
-                Object.assign(mutantQProgram, mutantData.circuit);
-
-                if (mutantData.circuit.qCircuit) {
-                  const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
-                  mutantQProgram.qCircuit = mutantQCircuit;
-                }
-                mutant.circuit = mutantQProgram;
-              }
-              return mutant;
-            });
-
-            return mutantCycle;
-          });
-
-          if (circuitData.projectNotes) {
-            project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
-              const note = new ProjectNote(
-                noteData.title,
-                noteData.text,
-                noteData.type,
-                noteData.id,
-                new Date(noteData.timestamp)
-              );
-              return note;
-            });
-          }
-
-          // TestSuites
-          if (circuitData.testSuites) {
-            project.testSuites = (circuitData.testSuites || []).map((testSuiteData: any) => {
-              const testSuite = new TestSuite();
-              testSuite.id = testSuiteData.id;
-              testSuite.error_range = testSuiteData.error_range;
-
-              // TestCases
-              testSuite.testCases = (testSuiteData.testCases || []).map((testCaseData: any) => {
-                let testCase: TestCase | null = null;
-                if (testCaseData.type === 'DETERMINISTIC') {
-                  testCase = new Deterministic();
-                  (testCase as Deterministic).entryValues = testCaseData.entryValues;
-                  (testCase as Deterministic).expectedValues = testCaseData.expectedValues;
-                } else if (testCaseData.type === 'STOCHASTIC') {
-                  testCase = new Stochastic();
-                  (testCase as Stochastic).probabilityDistribution = testCaseData.probabilityDistribution;
-                }
-
-                if (testCase) {
-                  testCase.id = testCaseData.id;
-                  testCase.entryIndexes = testCaseData.entryIndexes;
-                  testCase.outputIndexes = testCaseData.outputIndexes;
-                }
-                return testCase;
-              }).filter((tc: any) => tc !== null);
-
-              return testSuite;
-            });
-          }
-
-          if (circuitData.projectNotes) {
-            project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
-              const note = new ProjectNote(
-                noteData.title,
-                noteData.text,
-                noteData.type,
-                noteData.id,
-                new Date(noteData.timestamp)
-              );
-              return note;
-            });
-          }
-
-          return project;
-        });
-
-
+    this.manager.loadProjects(email).subscribe({
+      next: () => {
         this.loading = false;
       },
       error: (error) => {
