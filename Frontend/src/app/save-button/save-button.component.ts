@@ -27,7 +27,7 @@ export class SaveButtonComponent {
 
   onSave(): void {
 
-    if (!sessionStorage.getItem('token')) {
+    if (!sessionStorage.getItem('email')) {
       // marcar intención de guardar y abrir modal
       this.pendingSave = true;
       this.openLoginModal();

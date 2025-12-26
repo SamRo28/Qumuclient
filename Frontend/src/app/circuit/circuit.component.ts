@@ -9,6 +9,7 @@ import { QumugenService } from '../qumugen.service';
 import { QasmService } from '../qasm.service';
 import { Output, EventEmitter } from '@angular/core';
 import { Project } from '../model/Project';
+import { UserService } from '../user.service';
 
 @Component({
   selector: 'app-circuit',
@@ -32,7 +33,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
   circuits: Project[] = []
   selectedTab: string = 'circuit';
 
-  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService) {
+  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService, private userService: UserService) {
     this.url = '';
   }
   ngOnInit(): void {
@@ -187,7 +188,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
   }
 
   isLoggedIn(): boolean {
-    return !!sessionStorage.getItem('token');
+    return this.userService.isAuthenticated$.value;
   }
 
   onDeleteCircuit(): void {

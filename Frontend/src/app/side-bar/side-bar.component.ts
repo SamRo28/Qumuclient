@@ -57,9 +57,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.manager.sidebarExpanded = this.menuAbierto;
 
-    if (sessionStorage.getItem('token')) {
-      this.loadCircuitsFromService();
-    }
+    // Verify session via cookie on initialization
+    this.userService.checkSession().subscribe(isAuthenticated => {
+      if (isAuthenticated) {
+        this.loadCircuitsFromService();
+      }
+    });
 
     // Suscribirse a eventos de login
     this.subs.add(
@@ -258,7 +261,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   isLoggedIn(): boolean {
-    return !!sessionStorage.getItem('token');
+    return this.userService.isAuthenticated$.value;
   }
 
   refreshCircuits(): void {
@@ -282,18 +285,18 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   loadCircuitsFromService(): void {
     const email = sessionStorage.getItem('email');
-    const token = sessionStorage.getItem('token')!;
+
 
     this.loading = true;
 
     let email$ = email
       ? of(email)
-      : this.reperService.getUser(token).pipe(
+      : this.reperService.getUser().pipe(
         tap(userEmail => sessionStorage.setItem('email', userEmail))
       );
 
     email$.pipe(
-      switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
+      switchMap(userEmail => this.reperService.getCircuits(userEmail))
     ).subscribe({
       next: (data) => {
         this.circuits = data.map((circuitData: any) => {
