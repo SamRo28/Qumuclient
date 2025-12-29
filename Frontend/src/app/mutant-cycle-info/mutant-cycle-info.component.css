@@ -116,6 +116,43 @@
   color: var(--accent-primary);
 }
 
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  background: rgba(111, 168, 130, 0.1);
+  color: var(--accent-primary);
+  border: 1px solid rgba(111, 168, 130, 0.2);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: rgba(111, 168, 130, 0.2);
+  border-color: var(--accent-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  color: var(--accent-secondary);
+}
+
+.export-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+}
+
+
 .form-row {
   display: flex;
   gap: 1.5rem;

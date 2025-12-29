@@ -56,10 +56,14 @@ export class SaveButtonComponent {
 
         this.saveClick.emit();
 
+        // Mostrar notificación de éxito
+        this.manager.showNotification('Project saved successfully!', 'success');
         console.log('Project saved successfully');
       },
       error: (error) => {
         console.error('Error al guardar:', error);
+        // Mostrar notificación de error
+        this.manager.showNotification('Error saving project. Please try again.', 'error');
       }
     });
   }

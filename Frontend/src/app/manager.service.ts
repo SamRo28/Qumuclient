@@ -89,11 +89,17 @@ export class ManagerService {
    * Marca el proyecto actual como modificado (no guardado)
    * y emite el cambio de estado
    */
-  markProjectAsModified(): void {
-    if (this.selectedProject) {
-      this.selectedProject.markAsModified();
-      this._projectSavedState.next(false);
-      this.showSaveButton = true;
+  markProjectAsModified(project?: Project): void {
+    const targetProject = project || this.selectedProject;
+
+    if (targetProject) {
+      targetProject.markAsModified();
+
+      // Only update UI if the modified project is the currently selected one
+      if (this.selectedProject && this.selectedProject === targetProject) {
+        this._projectSavedState.next(false);
+        this.showSaveButton = true;
+      }
     }
   }
 
@@ -302,16 +308,17 @@ export class ManagerService {
 
   notification = {
     message: '',
-    type: 'loading' as 'loading' | 'success',
+    type: 'loading' as 'loading' | 'success' | 'error',
     visible: false
   };
 
   private notificationTimeout: any;
 
-  showNotification(message: string, type: 'loading' | 'success', duration: number = 0): void {
+  showNotification(message: string, type: 'loading' | 'success' | 'error', duration: number = 0): void {
     if (this.notificationTimeout) {
       clearTimeout(this.notificationTimeout);
     }
+
 
     this.notification = {
       message,

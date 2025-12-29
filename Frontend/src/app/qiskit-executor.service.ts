@@ -21,19 +21,19 @@ export class QiskitExecutorService {
 
     constructor(private client: HttpClient, private manager: ManagerService) { }
 
-    runOne(qprogram: QProgram, inputQubits: string, SoutputQubits: string, algorithm: string, qubits: number, reduceTable: boolean, inputs?: string[]) {
+    runOne(qprogram: QProgram, inputQubits: string, outputQubits: string, algorithm: string, qubits: number, reduceTable: boolean, inputs?: string[]) {
 
         let program = {
             qubits: qprogram.qubits,
             qiskitCode: qprogram.qCode.code,
             inputQubits: inputQubits,
-            outputQubits: qprogram.outputQubits
+            outputQubits: outputQubits
         }
 
         let info = {
             program: program,
             inputQubits: inputQubits,
-            outputQubits: SoutputQubits,
+            outputQubits: outputQubits,
             qubits: qubits,
             algorithm: algorithm,
             reduceTable: reduceTable,
@@ -70,7 +70,7 @@ export class QiskitExecutorService {
         return this.client.put<any>(url, info)
     }
 
-    executeWithStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number, reduceTable: boolean, Einputs?: string[]) {
+    executeWithStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number, reduceTable: boolean, inputQubits: string, outputQubits: string, Einputs?: string[]) {
         let capped = []
         for (let i = 0; i < mutants.length; i++) {
             capped.push({
@@ -81,8 +81,8 @@ export class QiskitExecutorService {
             })
         }
         let info = {
-            inputQubits: this.manager.inputQubits,
-            outputQubits: this.manager.outputQubits,
+            inputQubits: inputQubits,
+            outputQubits: outputQubits,
             algorithm: algorithm,
             toleratedError: toleratedError,
             originalResults: originalResults,

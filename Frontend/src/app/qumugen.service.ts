@@ -44,9 +44,9 @@ export class QumugenService {
     }
   }
 
-  getMultipleQiskitCode(mutants: Mutant[]) {
+  getMultipleQiskitCode(mutants: Mutant[], outputQubits: string) {
     let info = {
-      outputQubits: this.manager.outputQubits,
+      outputQubits: outputQubits,
       mutants: mutants
     }
     return this.client.put<any[]>("http://localhost:8500/qumugen/getMultipleQiskitCode?shots=" + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, info)
