@@ -97,6 +97,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   selectAlgorithm(algo: string) {
     if (this.mutantCycle?.execConfiguration) {
       this.mutantCycle.execConfiguration.execAlgorithm = algo;
+      this.manager.executionAlgorithm = algo;
     }
     this.showAlgoDropdown = false;
   }
@@ -187,6 +188,13 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   initializeCycleView() {
     this.currentPage = 1; // Reset to first page on new cycle
 
+    if (this.mutantCycle && this.mutantCycle.execConfiguration) {
+      if (!this.mutantCycle.execConfiguration.execAlgorithm) {
+        this.mutantCycle.execConfiguration.execAlgorithm = 'AllAgainstAll';
+      }
+      this.manager.executionAlgorithm = this.mutantCycle.execConfiguration.execAlgorithm;
+    }
+
     // Initialize matrix rows
     this.matrixRows = this.mutantCycle!.mutants.map(m => ({
       mutant: m,
@@ -272,6 +280,20 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
       this.updatePagination();
+    }
+  }
+
+  onPageInput(event: any): void {
+    const page = parseInt(event.target.value, 10);
+    if (!isNaN(page)) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.goToPage(page);
+      } else {
+        // Revert to current page if out of bounds
+        event.target.value = this.currentPage;
+      }
+    } else {
+      event.target.value = this.currentPage;
     }
   }
 

@@ -176,7 +176,7 @@
               </svg>
             </button>
             <span class="page-info">
-              Page <span class="current-page">{{ currentPage }}</span> of <span class="total-pages">{{ totalPages
+              Page <input type="number" class="page-input" [value]="currentPage" (change)="onPageInput($event)" min="1" [max]="totalPages"> of <span class="total-pages">{{ totalPages
                 }}</span>
             </span>
             <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="page-btn" title="Next Page">

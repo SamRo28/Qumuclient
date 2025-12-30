@@ -53,7 +53,7 @@ export class ManagerService {
   qubits: number[] = []
   shots: number = 100
 
-  executionAlgorithm: string = "Simple"
+  executionAlgorithm: string = "AllAgainstAll"
   toleratedError: number = 0.05
   generateWithAllInputs: boolean = false;
 
@@ -378,7 +378,7 @@ export class ManagerService {
         const mutantCycle = new (require('./model/MutantCycle').MutantCycle)();
         mutantCycle.id = cycleData.id;
         mutantCycle.date = cycleData.date;
-        mutantCycle.execConfig = cycleData.execConfig;
+        mutantCycle.execConfiguration = new (require('./model/ExecConfiguration').ExecConfiguration)(cycleData.execConfig);
 
         // Mutants
         mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {

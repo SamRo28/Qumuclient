@@ -13,7 +13,10 @@ export class QiskitExecutorService {
     //qeUrl = "http://localhost:8502/"
 
     //MOVIL:
-    qeUrl = "http://10.64.223.216:8502/"
+    qeUrl = "http://10.64.157.216:8502/"
+
+    //CASA:
+    //qeUrl = "http://192.168.1.133:8502/"
 
     //PISO:
     //qeUrl = "http://192.168.0.4:8502/"

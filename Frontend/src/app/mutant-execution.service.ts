@@ -60,7 +60,7 @@ export class MutantExecutionService {
     }
 
     public startExecution(mutantCycle: MutantCycle, project: Project) {
-        if (!mutantCycle || !mutantCycle.id) return;
+
         const cycleId = mutantCycle.id as number;
 
         if (this.activeExecutions.has(cycleId)) {

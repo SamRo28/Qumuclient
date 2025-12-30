@@ -628,3 +628,34 @@
   flex: 1;
   min-width: 0;
 }
+
+.page-input {
+  width: 50px;
+  padding: 0.25rem;
+  border: 1px solid var(--border-glass);
+  border-radius: 6px;
+  background: var(--glass-bg-card);
+  color: var(--text-primary);
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  margin: 0 0.5rem;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(111, 168, 130, 0.2);
+}
+
+/* Remove arrows from number input */
+.page-input::-webkit-outer-spin-button,
+.page-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.page-input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
