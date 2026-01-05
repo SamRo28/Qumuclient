@@ -1,0 +1,187 @@
+<div class="stats-page-container">
+    <div class="header">
+        <h2>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            Execution Statistics
+        </h2>
+    </div>
+
+    <div class="stats-body-wrapper" *ngIf="statistics; else noData">
+        <div class="content">
+
+            <!-- Header Actions (Analyze) -->
+            <div class="actions-bar">
+                <button class="ai-analyze-btn" (click)="toggleSidebar()"
+                    [disabled]="isAnalyzing || (hasAnalyzed && isSidebarOpen)">
+                    <!-- Loading State -->
+                    <ng-container *ngIf="isAnalyzing">
+                        <div class="spinner-sm"></div>
+                        <span>Analyzing...</span>
+                    </ng-container>
+
+                    <!-- Normal State -->
+                    <ng-container *ngIf="!isAnalyzing">
+                        <!-- Case 1: Initial State -->
+                        <ng-container *ngIf="!hasAnalyzed">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+                                <path d="M12 2a10 10 0 0 1 10 10"></path>
+                                <path d="M12 12 2.1 11.9"></path>
+                            </svg>
+                            <span>Analyze with AI</span>
+                        </ng-container>
+
+                        <!-- Case 3: Sidebar Closed/Open (Show Chat) - No X logic -->
+                        <ng-container *ngIf="hasAnalyzed">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                                </path>
+                            </svg>
+                            <span>Chat with AI</span>
+                        </ng-container>
+                    </ng-container>
+                </button>
+            </div>
+
+            <!-- Mutation Score Card -->
+            <div class="score-card">
+                <div class="score-header">
+                    <div class="score-label">Mutation Score</div>
+                    <div class="info-icon"
+                        data-tooltip="The percentage of mutants killed (detected) by the test suite. Higher is better.">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </div>
+                </div>
+                <div class="score-value">{{ statistics.mutation_score | percent:'1.2-2' }}</div>
+            </div>
+
+            <!-- AI Card Removed -->
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Kill Rate per Test -->
+                <div class="chart-card">
+                    <h3>
+                        Kill Rate per Test
+                        <div class="info-icon"
+                            data-tooltip="Percentage of mutants killed by each individual test case. Helps identify powerful tests.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="custom-chart-container">
+                        <div class="chart-bar-row" *ngFor="let item of testRates">
+                            <div class="bar-label">{{ item.label }}</div>
+                            <div class="bar-track">
+                                <div class="bar-fill test-fill" [style.width.%]="item.value * 100">
+                                    <!-- Tooltip removed from inside bar as requested -->
+                                </div>
+                            </div>
+                            <div class="bar-value-text">{{ item.displayValue }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kill Rate per Mutant -->
+                <div class="chart-card">
+                    <h3>
+                        Kill Rate per Mutant
+                        <div class="info-icon"
+                            data-tooltip="Percentage of test cases that killed each specific mutant. Low values indicate hard-to-kill mutants.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="custom-chart-container">
+                        <div class="chart-bar-row" *ngFor="let item of mutantRates">
+                            <div class="bar-label">{{ item.label }}</div>
+                            <div class="bar-track">
+                                <div class="bar-fill mutant-fill" [style.width.%]="item.value * 100">
+                                    <!-- Tooltip removed from inside bar as requested -->
+                                </div>
+                            </div>
+                            <div class="bar-value-text">{{ item.displayValue }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lists Grid -->
+            <div class="lists-grid">
+                <div class="list-card">
+                    <h3>
+                        Rarely Killed Mutants
+                        <div class="info-icon"
+                            data-tooltip="Mutants killed by very few tests (below threshold). These are often 'stubborn' mutants requiring specific tests.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="list-container">
+                        <div *ngIf="statistics.rarely_killed_mutants.length === 0" class="empty-text">None</div>
+                        <div *ngFor="let item of statistics.rarely_killed_mutants" class="list-item">
+                            Mutant {{ item }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-card">
+                    <h3>
+                        Subsumed Mutants
+                        <div class="info-icon"
+                            data-tooltip="Mutants properly killed by a set of tests that also kill another mutant. Helps identify redundant equivalents.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="list-container">
+                        <div *ngIf="statistics.subsumed_mutants.length === 0" class="empty-text">None</div>
+                        <div *ngFor="let item of statistics.subsumed_mutants" class="list-item">
+                            Mutant {{ item }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <app-chat-side-bar *ngIf="isSidebarOpen" [conversationId]="conversationId" [initialAnalysis]="analysisResult"
+            (close)="closeSidebar()">
+        </app-chat-side-bar>
+    </div>
+
+    <ng-template #noData>
+        <div class="no-data">
+            <p>No statistics data available. Please generate statistics from the Mutant Cycle page.</p>
+        </div>
+    </ng-template>
+</div>

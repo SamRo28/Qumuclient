@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges, HostListener, ChangeDetectorRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MutantCycle } from '../model/MutantCycle';
 import { Result, MutantResult } from '../model/MutantResult';
@@ -16,6 +16,8 @@ import { QiskitExecutorService } from '../qiskit-executor.service';
 import { TestSuite } from '../model/TestSuite';
 import { Deterministic } from '../model/Deterministic';
 import { MutantExecutionService, ExecutionStatus } from '../mutant-execution.service';
+import { StatisticsService } from '../services/statistics.service';
+import { StatisticsResponse } from '../model/StatisticsResponse';
 
 @Component({
   selector: 'app-mutant-cycle-info',
@@ -52,14 +54,21 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   // Execution State
   executionStatus: ExecutionStatus = { isRunning: false, progress: 0, total: 0, message: '' };
 
+  // Statistics State
+  isLoadingStats = false;
+  statistics: StatisticsResponse | null = null;
+  showStatsModal = false;
+
   constructor(
     public override sanitizer: DomSanitizer,
     public manager: ManagerService,
     public qe: QiskitExecutorService,
     private qumugen: QumugenService,
     private route: ActivatedRoute,
+    private router: Router,
     private mutantExecutionService: MutantExecutionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private statisticsService: StatisticsService
   ) {
     super(sanitizer);
   }
@@ -470,35 +479,37 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       (this.mutantCycle?.mutants?.some(m => m.result !== undefined && m.result !== null) ?? false);
   }
 
-  exportMatrixToCSV(): void {
-    if (!this.matrixRows || this.matrixRows.length === 0) return;
+  private generateCSVContent(): string | null {
+    if (!this.matrixRows || this.matrixRows.length === 0) return null;
 
-    // 1. Crear cabeceras del CSV
-    // Columnas fijas + las columnas dinámicas de inputs (test case ids)
+    // 1. Cabeceras del CSV
     const header = ['Mutant ID', 'Operator', ...this.inputHeaders];
     let csvContent = header.join(',') + '\n';
 
-    // 2. Iterar sobre las filas de la matriz
+    // 2. Filas de la matriz
     this.matrixRows.forEach(row => {
       const mutantId = row.mutant.mutantIndex !== undefined ? row.mutant.mutantIndex : 'N/A';
       const operator = row.mutant.mutationOperator || 'N/A';
 
-      // Para cada input de la cabecera, buscamos si existe la celda correspondiente en esta fila
       const rowData = this.inputHeaders.map(inputCtx => {
         const cell = row.cells.find(c => c.input === inputCtx);
         if (cell) {
-          // Si existe celda, retornamos "Killed" o "Alive"
           return cell.killed ? 'Killed' : 'Alive';
         } else {
-          // Si no hay dato para ese input, asumimos Alive o vacío
           return 'Alive';
         }
       });
 
-      // Construir la línea: ID, Operador, Resultado1, Resultado2...
       const line = [mutantId, operator, ...rowData].join(',');
       csvContent += line + '\n';
     });
+
+    return csvContent;
+  }
+
+  exportMatrixToCSV(): void {
+    const csvContent = this.generateCSVContent();
+    if (!csvContent) return;
 
     // 3. Crear el Blob y descargar
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -511,5 +522,32 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  }
+
+  calculateStatistics(): void {
+    const csvContent = this.generateCSVContent();
+    if (!csvContent) return;
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const file = new File([blob], `killing_matrix.csv`, { type: 'text/csv' });
+
+    this.isLoadingStats = true;
+    this.statisticsService.calculateStatistics(file).subscribe({
+      next: (stats) => {
+        this.statisticsService.setStatistics(stats);
+        this.isLoadingStats = false;
+        this.router.navigate(['/statistics']);
+      },
+      error: (err) => {
+        console.error('Error calculating statistics', err);
+        this.isLoadingStats = false;
+        this.manager.showNotification('Error calculating statistics', 'error');
+      }
+    });
+  }
+
+  closeStatsModal(): void {
+    this.showStatsModal = false;
+    this.statistics = null;
   }
 }

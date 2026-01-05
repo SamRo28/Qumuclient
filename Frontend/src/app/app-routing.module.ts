@@ -4,6 +4,7 @@ import { HomeComponent } from './home/home.component';
 import { CircuitsConfigurationComponent } from './circuits-configuration/circuits-configuration.component';
 import { MutantsInfoComponent } from './mutants-info/mutants-info.component';
 import { MutantCycleInfoComponent } from './mutant-cycle-info/mutant-cycle-info.component';
+import { StatisticsVisualizerComponent } from './statistics-visualizer/statistics-visualizer.component';
 
 const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -11,6 +12,7 @@ const routes: Routes = [
     { path: 'project/:projectId', component: CircuitsConfigurationComponent },
     { path: 'project/:projectId/cycle/:cycleId', component: MutantCycleInfoComponent },
     { path: 'project/:projectId/cycle/:cycleId/mutant/:mutantId', component: MutantsInfoComponent },
+    { path: 'statistics', component: StatisticsVisualizerComponent },
     { path: '**', redirectTo: '' }
 ];
 

@@ -20,6 +20,8 @@ import { SaveButtonComponent } from './save-button/save-button.component';
 import { ProjectNotesComponent } from './project-notes/project-notes.component';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
+import { StatisticsVisualizerComponent } from './statistics-visualizer/statistics-visualizer.component';
+import { ChatSideBarComponent } from './chat-side-bar/chat-side-bar.component';
 
 @NgModule({
   declarations: [
@@ -38,7 +40,9 @@ import { ConfirmationModalComponent } from './components/confirmation-modal/conf
     SaveButtonComponent,
     ProjectNotesComponent,
     ThemeToggleComponent,
-    ConfirmationModalComponent
+    ConfirmationModalComponent,
+    StatisticsVisualizerComponent,
+    ChatSideBarComponent
   ],
   imports: [
     BrowserModule,
