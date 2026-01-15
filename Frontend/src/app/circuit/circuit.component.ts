@@ -1,15 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ReperService } from '../reper.service';
-import { QProgram } from '../model/QProgram';
+import { ReperService } from '../services/reper.service';
 import { Subscription } from 'rxjs';
 import { AppComponent } from '../app.component';
-import { ManagerService } from '../manager.service';
-import { QumugenService } from '../qumugen.service';
-import { QasmService } from '../qasm.service';
+import { ManagerService } from '../services/manager.service';
+import { QumugenService } from '../services/qumugen.service';
+import { QasmService } from '../services/qasm.service';
 import { Output, EventEmitter } from '@angular/core';
 import { Project } from '../model/Project';
-import { UserService } from '../user.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-circuit',

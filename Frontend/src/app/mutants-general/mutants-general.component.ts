@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Mutant } from '../model/Mutant';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 
 @Component({
   selector: 'app-mutants-general',

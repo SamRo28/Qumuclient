@@ -3,7 +3,7 @@
     background: var(--glass-bg-sidebar, rgba(255, 255, 255, 0.8));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-left: 1px solid var(--border-glass, rgba(255, 255, 255, 0.5));
+    border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.5));
     display: flex;
     flex-direction: row;
     position: relative;

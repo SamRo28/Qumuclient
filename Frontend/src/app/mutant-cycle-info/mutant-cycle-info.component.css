@@ -353,6 +353,35 @@
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
+/* Custom Scrollbar for Killing Matrix */
+.killing-matrix-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.killing-matrix-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+:host-context([data-theme='dark']) .killing-matrix-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.killing-matrix-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.killing-matrix-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+.killing-matrix-scroll-wrapper::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .killing-matrix-table td,
 .killing-matrix-table th {
   white-space: nowrap;

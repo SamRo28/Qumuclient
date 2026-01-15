@@ -1,10 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { QumugenService } from '../qumugen.service';
+import { QumugenService } from '../services/qumugen.service';
 
 import { OperatorFamily } from '../model/OperatorFamily';
 import { AppComponent } from '../app.component';
-import { ManagerService } from '../manager.service';
-import { LoadingService } from '../loading.service';
+import { ManagerService } from '../services/manager.service';
+import { LoadingService } from '../services/loading.service';
 import { Subscription } from 'rxjs';
 
 @Component({

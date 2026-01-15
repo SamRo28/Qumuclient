@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, of, tap, switchMap } from 'rxjs';
-import { QProgram } from './model/QProgram';
-import { Mutant } from './model/Mutant';
-import { MutantCycle } from './model/MutantCycle';
-import { Project } from './model/Project';
-import { Operator } from './model/OperatorFamily';
+import { Project } from '../model/Project';
+import { Mutant } from '../model/Mutant';
+import { QProgram } from '../model/QProgram';
+import { MutantCycle } from '../model/MutantCycle';
+import { QCircuit } from '../model/QCircuit';
+import { ExecConfiguration } from '../model/ExecConfiguration';
+import { ProjectNote } from '../model/ProjectNote';
+import { TestSuite } from '../model/TestSuite';
+import { Deterministic } from '../model/Deterministic';
+import { Stochastic } from '../model/Stochastic';
 import { ReperService } from './reper.service';
+
 
 @Injectable({
   providedIn: 'root'
@@ -367,7 +373,7 @@ export class ManagerService {
 
         // QCircuit
         if (circuitData.qProgram.qCircuit) {
-          const qCircuit = new (require('./model/QCircuit').QCircuit)(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
+          const qCircuit = new QCircuit(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
           qProgram.qCircuit = qCircuit;
         }
         project.qProgram = qProgram;
@@ -375,14 +381,14 @@ export class ManagerService {
 
       // MutantCycles
       project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
-        const mutantCycle = new (require('./model/MutantCycle').MutantCycle)();
+        const mutantCycle = new MutantCycle();
         mutantCycle.id = cycleData.id;
         mutantCycle.date = cycleData.date;
-        mutantCycle.execConfiguration = new (require('./model/ExecConfiguration').ExecConfiguration)(cycleData.execConfig);
+        mutantCycle.execConfiguration = new ExecConfiguration(cycleData.execConfig);
 
         // Mutants
         mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
-          const mutant = new (require('./model/Mutant').Mutant)();
+          const mutant = new Mutant();
           mutant.id = mutantData.id;
           mutant.mutantResults = mutantData.mutantResults;
           mutant.mutantIndex = mutantData.mutantIndex;
@@ -403,7 +409,7 @@ export class ManagerService {
             Object.assign(mutantQProgram, mutantData.circuit);
 
             if (mutantData.circuit.qCircuit) {
-              const mutantQCircuit = new (require('./model/QCircuit').QCircuit)(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
+              const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
               mutantQProgram.qCircuit = mutantQCircuit;
             }
             mutant.circuit = mutantQProgram;
@@ -416,7 +422,7 @@ export class ManagerService {
 
       if (circuitData.projectNotes) {
         project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
-          const note = new (require('./model/ProjectNote').ProjectNote)(
+          const note = new ProjectNote(
             noteData.title,
             noteData.text,
             noteData.type,
@@ -430,7 +436,7 @@ export class ManagerService {
       // TestSuites
       if (circuitData.testSuites) {
         project.testSuites = (circuitData.testSuites || []).map((testSuiteData: any) => {
-          const testSuite = new (require('./model/TestSuite').TestSuite)();
+          const testSuite = new TestSuite();
           testSuite.id = testSuiteData.id;
           testSuite.error_range = testSuiteData.error_range;
 
@@ -438,11 +444,11 @@ export class ManagerService {
           testSuite.testCases = (testSuiteData.testCases || []).map((testCaseData: any) => {
             let testCase: any = null; // Typing loosely to avoid circular dep issues in this snippet
             if (testCaseData.type === 'DETERMINISTIC') {
-              testCase = new (require('./model/Deterministic').Deterministic)();
+              testCase = new Deterministic();
               testCase.entryValues = testCaseData.entryValues;
               testCase.expectedValues = testCaseData.expectedValues;
             } else if (testCaseData.type === 'STOCHASTIC') {
-              testCase = new (require('./model/Stochastic').Stochastic)();
+              testCase = new Stochastic();
               testCase.probabilityDistribution = testCaseData.probabilityDistribution;
             }
 

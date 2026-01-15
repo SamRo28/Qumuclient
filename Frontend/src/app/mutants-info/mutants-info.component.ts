@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { QumugenService } from '../qumugen.service';
+import { QumugenService } from '../services/qumugen.service';
 
 @Component({
   selector: 'app-mutants-info',

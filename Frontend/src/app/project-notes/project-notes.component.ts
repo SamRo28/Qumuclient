@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 import { ProjectNote } from '../model/ProjectNote';
 import { Project } from '../model/Project';
 import { Subscription } from 'rxjs';

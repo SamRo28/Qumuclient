@@ -1,0 +1,6 @@
+projectKey=QuMu-frontend
+serverUrl=http://localhost:9000
+serverVersion=25.12.0.117093
+dashboardUrl=http://localhost:9000/dashboard?id=QuMu-frontend
+ceTaskId=e12d224a-9a2e-47d6-870b-c73baa0d8544
+ceTaskUrl=http://localhost:9000/api/ce/task?id=e12d224a-9a2e-47d6-870b-c73baa0d8544

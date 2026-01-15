@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { QProgram } from './model/QProgram';
+import { QProgram } from '../model/QProgram';
 import { ManagerService } from './manager.service';
-import { Mutant } from './model/Mutant';
-import { Curl } from './model/Curl';
+import { Mutant } from '../model/Mutant';
+import { Curl } from '../model/Curl';
 
 @Injectable({
   providedIn: 'root'

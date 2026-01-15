@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ManagerService } from '../manager.service';
-import { QProgram } from '../model/QProgram';
+import { ManagerService } from '../services/manager.service';
 import { Project } from '../model/Project';
-import { UserService } from '../user.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-home',

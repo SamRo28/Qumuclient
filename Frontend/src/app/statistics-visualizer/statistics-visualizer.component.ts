@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
+import { ManagerService } from '../services/manager.service';
 
 interface ChartItem {
     label: string;
@@ -14,7 +15,7 @@ interface ChartItem {
     templateUrl: './statistics-visualizer.component.html',
     styleUrls: ['./statistics-visualizer.component.css']
 })
-export class StatisticsVisualizerComponent implements OnInit {
+export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
 
     statistics: StatisticsResponse | null = null;
 
@@ -32,10 +33,12 @@ export class StatisticsVisualizerComponent implements OnInit {
 
     constructor(
         private statisticsService: StatisticsService,
-        private router: Router
+        private router: Router,
+        private manager: ManagerService
     ) { }
 
     ngOnInit(): void {
+        this.manager.showSaveButton = false;
         this.statistics = this.statisticsService.getStatistics();
 
         if (!this.statistics) {
@@ -107,5 +110,9 @@ export class StatisticsVisualizerComponent implements OnInit {
 
     closeSidebar() {
         this.isSidebarOpen = false;
+    }
+
+    ngOnDestroy(): void {
+        this.manager.showSaveButton = true;
     }
 }

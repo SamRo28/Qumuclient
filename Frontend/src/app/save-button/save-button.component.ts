@@ -1,7 +1,7 @@
 import { Component, Output, EventEmitter } from '@angular/core';
-import { ManagerService } from '../manager.service';
-import { UserService } from '../user.service';
-import { ReperService } from '../reper.service';
+import { ManagerService } from '../services/manager.service';
+import { UserService } from '../services/user.service';
+import { ReperService } from '../services/reper.service';
 
 @Component({
   selector: 'app-save-button',
@@ -57,13 +57,13 @@ export class SaveButtonComponent {
         this.saveClick.emit();
 
         // Mostrar notificación de éxito
-        this.manager.showNotification('Project saved successfully!', 'success');
+        this.manager.showNotification('Project saved successfully!', 'success', 5000);
         console.log('Project saved successfully');
       },
       error: (error) => {
         console.error('Error al guardar:', error);
         // Mostrar notificación de error
-        this.manager.showNotification('Error saving project. Please try again.', 'error');
+        this.manager.showNotification('Error saving project. Please try again.', 'error', 5000);
       }
     });
   }

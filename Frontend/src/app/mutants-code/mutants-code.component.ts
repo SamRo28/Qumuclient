@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Mutant } from '../model/Mutant';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({

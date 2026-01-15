@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 import { AppComponent } from '../app.component';
 import { Mutant } from '../model/Mutant';
 import { Subscription } from 'rxjs';
@@ -43,7 +43,7 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
   private updateCircuitUrls(): void {
     // Update original circuit URL
     this.updateOriginalCircuitUrl();
-    
+
     // Update mutant circuit URL
     if (this.selectedMutant?.circuit?.qCircuit.textQuirkCode) {
       const url = AppComponent.quirkUrl + "#circuit=" + this.selectedMutant.circuit.qCircuit.textQuirkCode;

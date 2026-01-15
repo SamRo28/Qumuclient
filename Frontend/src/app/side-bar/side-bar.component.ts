@@ -1,22 +1,15 @@
 import { Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { of, Subscription, switchMap, tap } from 'rxjs';
-import { ReperService } from '../reper.service';
-import { ManagerService } from '../manager.service';
-import { QProgram } from '../model/QProgram';
+import { Subscription } from 'rxjs';
+import { ReperService } from '../services/reper.service';
+import { ManagerService } from '../services/manager.service';
 import { MutantCycle } from '../model/MutantCycle';
 import { Mutant } from '../model/Mutant';
-import { QumugenService } from '../qumugen.service';
-import { AppComponent } from '../app.component';
+import { QumugenService } from '../services/qumugen.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Project } from '../model/Project';
-import { QCircuit } from '../model/QCircuit';
-import { UserService } from '../user.service';
-import { ProjectNote } from '../model/ProjectNote';
-import { TestSuite } from '../model/TestSuite';
-import { TestCase } from '../model/TestCase';
-import { Deterministic } from '../model/Deterministic';
-import { Stochastic } from '../model/Stochastic';
+import { UserService } from '../services/user.service';
+
 
 @Component({
   selector: 'app-side-bar',

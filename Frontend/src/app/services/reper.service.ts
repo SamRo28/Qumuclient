@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { QProgram } from './model/QProgram';
+import { QProgram } from '../model/QProgram';
 
-import { Mutant } from './model/Mutant';
-import { Project } from './model/Project';
+import { Mutant } from '../model/Mutant';
+import { Project } from '../model/Project';
 
 @Injectable({
   providedIn: 'root'
@@ -35,7 +35,7 @@ export class ReperService {
   }
 
   delete(projectId: string) {
-    return this.client.post<any>("http://localhost:8080/projects/delete", { projectId }, { withCredentials: true })
+    return this.client.post<any>("http://localhost:8080/projects/delete", { projectId, userId: sessionStorage.getItem('email')! }, { withCredentials: true })
   }
 
   getUser() {

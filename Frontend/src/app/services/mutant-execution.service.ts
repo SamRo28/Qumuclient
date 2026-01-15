@@ -3,13 +3,13 @@ import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { ManagerService } from './manager.service';
 import { QiskitExecutorService } from './qiskit-executor.service';
 import { QumugenService } from './qumugen.service';
-import { MutantCycle } from './model/MutantCycle';
-import { Mutant } from './model/Mutant';
-import { Result, MutantResult } from './model/MutantResult';
-import { AppComponent } from './app.component';
-import { Project } from './model/Project';
-import { TestSuite } from './model/TestSuite';
-import { Deterministic } from './model/Deterministic';
+import { MutantCycle } from '../model/MutantCycle';
+import { Mutant } from '../model/Mutant';
+import { Result, MutantResult } from '../model/MutantResult';
+import { AppComponent } from '../app.component';
+import { Project } from '../model/Project';
+import { TestSuite } from '../model/TestSuite';
+import { Deterministic } from '../model/Deterministic';
 
 export interface ExecutionStatus {
     isRunning: boolean;
@@ -95,7 +95,7 @@ export class MutantExecutionService {
                 testSuite.testCases.forEach(testCase => {
                     if (testCase.type === 'DETERMINISTIC') {
                         const deterministicCase = testCase as Deterministic;
-                        inputs!.push(deterministicCase.entryIndexes.join(''));
+                        inputs!.push(deterministicCase.entryValues.join(''));
                     }
                 });
             }
@@ -286,8 +286,10 @@ export class MutantExecutionService {
                 const killed = batchResult.killed;
                 const error = batchResult.error;
 
+                const id = inputs ? parseInt(inputs[i], 2) : i;
+
                 const mr = new MutantResult({
-                    id: i, // ID is the input index (implicitly)
+                    id: id,
                     result: killed ? Result.KILLED : Result.ALIVE,
                     error: error
                 });

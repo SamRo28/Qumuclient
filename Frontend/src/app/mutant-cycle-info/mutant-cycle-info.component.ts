@@ -5,17 +5,17 @@ import { MutantCycle } from '../model/MutantCycle';
 import { Result, MutantResult } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
 import { DomSanitizer } from '@angular/platform-browser';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 // import { QiskitExecutorService } from '../qiskit-executor.service'; // TODO: Reemplazar por ExecuterService
-import { QumugenService } from '../qumugen.service';
+import { QumugenService } from '../services/qumugen.service';
 import { AppComponent } from '../app.component';
 import { MutantsExecutor } from '../MutantsExecutor';
 import { QProgram } from '../model/QProgram';
 import { QCode } from '../model/QCode';
-import { QiskitExecutorService } from '../qiskit-executor.service';
+import { QiskitExecutorService } from '../services/qiskit-executor.service';
 import { TestSuite } from '../model/TestSuite';
 import { Deterministic } from '../model/Deterministic';
-import { MutantExecutionService, ExecutionStatus } from '../mutant-execution.service';
+import { MutantExecutionService, ExecutionStatus } from '../services/mutant-execution.service';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
 

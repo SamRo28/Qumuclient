@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 import { Subscription } from 'rxjs';
 import { CircuitComponent } from '../circuit/circuit.component';
 import { QProgram } from '../model/QProgram';

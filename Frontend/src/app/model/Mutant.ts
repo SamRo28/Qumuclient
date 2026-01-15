@@ -10,7 +10,8 @@ export class Mutant {
     circuit?: QProgram
     result?: MutantResult
     mutantResults: MutantResult[] = []
-    operator?: Operator
+    operator: Operator
+    id?: string
 
     constructor(mutantIndex?: number, mutatedColumn?: number, mutatedRow?: number, mutationOperator?: string, circuit?: QProgram) {
 
