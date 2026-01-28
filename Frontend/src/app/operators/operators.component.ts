@@ -16,23 +16,10 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   families: OperatorFamily[] = []
   error: string = ""
   qubitCount: number = -1;
+  inputQubitsSelection: { [key: number]: boolean } = {};
   outputQubitsSelection: { [key: number]: boolean } = {};
+  qubitsIndices: number[] = [];
   private projectSubscription?: Subscription;
-
-  get outputQubitsArray(): string[] {
-    if (!this.manager.outputQubits || this.manager.outputQubits.trim() === '') {
-      return [];
-    }
-    return this.manager.outputQubits.split(',').filter(item => item.trim() !== '');
-  }
-
-  getOutputQubitsIndices(): number[] {
-    return this.outputQubitsArray.map((_, index) => index);
-  }
-
-  getSelectedOutputQubitsCount(): number {
-    return Object.values(this.outputQubitsSelection).filter(selected => selected).length;
-  }
 
   constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) { }
 
@@ -70,30 +57,71 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    // Recargar qubitCount
-    this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
-    if (this.manager.selectedProject) {
-      this.manager.selectedProject.qProgram.qubits = this.qubitCount;
-
-      // Calcular mutableColumns y mutableRows si están vacíos o son valores por defecto
-      const qCircuit = this.manager.selectedProject.qProgram.qCircuit;
-
-      // Si mutableColumns está vacío o es el valor por defecto "-1,", calcularlo
-      if (!qCircuit.mutableColumns || qCircuit.mutableColumns === '' || qCircuit.mutableColumns === '-1,') {
-        qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
-      }
-
-      // Si mutableRows está vacío, calcularlo
-      if (!qCircuit.mutableRows || qCircuit.mutableRows === '') {
-        qCircuit.mutableRows = qCircuit.calculateMutableRows();
-      }
+    if (!this.manager.selectedProject) {
+      this.qubitCount = -1;
+      this.qubitsIndices = [];
+      return;
     }
 
-    // Reinicializar outputQubitsSelection
+    // Recargar qubitCount
+    this.qubitCount = this.manager.selectedProject.getQubits();
+    this.manager.selectedProject.qProgram.qubits = this.qubitCount;
+
+    // Generar índices de qubits [0, 1, ..., n-1]
+    this.qubitsIndices = Array.from({ length: this.qubitCount }, (_, i) => i);
+
+    // Calcular mutableColumns y mutableRows si están vacíos
+    const qCircuit = this.manager.selectedProject.qProgram.qCircuit;
+    if (!qCircuit.mutableColumns || qCircuit.mutableColumns === '' || qCircuit.mutableColumns === '-1,') {
+      qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
+    }
+    if (!qCircuit.mutableRows || qCircuit.mutableRows === '') {
+      qCircuit.mutableRows = qCircuit.calculateMutableRows();
+    }
+
+    // Inicializar inputQubitsSelection
+    this.inputQubitsSelection = {};
+    const inputQubitsStr = this.manager.selectedProject.qProgram.inputQubits || "";
+    if (inputQubitsStr.trim() === "") {
+      // Si está vacío, marcar todos
+      this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = true);
+    } else {
+      const selectedInputs = inputQubitsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = selectedInputs.includes(i));
+    }
+
+    // Inicializar outputQubitsSelection
     this.outputQubitsSelection = {};
-    this.outputQubitsArray.forEach((_, index) => {
-      this.outputQubitsSelection[index] = true; // Por defecto todos seleccionados
-    });
+    const outputQubitsStr = this.manager.selectedProject.qProgram.outputQubits || "";
+    if (outputQubitsStr.trim() === "") {
+      // Si está vacío, marcar todos
+      this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = true);
+    } else {
+      const selectedOutputs = outputQubitsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = selectedOutputs.includes(i));
+    }
+  }
+
+  updateInputQubits() {
+    const selected = this.qubitsIndices.filter(i => this.inputQubitsSelection[i]);
+    const str = selected.join(',');
+
+    if (this.manager.selectedProject) {
+      this.manager.selectedProject.qProgram.inputQubits = str;
+      this.manager.inputQubits = str; // Sync manager property if needed
+      this.manager.markProjectAsModified();
+    }
+  }
+
+  updateOutputQubits() {
+    const selected = this.qubitsIndices.filter(i => this.outputQubitsSelection[i]);
+    const str = selected.join(',');
+
+    if (this.manager.selectedProject) {
+      this.manager.selectedProject.qProgram.outputQubits = str;
+      this.manager.outputQubits = str; // Sync manager property if needed
+      this.manager.markProjectAsModified();
+    }
   }
 
   selectAll() {

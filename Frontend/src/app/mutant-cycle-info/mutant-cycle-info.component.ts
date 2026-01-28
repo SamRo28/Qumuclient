@@ -18,6 +18,7 @@ import { Deterministic } from '../model/Deterministic';
 import { MutantExecutionService, ExecutionStatus } from '../services/mutant-execution.service';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
+import { ExecConfiguration } from '../model/ExecConfiguration';
 
 @Component({
   selector: 'app-mutant-cycle-info',
@@ -197,10 +198,24 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   initializeCycleView() {
     this.currentPage = 1; // Reset to first page on new cycle
 
-    if (this.mutantCycle && this.mutantCycle.execConfiguration) {
+    if (this.mutantCycle) {
+      if (!this.mutantCycle.execConfiguration) {
+        this.mutantCycle.execConfiguration = new ExecConfiguration({});
+        this.mutantCycle.execConfiguration.executionDate = new Date();
+        this.mutantCycle.execConfiguration.machine = 'AerSimulator';
+        this.mutantCycle.execConfiguration.execAlgorithm = 'AllAgainstAll';
+      }
+
       if (!this.mutantCycle.execConfiguration.execAlgorithm) {
         this.mutantCycle.execConfiguration.execAlgorithm = 'AllAgainstAll';
       }
+      if (!this.mutantCycle.execConfiguration.machine) {
+        this.mutantCycle.execConfiguration.machine = 'AerSimulator';
+      }
+      if (!this.mutantCycle.execConfiguration.executionDate) {
+        this.mutantCycle.execConfiguration.executionDate = new Date();
+      }
+
       this.manager.executionAlgorithm = this.mutantCycle.execConfiguration.execAlgorithm;
     }
 

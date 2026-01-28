@@ -15,7 +15,8 @@
       <h3 class="card-title">Circuit Configuration</h3>
     </div>
 
-    <div class="config-grid-horizontal">
+    <!-- Row 1: Basic Config -->
+    <div class="config-row-basic">
       <!-- Qubits Count -->
       <div class="config-item">
         <label for="qubits" class="config-label">
@@ -35,10 +36,10 @@
             <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
           Mutable Columns
+          <span class="input-hint">(-1 for all)</span>
         </label>
         <input type="text" id="mutableColumns" [(ngModel)]="manager.selectedProject!.qProgram.qCircuit.mutableColumns"
           class="glass-input" placeholder="-1,0,1,2">
-        <span class="input-hint">(-1 for all)</span>
       </div>
 
       <!-- Mutable Rows -->
@@ -48,14 +49,35 @@
             <path d="M6 4v16M12 4v16M18 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
           Mutable Rows
+          <span class="input-hint">(qubit indices)</span>
         </label>
         <input type="text" id="mutableRows" [(ngModel)]="manager.selectedProject!.qProgram.qCircuit.mutableRows"
           class="glass-input" placeholder="0,1,2">
-        <span class="input-hint">(qubit indices)</span>
+      </div>
+    </div>
+
+    <!-- Row 2: Qubit Selection -->
+    <div class="config-row-qubits">
+      <!-- Input Qubits -->
+      <div class="config-item full-width">
+        <label class="config-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Input Qubits
+        </label>
+        <div class="output-qubits-inline">
+          <label *ngFor="let qubitIndex of qubitsIndices" class="qubit-checkbox">
+            <input type="checkbox" [(ngModel)]="inputQubitsSelection[qubitIndex]" (change)="updateInputQubits()"
+              class="glass-checkbox">
+            <span>Q{{ qubitIndex }}</span>
+          </label>
+        </div>
       </div>
 
       <!-- Output Qubits -->
-      <div class="config-item" *ngIf="manager.outputQubits && manager.outputQubits.trim() !== ''">
+      <div class="config-item full-width">
         <label class="config-label">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -64,8 +86,9 @@
           Output Qubits
         </label>
         <div class="output-qubits-inline">
-          <label *ngFor="let qubitIndex of getOutputQubitsIndices()" class="qubit-checkbox">
-            <input type="checkbox" [(ngModel)]="outputQubitsSelection[qubitIndex]" class="glass-checkbox">
+          <label *ngFor="let qubitIndex of qubitsIndices" class="qubit-checkbox">
+            <input type="checkbox" [(ngModel)]="outputQubitsSelection[qubitIndex]" (change)="updateOutputQubits()"
+              class="glass-checkbox">
             <span>Q{{ qubitIndex }}</span>
           </label>
         </div>

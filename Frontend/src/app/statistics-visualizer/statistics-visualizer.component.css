@@ -50,44 +50,14 @@
     gap: 1rem;
     z-index: 20;
     position: relative;
-    margin: 0 auto;
-}
-
-.back-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    transition: all 0.2s;
-}
-
-.back-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--text-primary);
-}
-
-.header h2 {
+    width: 100%;
+    max-width: none;
     margin: 0;
-    font-size: 1.75rem;
-    /* Larger font */
-    color: var(--text-primary);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
 }
 
-.header h2 svg {
-    color: var(--accent-primary);
-    filter: drop-shadow(0 2px 4px var(--shadow-glass));
-}
+/* ... styles for back-btn ... */
+
+/* ... styles for header h2 ... */
 
 /* Layout Wrapper */
 .stats-body-wrapper {
@@ -96,8 +66,9 @@
     overflow: hidden;
     position: relative;
     z-index: 10;
-    margin: 0 auto;
-    /* Center content */
+    width: 100%;
+    max-width: none;
+    margin: 0;
 }
 
 .content {
@@ -202,16 +173,13 @@
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-@media (max-width: 1400px) {
-    .dashboard-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
+/* 1400px query is now redundant but harmless, or we can remove it. Let's remove it for cleanliness if I can match lines. */
+
 
 @media (max-width: 768px) {
     .dashboard-grid {
@@ -465,4 +433,56 @@
 :host-context([data-theme='dark']) .custom-chart-container::-webkit-scrollbar-thumb:hover,
 :host-context([data-theme='dark']) .stats-page-container::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+/* New Styles for Refactor */
+
+.score-details {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.bar-value-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 40px;
+}
+
+.unique-kill-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+}
+
+.unique-kill-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.mini-score-card {
+    justify-content: center;
+    text-align: center;
+}
+
+.mini-score-card .score-value {
+    font-size: 2.5rem;
+    /* Slightly smaller than main score */
+}
+
+/* Ensure grid items stretch */
+.dashboard-grid>div {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.list-container,
+.custom-chart-container {
+    flex: 1;
+    /* Take remaining height */
+    max-height: 250px;
+    /* Or whatever fixed height matches design */
 }

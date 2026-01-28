@@ -79,7 +79,7 @@ export class MutantExecutionService {
 
         // Configuration
         if (mutantCycle.execConfiguration) {
-            mutantCycle.execConfiguration.executionDate = new Date();
+            // mutantCycle.execConfiguration.executionDate = new Date(); // USER REQUEST: Use the date from configuration, dont overwrite
             if (mutantCycle.execConfiguration.execAlgorithm) {
                 this.manager.executionAlgorithm = mutantCycle.execConfiguration.execAlgorithm;
             }

@@ -8,10 +8,13 @@ import { StatisticsResponse } from '../model/StatisticsResponse';
 })
 export class StatisticsService {
     // URL placeholder, user will update it later
-    private baseUrl = 'http://172.25.16.216:8503';
+    //private baseUrl = 'http://172.25.16.216:8503';
 
     //eduroam:
     //private baseUrl = "http://172.19.176.170:8503"
+
+    //movil 2:
+    private baseUrl = "http://10.204.94.216:8503"
 
 
     private currentStatistics: StatisticsResponse | null = null;

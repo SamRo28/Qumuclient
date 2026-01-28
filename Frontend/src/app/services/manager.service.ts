@@ -146,26 +146,55 @@ export class ManagerService {
     if (this.qubitCount > 0) {
       this.qubits = Array.from({ length: this.qubitCount }, (_, i) => i);
 
-      this.inputQubits = ""
-      this.outputQubits = ""
+      // Generate default "all selected" strings
+      let allInputQubits = "";
+      let allOutputQubits = "";
       for (let i = 0; i < this.qubitCount; i++) {
-        this.inputQubits = this.inputQubits + i + ","
-        this.outputQubits = this.outputQubits + i + ","
+        allInputQubits += i + ",";
+        allOutputQubits += i + ",";
       }
-      if (this.inputQubits.endsWith(","))
-        this.inputQubits = this.inputQubits.substring(0, this.inputQubits.length - 1)
-      this.selectedProject.qProgram.inputQubits = this.inputQubits
+      if (allInputQubits.endsWith(",")) allInputQubits = allInputQubits.substring(0, allInputQubits.length - 1);
+      if (allOutputQubits.endsWith(",")) allOutputQubits = allOutputQubits.substring(0, allOutputQubits.length - 1);
 
-      if (this.outputQubits.endsWith(","))
-        this.outputQubits = this.outputQubits.substring(0, this.outputQubits.length - 1)
-      this.selectedProject.qProgram.outputQubits = this.outputQubits
+      // Input Qubits Logic: Handle Array or String
+      let currentInputQubits: any = this.selectedProject.qProgram.inputQubits;
+      if (Array.isArray(currentInputQubits)) {
+        currentInputQubits = currentInputQubits.join(',');
+      }
+
+      if (currentInputQubits && typeof currentInputQubits === 'string' && currentInputQubits.trim() !== '') {
+        this.inputQubits = currentInputQubits;
+        this.selectedProject.qProgram.inputQubits = currentInputQubits; // Ensure it's stored as string
+      } else {
+        this.inputQubits = allInputQubits;
+        this.selectedProject.qProgram.inputQubits = this.inputQubits;
+      }
+
+      // Output Qubits Logic: Handle Array or String
+      let currentOutputQubits: any = this.selectedProject.qProgram.outputQubits;
+      if (Array.isArray(currentOutputQubits)) {
+        currentOutputQubits = currentOutputQubits.join(',');
+      }
+
+      if (currentOutputQubits && typeof currentOutputQubits === 'string' && currentOutputQubits.trim() !== '') {
+        this.outputQubits = currentOutputQubits;
+        this.selectedProject.qProgram.outputQubits = currentOutputQubits; // Ensure it's stored as string
+      } else {
+        this.outputQubits = allOutputQubits;
+        this.selectedProject.qProgram.outputQubits = this.outputQubits;
+      }
+
     } else {
       // Para circuitos sin código Quirk, inicializar valores por defecto
       this.qubits = []
       this.inputQubits = ""
       this.outputQubits = ""
-      this.selectedProject.qProgram.inputQubits = ""
-      this.selectedProject.qProgram.outputQubits = ""
+      // Do not overwrite project properties here if they might exist? 
+      // Assuming if qubitCount is 0/invalid, we probably just want safety defaults locally, 
+      // but maybe we shouldn't touch project properties if we can avoid it.
+      // However, the original code did overwrite.
+      if (!this.selectedProject.qProgram.inputQubits) this.selectedProject.qProgram.inputQubits = "";
+      if (!this.selectedProject.qProgram.outputQubits) this.selectedProject.qProgram.outputQubits = "";
     }
 
     // Emitir el estado de guardado del proyecto seleccionado
@@ -384,7 +413,7 @@ export class ManagerService {
         const mutantCycle = new MutantCycle();
         mutantCycle.id = cycleData.id;
         mutantCycle.date = cycleData.date;
-        mutantCycle.execConfiguration = new ExecConfiguration(cycleData.execConfig);
+        mutantCycle.execConfiguration = new ExecConfiguration(cycleData.execConfiguration);
 
         // Mutants
         mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {

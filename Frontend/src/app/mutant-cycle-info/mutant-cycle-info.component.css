@@ -116,14 +116,24 @@
   color: var(--accent-primary);
 }
 
+.section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0;
+}
+
 .export-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: auto;
-  background: rgba(111, 168, 130, 0.1);
+  /* margin-left: auto; REMOVED: Handled by flex container logic */
+  background: transparent;
+  /* Outline style: transparent background */
   color: var(--accent-primary);
-  border: 1px solid rgba(111, 168, 130, 0.2);
+  /* Dark green text */
+  border: 1px solid var(--accent-primary);
+  /* Thin dark green border */
   border-radius: 8px;
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
@@ -134,12 +144,17 @@
   letter-spacing: 0.02em;
 }
 
+/* Push the first button to the right */
+.section h3 .export-btn:first-of-type {
+  margin-left: auto;
+}
+
 .export-btn:hover:not(:disabled) {
-  background: rgba(111, 168, 130, 0.2);
-  border-color: var(--accent-secondary);
+  background: rgba(111, 168, 130, 0.1);
+  border-color: var(--accent-primary);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  color: var(--accent-secondary);
+  color: var(--accent-primary);
 }
 
 .export-btn:active:not(:disabled) {
@@ -150,6 +165,32 @@
   opacity: 0.5;
   cursor: not-allowed;
   filter: grayscale(100%);
+  border-color: var(--text-muted);
+  /* Optional: visual indication of disabled border */
+  color: var(--text-muted);
+}
+
+/* Statistics Button - Solid Dark Green */
+.export-btn.stats-btn {
+  background: var(--accent-primary);
+  color: white;
+  border: 1px solid var(--accent-primary);
+}
+
+.export-btn.stats-btn:hover:not(:disabled) {
+  background: var(--accent-secondary);
+  /* or slightly lighter/darker green */
+  border-color: var(--accent-secondary);
+  color: white;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+  /* Greenish shadow */
+}
+
+/* Higher specificity to override .section h3 svg */
+.section h3 .export-btn.stats-btn svg {
+  color: white !important;
+  stroke: white !important;
+  /* Ensure icon is white */
 }
 
 

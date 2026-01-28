@@ -239,7 +239,7 @@
     <div class="stats-content" *ngIf="statistics">
       <div class="stat-card main-score">
         <span class="stat-label">Mutation Score</span>
-        <span class="stat-value highlight">{{ statistics.mutation_score | percent:'1.2-2' }}</span>
+        <span class="stat-value highlight">{{ statistics.mutation_score.percentage | percent:'1.2-2' }}</span>
       </div>
 
       <div class="stats-grid">

@@ -57,12 +57,24 @@
     flex: 1;
 }
 
-/* Configuration Grid - Horizontal Layout */
-.config-grid-horizontal {
+/* Configuration Layout */
+.config-row-basic {
     display: grid;
-    grid-template-columns: minmax(100px, auto) 1fr 1fr 1.2fr;
+    grid-template-columns: minmax(100px, auto) 1fr 1fr;
     gap: 1.5rem;
     align-items: start;
+    margin-bottom: 1.5rem;
+}
+
+.config-row-qubits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.full-width {
+    width: 100%;
 }
 
 .config-item {
@@ -125,7 +137,7 @@
     font-size: 0.75rem;
     color: var(--text-muted);
     font-style: italic;
-    margin-left: 0.25rem;
+    text-transform: none;
 }
 
 /* Output Qubits Inline Container */

@@ -65,14 +65,16 @@
                         </svg>
                     </div>
                 </div>
-                <div class="score-value">{{ statistics.mutation_score | percent:'1.2-2' }}</div>
+                <!-- Updated: Access .percentage and show Killed/Total -->
+                <div class="score-value">{{ statistics.mutation_score.percentage | percent:'1.2-2' }}</div>
+                <div class="score-details">
+                    ({{ statistics.mutation_score.killed }} killed / {{ statistics.mutation_score.total }} total)
+                </div>
             </div>
 
-            <!-- AI Card Removed -->
-
-            <!-- Dashboard Grid (4 Columns) -->
+            <!-- Dashboard Grid (2 Columns -> 3 Rows) -->
             <div class="dashboard-grid">
-                <!-- Kill Rate per Test -->
+                <!-- 1. Kill Rate per Test -->
                 <div class="chart-card">
                     <h3>
                         Kill Rate per Test
@@ -87,19 +89,30 @@
                         </div>
                     </h3>
                     <div class="custom-chart-container">
-                        <div class="chart-bar-row" *ngFor="let item of testRates">
-                            <div class="bar-label">{{ item.label }}</div>
+                        <div class="chart-bar-row" *ngFor="let item of testRates" [attr.title]="item.tooltip">
+                            <div class="bar-label" [title]="item.label">{{ item.label }}</div>
                             <div class="bar-track">
                                 <div class="bar-fill test-fill" [style.width.%]="item.value * 100">
-                                    <!-- Tooltip removed from inside bar as requested -->
                                 </div>
                             </div>
-                            <div class="bar-value-text">{{ item.displayValue }}</div>
+                            <div class="bar-value-group">
+                                <div class="bar-value-text">{{ item.displayValue }}</div>
+                                <!-- Extract numbers from tooltip for display matching request? Or just rely on tooltip? 
+                                     Request: "al porcentajes le tienes que agregar el número de muertos"
+                                     I will put it next to percentage or in a small subtext.
+                                     Let's use the tooltip string parsing or just pass data if I wanted cleaner HTML.
+                                     But I have tooltip string: "Killed: 50, Total: 100".
+                                     Let's just show the tooltip on hover as implemented in [title], 
+                                     OR explicitly show it if space permits. 
+                                     The user said "agregar el número de muertos". 
+                                     I'll add it in the text.
+                                -->
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Kill Rate per Mutant -->
+                <!-- 2. Kill Rate per Mutant -->
                 <div class="chart-card">
                     <h3>
                         Kill Rate per Mutant
@@ -114,11 +127,10 @@
                         </div>
                     </h3>
                     <div class="custom-chart-container">
-                        <div class="chart-bar-row" *ngFor="let item of mutantRates">
-                            <div class="bar-label">{{ item.label }}</div>
+                        <div class="chart-bar-row" *ngFor="let item of mutantRates" [attr.title]="item.tooltip">
+                            <div class="bar-label" [title]="item.label">{{ item.label }}</div>
                             <div class="bar-track">
                                 <div class="bar-fill mutant-fill" [style.width.%]="item.value * 100">
-                                    <!-- Tooltip removed from inside bar as requested -->
                                 </div>
                             </div>
                             <div class="bar-value-text">{{ item.displayValue }}</div>
@@ -126,7 +138,7 @@
                     </div>
                 </div>
 
-                <!-- Rarely Killed Mutants -->
+                <!-- 3. Rarely Killed Mutants -->
                 <div class="list-card">
                     <h3>
                         Rarely Killed Mutants
@@ -148,7 +160,7 @@
                     </div>
                 </div>
 
-                <!-- Subsumed Mutants -->
+                <!-- 4. Subsumed Mutants -->
                 <div class="list-card">
                     <h3>
                         Subsumed Mutants
@@ -169,6 +181,52 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 5. Tests with Unique Kills -->
+                <div class="list-card">
+                    <h3>
+                        Tests with Unique Kills
+                        <div class="info-icon"
+                            data-tooltip="Tests that kill at least one mutant that no other test kills. These are critical tests.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="list-container">
+                        <div *ngIf="testsWithUniqueKills.length === 0" class="empty-text">None</div>
+                        <div *ngFor="let item of testsWithUniqueKills" class="list-item">
+                            <div class="unique-kill-header">Test {{ item.test }}</div>
+                            <div class="unique-kill-sub">Unique kills: {{ item.count }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Surviving Mutants -->
+                <div class="score-card mini-score-card">
+                    <div class="score-header">
+                        <div class="score-label">Surviving Mutants</div>
+                        <div class="info-icon"
+                            data-tooltip="Mutants that were NOT killed by any test case. These represent gaps in your test suite.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="score-value" *ngIf="survivingMutants">
+                        {{ survivingMutants.count }}
+                    </div>
+                    <div class="score-details" *ngIf="survivingMutants">
+                        {{ survivingMutants.percentage | percent:'1.1-1' }} of total
+                    </div>
+                </div>
+
             </div>
 
         </div>
