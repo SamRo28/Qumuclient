@@ -58,10 +58,6 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>edu.uclm</groupId>
-			<artifactId>dictionary</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
+
   </dependencies>
 </project>
