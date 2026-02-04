@@ -170,27 +170,93 @@
   color: var(--text-muted);
 }
 
-/* Statistics Button - Solid Dark Green */
-.export-btn.stats-btn {
-  background: var(--accent-primary);
-  color: white;
-  border: 1px solid var(--accent-primary);
+/* Tabs */
+.tabs-header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-glass-light);
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
 }
 
-.export-btn.stats-btn:hover:not(:disabled) {
-  background: var(--accent-secondary);
-  /* or slightly lighter/darker green */
-  border-color: var(--accent-secondary);
-  color: white;
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
-  /* Greenish shadow */
+.tab-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Higher specificity to override .section h3 svg */
-.section h3 .export-btn.stats-btn svg {
-  color: white !important;
-  stroke: white !important;
-  /* Ensure icon is white */
+.tab-btn:hover {
+  background: var(--glass-bg-hover);
+  color: var(--accent-primary);
+}
+
+.tab-btn.active {
+  background: rgba(111, 168, 130, 0.1);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.tab-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Tab States */
+.stats-tab-content {
+  min-height: 400px;
+}
+
+.loading-state,
+.empty-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+  gap: 1rem;
+}
+
+.primary-btn {
+  background: var(--accent-gradient);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primary-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.spinner-lg {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 

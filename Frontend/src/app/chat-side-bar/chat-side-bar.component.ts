@@ -23,20 +23,43 @@ export class ChatSideBarComponent implements OnInit {
     newMessage: string = '';
     isSendingMessage: boolean = false;
 
-    // Sidebar width
-    width: number = 400; // Default width
+    // Modal State
+    width: number = 400;
+    height: number = 500;
     minWidth: number = 300;
-    maxWidth: number = 800;
+    minHeight: number = 300;
+    top: number = 100;
+    left: number = 100;
+
+    // Dragging State
+    isDragging: boolean = false;
+    dragStartX: number = 0;
+    dragStartY: number = 0;
+    initialLeft: number = 0;
+    initialTop: number = 0;
+
+    // Resizing State
     isResizing: boolean = false;
-    startX: number = 0;
-    startWidth: number = 0;
+    resizeStartX: number = 0;
+    resizeStartY: number = 0;
+    initialWidth: number = 0;
+    initialHeight: number = 0;
 
     constructor(
         private statisticsService: StatisticsService,
-        private sanitizer: DomSanitizer
+        private sanitizer: DomSanitizer,
+        private el: ElementRef // Inject ElementRef to get window size if needed, though window object is fine
     ) { }
 
     ngOnInit(): void {
+        // Center the modal initially
+        this.left = (window.innerWidth / 2) - (this.width / 2);
+        this.top = (window.innerHeight / 2) - (this.height / 2);
+
+        // Ensure it's not negative
+        if (this.left < 0) this.left = 20;
+        if (this.top < 0) this.top = 20;
+
         if (this.initialAnalysis) {
             this.addMessage('assistant', this.initialAnalysis);
         }
@@ -46,8 +69,6 @@ export class ChatSideBarComponent implements OnInit {
     addMessage(role: 'user' | 'assistant', content: string) {
         const msg: ChatMessage = { role, content };
         if (role === 'assistant') {
-            // Parse Markdown for assistant
-            // marked.parse returns string | Promise<string>. safeHtml expects string.
             const html = marked.parse(content, { async: false }) as string;
             msg.rendered = this.sanitizer.bypassSecurityTrustHtml(html);
         }
@@ -79,28 +100,52 @@ export class ChatSideBarComponent implements OnInit {
         this.close.emit();
     }
 
-    // Resizing Logic
+    // --- Dragging Logic ---
+    startDragging(event: MouseEvent) {
+        // Only trigger if clicking the header itself, not buttons inside it
+        if ((event.target as HTMLElement).closest('button')) return;
+
+        this.isDragging = true;
+        this.dragStartX = event.clientX;
+        this.dragStartY = event.clientY;
+        this.initialLeft = this.left;
+        this.initialTop = this.top;
+        event.preventDefault();
+    }
+
+    // --- Resizing Logic ---
     startResizing(event: MouseEvent) {
         this.isResizing = true;
-        this.startX = event.clientX;
-        this.startWidth = this.width;
-        event.preventDefault(); // Prevent text selection
+        this.resizeStartX = event.clientX;
+        this.resizeStartY = event.clientY;
+        this.initialWidth = this.width;
+        this.initialHeight = this.height;
+        event.preventDefault();
+        event.stopPropagation(); // Prevent drag start
     }
 
     @HostListener('window:mousemove', ['$event'])
-    resize(event: MouseEvent) {
-        if (!this.isResizing) return;
+    onMouseMove(event: MouseEvent) {
+        if (this.isDragging) {
+            const dx = event.clientX - this.dragStartX;
+            const dy = event.clientY - this.dragStartY;
+            this.left = this.initialLeft + dx;
+            this.top = this.initialTop + dy;
+        } else if (this.isResizing) {
+            const dx = event.clientX - this.resizeStartX;
+            const dy = event.clientY - this.resizeStartY;
 
-        const dx = this.startX - event.clientX; // Moving left increases width
-        const newWidth = this.startWidth + dx;
+            const newWidth = this.initialWidth + dx;
+            const newHeight = this.initialHeight + dy;
 
-        if (newWidth >= this.minWidth && newWidth <= this.maxWidth) {
-            this.width = newWidth;
+            if (newWidth >= this.minWidth) this.width = newWidth;
+            if (newHeight >= this.minHeight) this.height = newHeight;
         }
     }
 
     @HostListener('window:mouseup')
-    stopResizing() {
+    stopInteraction() {
+        this.isDragging = false;
         this.isResizing = false;
     }
 }

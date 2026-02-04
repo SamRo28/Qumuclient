@@ -4,6 +4,7 @@ import { QProgram } from '../model/QProgram';
 import { ManagerService } from './manager.service';
 import { Mutant } from '../model/Mutant';
 import { Curl } from '../model/Curl';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -14,11 +15,11 @@ export class QumugenService {
   qiskitTemplate = "qiskitTemplateWindows.txt"
 
   getOperatorsByFamily() {
-    return this.client.get<any>("http://localhost:8080/qumureper/getoperatorsByFamily")
+    return this.client.get<any>(`${environment.api.core}/qumureper/getoperatorsByFamily`)
   }
 
   getOperators(family: string) {
-    return this.client.get("http://localhost:8500/qumugen/getOperators/" + family)
+    return this.client.get(`${environment.api.mutation}/qumugen/getOperators/` + family)
   }
 
   generateMutants(circuit: QProgram, selectedOperators: any[]) {
@@ -30,14 +31,14 @@ export class QumugenService {
       inputQubits: this.manager.inputQubits,
       generateWithAllInputs: this.manager.generateWithAllInputs
     }
-    return this.client.put<any>("http://localhost:8500/qumugen/generateQuirkMutants", info)
+    return this.client.put<any>(`${environment.api.mutation}/qumugen/generateQuirkMutants`, info)
   }
 
   async getQiskitCode(circuit: QProgram) {
     circuit.inputQubits = this.manager.inputQubits
     circuit.outputQubits = this.manager.outputQubits
     try {
-      let code: Promise<any> = this.client.put<any>("http://localhost:8500/qumugen/getQiskitCode?useTemplate=true&shots=" + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, circuit).toPromise()
+      let code: Promise<any> = this.client.put<any>(`${environment.api.mutation}/qumugen/getQiskitCode?useTemplate=true&shots=` + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, circuit).toPromise()
       return code
     } catch (error) {
       throw error
@@ -49,7 +50,7 @@ export class QumugenService {
       outputQubits: outputQubits,
       mutants: mutants
     }
-    return this.client.put<any[]>("http://localhost:8500/qumugen/getMultipleQiskitCode?shots=" + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, info)
+    return this.client.put<any[]>(`${environment.api.mutation}/qumugen/getMultipleQiskitCode?shots=` + this.manager.shots + "&qiskitTemplate=" + this.qiskitTemplate, info)
   }
 
   buildUnexCurls(id: string, mutants: Mutant[]) {
@@ -57,11 +58,11 @@ export class QumugenService {
       circuitId: id,
       mutants: mutants
     }
-    return this.client.post<Curl[]>("http://localhost:8500/qumugen/buildUnexCurls", info)
+    return this.client.post<Curl[]>(`${environment.api.mutation}/qumugen/buildUnexCurls`, info)
   }
 
   sendToUnex(curl: Curl) {
     curl.result = -1
-    return this.client.post("http://localhost:8500/qumugen/sendToUnex", curl)
+    return this.client.post(`${environment.api.mutation}/qumugen/sendToUnex`, curl)
   }
 }

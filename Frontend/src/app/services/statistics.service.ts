@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { StatisticsResponse } from '../model/StatisticsResponse';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
     providedIn: 'root'
@@ -14,7 +15,7 @@ export class StatisticsService {
     //private baseUrl = "http://172.19.176.170:8503"
 
     //movil 2:
-    private baseUrl = "http://10.204.94.216:8503"
+    private baseUrl = environment.api.statistics
 
 
     private currentStatistics: StatisticsResponse | null = null;

@@ -58,7 +58,16 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   // Statistics State
   isLoadingStats = false;
   statistics: StatisticsResponse | null = null;
-  showStatsModal = false;
+  // showStatsModal = false; // Removed legacy modal
+
+  currentTab: 'matrix' | 'statistics' = 'matrix';
+
+  setTab(tab: 'matrix' | 'statistics') {
+    this.currentTab = tab;
+    if (tab === 'statistics' && !this.statistics && this.hasExecutionResults()) {
+      this.calculateStatistics();
+    }
+  }
 
   constructor(
     public override sanitizer: DomSanitizer,
@@ -228,6 +237,10 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
     this.loadKillingMatrixFromExistingResults();
     this.updatePagination();
+
+    // Reset statistics state for new cycle
+    this.statistics = null;
+    this.currentTab = 'matrix';
   }
 
   checkAndSubscribeToExecution() {
@@ -549,9 +562,11 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.isLoadingStats = true;
     this.statisticsService.calculateStatistics(file).subscribe({
       next: (stats) => {
-        this.statisticsService.setStatistics(stats);
+        // this.statisticsService.setStatistics(stats); // Optional if we just want to show it here
+        this.statistics = stats;
         this.isLoadingStats = false;
-        this.router.navigate(['/statistics']);
+        this.currentTab = 'statistics'; // Switch tab
+        // this.router.navigate(['/statistics']); // Removed
       },
       error: (err) => {
         console.error('Error calculating statistics', err);
@@ -561,8 +576,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     });
   }
 
-  closeStatsModal(): void {
-    this.showStatsModal = false;
-    this.statistics = null;
-  }
+  // NOTE: showStatsModal logic is removed/superseded by tabs but we can keep closeStatsModal empty or remove it.
+  // I will just remove the usage of showStatsModal in HTML and here.
+
 }
+

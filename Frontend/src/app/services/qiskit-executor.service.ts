@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ManagerService } from '../services/manager.service';
 import { QProgram } from '../model/QProgram';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
     providedIn: 'root'
@@ -11,7 +12,7 @@ export class QiskitExecutorService {
     //qeUrl = "http://localhost:8502/"
 
     //MOVIL:
-    qeUrl = "http://10.204.94.216:8502/"
+    //qeUrl = "http://10.204.94.216:8502/"
 
     //CASA:
     //qeUrl = "http://192.168.1.133:8502/"
@@ -21,6 +22,7 @@ export class QiskitExecutorService {
 
     //eduroam:
     //qeUrl = "http://172.19.176.170/"
+    qeUrl = environment.api.execution + "/"
 
 
     constructor(private client: HttpClient, private manager: ManagerService) { }

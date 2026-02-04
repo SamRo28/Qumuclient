@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
@@ -23,6 +23,9 @@ interface uniqueKillItem {
     styleUrls: ['./statistics-visualizer.component.css']
 })
 export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
+
+    @Input() inputStatistics: StatisticsResponse | null = null;
+    @Input() isEmbedded: boolean = false;
 
     statistics: StatisticsResponse | null = null;
 
@@ -49,9 +52,14 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.manager.showSaveButton = false;
-        this.statistics = this.statisticsService.getStatistics();
 
-        if (!this.statistics) {
+        if (this.inputStatistics) {
+            this.statistics = this.inputStatistics;
+        } else {
+            this.statistics = this.statisticsService.getStatistics();
+        }
+
+        if (!this.statistics && !this.isEmbedded) {
             this.router.navigate(['/']);
             return;
         }
