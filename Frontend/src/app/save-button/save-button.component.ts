@@ -2,6 +2,7 @@ import { Component, Output, EventEmitter } from '@angular/core';
 import { ManagerService } from '../services/manager.service';
 import { UserService } from '../services/user.service';
 import { ReperService } from '../services/reper.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-save-button',
@@ -9,14 +10,6 @@ import { ReperService } from '../services/reper.service';
   styleUrls: ['./save-button.component.css']
 })
 export class SaveButtonComponent {
-
-  isLoginOpen: boolean = false;
-  username: string = '';
-  password: string = '';
-  isLoggingIn: boolean = false;
-
-  // Flag para recordar la intención de guardar cuando se abre el modal de login
-  pendingSave: boolean = false;
 
   @Output() saveClick = new EventEmitter<void>();
 
@@ -27,15 +20,16 @@ export class SaveButtonComponent {
 
   onSave(): void {
 
-    if (!sessionStorage.getItem('email')) {
-      // marcar intención de guardar y abrir modal
-      this.pendingSave = true;
-      this.openLoginModal();
-      return;
-    }
-    else {
-      this.performSave();
-    }
+    this.userService.checkSession().subscribe(isLoggedIn => {
+      if (!isLoggedIn) {
+        // Redirigir a login externo
+        window.open(environment.loginUrl, '_blank');
+        return;
+      }
+      else {
+        this.performSave();
+      }
+    });
   }
 
   // Nuevo método centralizado para realizar el guardado
@@ -66,54 +60,6 @@ export class SaveButtonComponent {
         this.manager.showNotification('Error saving project. Please try again.', 'error', 5000);
       }
     });
-  }
-
-  openLoginModal(): void {
-    this.isLoginOpen = true;
-  }
-
-  closeModal() {
-    this.isLoginOpen = false;
-    this.username = '';
-    this.password = '';
-    this.isLoggingIn = false;
-    this.pendingSave = false; // limpiar si cierra sin loguear
-  }
-
-  onLogin(): void {
-    if (this.username.trim() && this.password.trim()) {
-      this.isLoggingIn = true;
-
-      this.userService.login(this.username, this.password)
-        .subscribe({
-          next: (token) => {
-
-            this.isLoggingIn = false;
-            // Guardar token si el servicio lo devuelve
-            if (token) {
-              sessionStorage.setItem('token', token as unknown as string);
-            }
-            this.isLoginOpen = false;
-
-            // Si había intención de guardar, ejecutar el guardado aquí
-            if (this.pendingSave) {
-              // emitir con pequeño retardo para garantizar que el cierre del modal se procese
-              setTimeout(() => {
-                this.performSave();
-                this.pendingSave = false;
-              }, 0);
-            } else {
-              // seguir emitiendo el evento por compatibilidad
-              setTimeout(() => this.saveClick.emit(), 0);
-            }
-          },
-          error: (error) => {
-            console.error('Login failed:', error);
-            this.isLoggingIn = false;
-          }
-        });
-
-    }
   }
 
 

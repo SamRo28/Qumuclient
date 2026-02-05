@@ -5,5 +5,6 @@ export const environment = {
     mutation: 'http://localhost:8500',
     execution: 'http://localhost:8502',
     statistics: 'http://localhost:8503'
-  }
+  },
+  loginUrl: 'PENDING_PRODUCTION_URL'
 };
