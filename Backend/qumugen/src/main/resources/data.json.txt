@@ -7,7 +7,7 @@
 		{
 			"family" : "Swap Gates",
 			"containerClass" : "SwapGates",
-			"operators" : [ "H_X", "H_Y", "H_Z", "X_H", "X_Y", "X_Z", "Y_X", "Y_H", "Y_Z", "Z_H", "Z_X", "Z_Y" ]
+			"operators" : [ "H_X", "H_Y", "H_Z", "X_H", "X_Y", "X_Z", "Y_X", "Y_H", "Y_Z", "Z_H", "Z_X", "Z_Y", "Z_Z^½", "Z_Z^¼", "Z^½_Z^¼", "Z^½_Z", "Z^¼_Z^½", "Z^¼_Z" ]
 		},
 		{
 			"family" : "Control Gates",
@@ -20,6 +20,11 @@
 		{
 			"family" : "Position errors",
 			"operators" : [ "MoveGateDownAdj", "MoveGateDownAll","MoveGateUpAdj", "MoveGateUpAll","ChangeControlledQubitDown", "ChangeControlledQubitUp","ChangeControlQubitDown", "ChangeControlQubitUp" ]
+		},
+		{
+			"family" : "Phase Gates",
+			"containerClass" : "SwapGates",
+			"operators" : [ "Z_Z^½", "Z_Z^¼", "Z^½_Z^¼", "Z^½_Z", "Z^¼_Z^½", "Z^¼_Z" ]
 		}
 	],
 	"gates" : [

@@ -1,10 +1,10 @@
 export const environment = {
   production: true,
   api: {
-    core: 'http://localhost:8080',
-    mutation: 'http://localhost:8500',
-    execution: 'http://localhost:8502',
-    statistics: 'http://localhost:8503'
+    core: 'https://alarcosj.esi.uclm.es/qsauronback',
+    mutation: 'https://alarcosj.esi.uclm.es/v2qumugen',
+    execution: 'https://alarcosj.esi.uclm.es/v2qiskitexec',
+    statistics: 'http://192.168.229.4:8503/'
   },
-  loginUrl: 'PENDING_PRODUCTION_URL'
+  loginUrl: 'https://alarcosj.esi.uclm.es/qsauron'
 };

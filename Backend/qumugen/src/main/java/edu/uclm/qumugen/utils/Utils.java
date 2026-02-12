@@ -13,12 +13,10 @@ public class Utils {
 
 	public static String readFileAsString(Object o, String fileName) throws IOException {
 		ClassLoader classLoader = o.getClass().getClassLoader();
-		 try (InputStream fis = classLoader.getResourceAsStream(fileName)) {
-			byte[] b = new byte[fis.available()];
-			fis.read(b);
-			String s = new String(b);
-			return s;
-		 }
+		try (InputStream fis = classLoader.getResourceAsStream(fileName)) {
+			byte[] b = fis.readAllBytes();
+			return new String(b, java.nio.charset.StandardCharsets.UTF_8);
+		}
 	}
 	
 	public static boolean createFolder(String db) {

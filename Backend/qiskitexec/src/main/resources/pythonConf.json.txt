@@ -1,5 +1,5 @@
 {
-	"environment" : "Samuel",
+	"environment" : "AlarcosJ2",
 	"debug" : true,
 	"environments" : [
 		{
