@@ -2,7 +2,7 @@ package edu.uclm.qiskitexec.http;
 
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,13 +20,13 @@ import edu.uclm.qiskitexec.runners.ProgramExecutionResult;
 import edu.uclm.qiskitexec.services.StrategyService;
 
 @RestController
-@RequestMapping(value = "strategy", produces = { "application/json"} )
+@RequestMapping(value = "strategy", produces = { "application/json" })
 @CrossOrigin(origins = "*")
 public class StrategyExecutorController {
-	
+
 	@Autowired
 	private StrategyService service;
-	
+
 	@PutMapping("/executeOne")
 	public List<ProgramExecutionResult> executeOne(@RequestBody ProgramExecutionConf pec) {
 		try {
@@ -39,21 +39,21 @@ public class StrategyExecutorController {
 			return result;
 		} catch (Exception e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-		}	
+		}
 	}
-	
+
 	@PutMapping("/executeWithStrategy")
-	public List<List<ProgramExecutionResult>> executeWithStrategy(@RequestBody StrategyMutantsExecutionConfiguration smec) {
+	public List<List<ProgramExecutionResult>> executeWithStrategy(
+			@RequestBody StrategyMutantsExecutionConfiguration smec) {
 		try {
 			return this.service.executeMany(smec);
 		} catch (Exception e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
 	}
-	
+
 	@GetMapping("/getCores")
 	public int getCores(HttpServletResponse resp) throws Exception {
-		return Runtime.getRuntime().availableProcessors()/3;
+		return Runtime.getRuntime().availableProcessors() / 3;
 	}
 }
-	
