@@ -193,8 +193,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
         code => {
           // ... existing init logic
-          this.manager.selectedProject!.qProgram.qCode = new QCode()
-          this.manager.selectedProject!.qProgram.qCode.code = code.wholeCode.split("\n")
+          // ... existing init logic
+          this.manager.selectedProject!.qProgram.qCodes = [new QCode(undefined, code.wholeCode, "QuMu")]
         },
         error => {
           console.log(error)

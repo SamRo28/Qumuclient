@@ -6,7 +6,7 @@ import { QCode } from "./QCode"
 export class QProgram {
     id: String = crypto.randomUUID()
     name?: string
-    qCode: QCode
+    qCodes: QCode[] = []
     qubits: number = -1
     outputQubits?: string
     inputQubits?: string
@@ -18,7 +18,7 @@ export class QProgram {
         if (id)
             this.id = id
         this.qCircuit = new QCircuit(crypto.randomUUID(), quirkCode);
-        this.qCode = new QCode();
+        this.qCodes = [];
         //this.qubits = this.getQubits();
     }
 

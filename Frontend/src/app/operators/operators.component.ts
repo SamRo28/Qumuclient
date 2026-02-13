@@ -174,7 +174,8 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   reloadOriginalCode() {
     this.service.getQiskitCode(this.manager.selectedProject!.qProgram).then(
       result => {
-        this.manager.selectedProject!.qProgram.qCode.code = result.wholeCode.split("\n")
+        const QCodeClass = require('../model/QCode').QCode;
+        this.manager.selectedProject!.qProgram.qCodes = [new QCodeClass(undefined, result.wholeCode, "QuMu")]
       }
     )
   }

@@ -92,4 +92,53 @@
       <span *ngIf="menuAbierto">No circuits available</span>
     </div>
   </div>
+
+  <!-- User Section (Footer) -->
+  <div class="sidebar-footer">
+    <div class="user-section">
+
+      <!-- User Icon with Dropdown -->
+      <div class="user-menu-container">
+        <div class="user-icon-wrapper" (click)="toggleUserMenu($event)" [class.active]="userMenuOpen">
+          <i class="fas fa-user-circle user-icon"></i>
+
+          <!-- Dropdown Menu -->
+          <div class="user-dropdown" *ngIf="userMenuOpen" (click)="$event.stopPropagation()">
+
+            <!-- Header/Info -->
+            <div class="dropdown-header" *ngIf="isLoggedIn()">
+              <span>User Info</span>
+            </div>
+
+            <!-- Logged In Options -->
+            <ng-container *ngIf="isLoggedIn()">
+              <button (click)="navigateToQSauron()" class="dropdown-item">
+                <i class="fas fa-arrow-left"></i> Back to QSauron
+              </button>
+              <button (click)="toggleTheme()" class="dropdown-item">
+                <i class="fas fa-adjust"></i> Toggle Theme
+              </button>
+            </ng-container>
+
+            <!-- Logged Out Options -->
+            <ng-container *ngIf="!isLoggedIn()">
+              <button (click)="toggleTheme()" class="dropdown-item">
+                <i class="fas fa-adjust"></i> Toggle Theme
+              </button>
+              <button (click)="navigateToQSauron()" class="dropdown-item">
+                <i class="fas fa-sign-in-alt"></i> Login
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Logout Icon (Only if Logged In) -->
+      <div *ngIf="isLoggedIn()" class="logout-wrapper" (click)="logout()" title="Logout">
+        <i class="fas fa-sign-out-alt logout-icon"></i>
+      </div>
+
+    </div>
+  </div>
 </div>

@@ -13,10 +13,6 @@
   <!-- Project Notes - FAB and panel -->
   <app-project-notes></app-project-notes>
 
-  <div class="theme-toggle-container">
-    <app-theme-toggle></app-theme-toggle>
-  </div>
-
   <app-confirmation-modal [isOpen]="manager.modalState.isOpen" [title]="manager.modalState.title"
     [message]="manager.modalState.message" [confirmText]="manager.modalState.confirmText"
     [cancelText]="manager.modalState.cancelText" [type]="manager.modalState.type" (confirm)="manager.confirmModal()"

@@ -166,7 +166,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
     this.qumugen.getQiskitCode(this.selectedProject.qProgram).then(
       result => {
         if (this.selectedProject) {
-          this.selectedProject.qProgram.qCode!.code = result.wholeCode.split("\n")
+          this.selectedProject.qProgram.qCodes = [new (require('../model/QCode').QCode)(undefined, result.wholeCode, "QuMu")]
         }
       }
     )

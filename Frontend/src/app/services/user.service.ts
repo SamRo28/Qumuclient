@@ -42,6 +42,21 @@ export class UserService {
     );
   }
 
+  logout(): void {
+    this.client.post(`${environment.api.core}/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => {
+        this.clearSession();
+      },
+      error: () => {
+        // Even if the backend fails, we should clear the local session
+        this.clearSession();
+      }
+    });
 
+  }
+
+  private clearSession(): void {
+    sessionStorage.removeItem('email');
+    this.isAuthenticated$.next(false);
+  }
 }
-

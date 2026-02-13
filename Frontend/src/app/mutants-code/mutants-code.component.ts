@@ -29,21 +29,16 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateHighlightedCode(): void {
-    if (this.selectedMutant?.circuit?.qCode.code && this.manager.selectedProject?.qProgram.qCode.code) {
-      const originalCode = Array.isArray(this.manager.selectedProject?.qProgram.qCode.code)
-        ? this.manager.selectedProject.qProgram.qCode.code.join('\n')
-        : this.manager.selectedProject.qProgram.qCode.code;
-      const mutantCode = Array.isArray(this.selectedMutant.circuit.qCode.code)
-        ? this.selectedMutant.circuit.qCode.code.join('\n')
-        : this.selectedMutant.circuit.qCode.code;
+    if (this.selectedMutant?.circuit?.qCodes?.[0]?.code && this.manager.selectedProject?.qProgram.qCodes?.[0]?.code) {
+      const originalCode = this.manager.selectedProject.qProgram.qCodes[0].code;
+      const mutantCode = this.selectedMutant.circuit.qCodes[0].code;
+
       this.highlightedMutantCode = this.sanitizer.bypassSecurityTrustHtml(
-        this.highlightDifferences(originalCode, mutantCode)
+        this.highlightDifferences(originalCode!, mutantCode!)
       );
     } else {
-      const fallbackCode = this.selectedMutant?.circuit?.qCode.code;
-      this.highlightedMutantCode = Array.isArray(fallbackCode)
-        ? fallbackCode.join('\n')
-        : (fallbackCode || '');
+      const fallbackCode = this.selectedMutant?.circuit?.qCodes?.[0]?.code;
+      this.highlightedMutantCode = fallbackCode || '';
     }
   }
 
@@ -75,8 +70,8 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getOriginalCode(): string {
-    const code = this.manager.selectedProject?.qProgram.qCode.code;
-    return Array.isArray(code) ? code.join('\n') : (code || '');
+    const code = this.manager.selectedProject?.qProgram.qCodes?.[0]?.code;
+    return code || '';
   }
 
   private escapeHtml(text: string): string {

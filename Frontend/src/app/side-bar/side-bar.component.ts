@@ -9,6 +9,8 @@ import { QumugenService } from '../services/qumugen.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Project } from '../model/Project';
 import { UserService } from '../services/user.service';
+import { ThemeService } from '../services/theme.service';
+import { environment } from 'src/environments/environment';
 
 
 @Component({
@@ -38,7 +40,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     private manager: ManagerService,
     private qumugen: QumugenService,
     public sanitizer: DomSanitizer,
-    private userService: UserService
+    private userService: UserService,
+    private themeService: ThemeService
   ) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -234,5 +237,26 @@ export class SideBarComponent implements OnInit, OnDestroy {
         this.loading = false;
       }
     });
+  }
+
+  // User Section Methods
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  logout(): void {
+    this.userService.logout();
+    this.router.navigate(['/']);
+  }
+
+  navigateToQSauron(): void {
+    // Redirect to QSauron login/dashboard
+    window.location.href = environment.loginUrl;
+  }
+
+  userMenuOpen = false;
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.userMenuOpen = !this.userMenuOpen;
   }
 }

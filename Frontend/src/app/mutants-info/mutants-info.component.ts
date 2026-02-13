@@ -41,10 +41,16 @@ export class MutantsInfoComponent implements OnInit, OnDestroy {
                     this.manager.setSelectedMutant(mutant);
 
                     // Check if code is loaded, if not, load it
-                    if (!mutant.circuit?.qCode?.code) {
+                    if (!mutant.circuit?.qCodes || mutant.circuit.qCodes.length === 0 || !mutant.circuit.qCodes[0].code) {
 
                       this.qumugenService.getQiskitCode(project.qProgram!).then(response => {
-                        project.qProgram!.qCode.code = response.wholeCode;
+                        if (!project.qProgram!.qCodes || project.qProgram!.qCodes.length === 0) {
+                          const QCodeClass = require('../model/QCode').QCode;
+                          project.qProgram!.qCodes = [new QCodeClass(undefined, response.wholeCode, "QuMu")];
+                        } else {
+                          project.qProgram!.qCodes[0].code = response.wholeCode;
+                          project.qProgram!.qCodes[0].platform = "QuMu";
+                        }
 
                       }).catch(err => {
                         console.error("Error loading mutant code", err);
@@ -53,10 +59,13 @@ export class MutantsInfoComponent implements OnInit, OnDestroy {
                       this.qumugenService.getQiskitCode(mutant.circuit!).then(response => {
 
                         if (mutant.circuit) {
-                          if (!mutant.circuit.qCode) {
-                            mutant.circuit.qCode = new (require('../model/QCode').QCode)();
+                          const QCodeClass = require('../model/QCode').QCode;
+                          if (!mutant.circuit.qCodes || mutant.circuit.qCodes.length === 0) {
+                            mutant.circuit.qCodes = [new QCodeClass(undefined, response.wholeCode, "QuMu")];
+                          } else {
+                            mutant.circuit.qCodes[0].code = response.wholeCode;
+                            mutant.circuit.qCodes[0].platform = "QuMu";
                           }
-                          mutant.circuit.qCode.code = response.wholeCode;
                         }
 
                         this.manager.clearExecutionStatus();
