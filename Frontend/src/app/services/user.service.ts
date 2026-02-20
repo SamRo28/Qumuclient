@@ -58,5 +58,15 @@ export class UserService {
   private clearSession(): void {
     sessionStorage.removeItem('email');
     this.isAuthenticated$.next(false);
+
+    // Clear all cached projects from localStorage
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('qumu_project_')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
   }
 }

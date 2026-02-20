@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ReperService } from '../services/reper.service';
@@ -258,5 +258,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
   toggleUserMenu(event: Event): void {
     event.stopPropagation();
     this.userMenuOpen = !this.userMenuOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.userMenuOpen) {
+      this.userMenuOpen = false;
+    }
   }
 }

@@ -74,9 +74,9 @@ export class ManagerService {
    */
   loadProjects(email: string): Observable<Project[]> {
     this.loadingProjects = true;
-    return this.reperService.getCircuits(email).pipe(
+    return this.reperService.getSidebarCircuits(email).pipe(
       tap(data => {
-        this.projects = this.processProjectData(data);
+        this.projects = this.processSidebarProjectData(data);
         this._projects.next(this.projects);
         this.loadingProjects = false;
       })
@@ -105,6 +105,7 @@ export class ManagerService {
       if (this.selectedProject && this.selectedProject === targetProject) {
         this._projectSavedState.next(false);
         this.showSaveButton = true;
+        this.cacheProjectToLocalStorage(targetProject);
       }
     }
   }
@@ -128,6 +129,7 @@ export class ManagerService {
   }
 
   notifyProjectDeleted(projectId: string): void {
+    localStorage.removeItem(`qumu_project_${projectId}`);
     this.projectDeletedSubject.next(projectId);
   }
 
@@ -138,7 +140,88 @@ export class ManagerService {
     return this.selectedProject?.saved ?? true;
   }
 
+  private cacheProjectToLocalStorage(project: Project): void {
+    if (project && project.id) {
+      try {
+        // Solo guardar los datos del proyecto completo, eliminando referencias circulares o propiedades innecesarias si es necesario
+        localStorage.setItem(`qumu_project_${project.id}`, JSON.stringify(project));
+      } catch (e) {
+        console.warn("Could not cache project to localStorage", e);
+      }
+    }
+  }
+
   setselectedProject(circuit: Project) {
+    // Si el proyecto viene del sidebar, no está "completo".
+    // El modelo Project inicializa qProgram y testSuites con objetos vacíos.
+    // La forma más segura de saber si es ligero es comprobar si textQuirkCode está vacío/indefinido
+    // y si no hay testSuites reales.
+    const isLightweight = circuit && circuit.id &&
+      (!circuit.qProgram || !circuit.qProgram.qCircuit || !circuit.qProgram.qCircuit.textQuirkCode) &&
+      (!circuit.testSuites || circuit.testSuites.length === 0);
+
+    if (isLightweight) {
+
+      const cachedItem = localStorage.getItem(`qumu_project_${circuit.id}`);
+      if (cachedItem) {
+        try {
+          const parsedCached = JSON.parse(cachedItem);
+          const fullyLoadedCircuitArr = this.processProjectData([parsedCached]);
+          if (fullyLoadedCircuitArr.length > 0) {
+            const loadedProject = fullyLoadedCircuitArr[0];
+            loadedProject.saved = circuit.saved; // Restablecer estado visual anterior
+
+            // Sustituir en la lista de projects de manera transparente
+            const index = this.projects.findIndex(p => p.id === loadedProject.id);
+            if (index !== -1) {
+              this.projects[index] = loadedProject;
+              this._projects.next(this.projects);
+            }
+            this._finalizeSetSelectedProject(loadedProject);
+            return;
+          }
+        } catch (e) {
+          console.warn("Failed to reconstruct cached project", e);
+        }
+      }
+
+      // Si no está en caché local, hay que descargarlo entero del servidor.
+      const email = sessionStorage.getItem('email');
+      if (email) {
+        this.reperService.getProject(email, circuit.id!).subscribe({
+          next: (fullCircuitData) => {
+            // fullCircuitData is raw JSON from backend
+            const fullyLoadedCircuitArr = this.processProjectData([fullCircuitData]);
+            if (fullyLoadedCircuitArr.length > 0) {
+              const loadedProject = fullyLoadedCircuitArr[0];
+
+              // Guardar en la caché local
+              this.cacheProjectToLocalStorage(loadedProject);
+
+              // Sustituir en la vista
+              const index = this.projects.findIndex(p => p.id === loadedProject.id);
+              if (index !== -1) {
+                this.projects[index] = loadedProject;
+                this._projects.next(this.projects);
+              }
+              this._finalizeSetSelectedProject(loadedProject);
+            }
+          },
+          error: (err) => {
+            console.error("Failed to lazy load project from backend", err);
+            // Failsafe: fall back on what we have even if incomplete
+            this._finalizeSetSelectedProject(circuit);
+          }
+        });
+        return; // Finalize happens inside subscribe
+      }
+    }
+
+    // Si estaba completo (e.g. uno que acabamos de crear con setNewselectedProject o ya estaba parseado completo)
+    this._finalizeSetSelectedProject(circuit);
+  }
+
+  private _finalizeSetSelectedProject(circuit: Project) {
     this.selectedProject = circuit
     this.qubitCount = this.selectedProject.getQubits()
 
@@ -232,6 +315,9 @@ export class ManagerService {
       this.projects = [...this.projects, circuit];
       this._projects.next(this.projects);
     }
+
+    // Cache local initially
+    this.cacheProjectToLocalStorage(circuit);
 
     // Notificar a los suscriptores del nuevo circuito seleccionado
     this._selectedProject.next(circuit);
@@ -492,6 +578,35 @@ export class ManagerService {
           return testSuite;
         });
       }
+
+      return project;
+    });
+  }
+
+  // Simplified mapper for sidebar data to ensure missing relationships do not crash
+  processSidebarProjectData(data: any[]): Project[] {
+    return data.map((circuitData: any) => {
+      // By using true for fromServer, we avoid prompting save on load
+      const project = new Project(undefined, undefined, undefined, undefined, true);
+      project.id = circuitData.id;
+      project.name = circuitData.name;
+
+      project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
+        const mutantCycle = new MutantCycle();
+        mutantCycle.id = cycleData.id;
+
+        mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
+          const mutant = new Mutant();
+          mutant.mutantIndex = mutantData.mutantIndex;
+          if (mutantData.operator) {
+            mutant.operator.name = mutantData.operator.name;
+            mutant.mutationOperator = mutantData.operator.name;
+          }
+          return mutant;
+        });
+
+        return mutantCycle;
+      });
 
       return project;
     });
