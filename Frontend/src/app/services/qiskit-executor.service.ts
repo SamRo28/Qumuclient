@@ -31,7 +31,7 @@ export class QiskitExecutorService {
 
         let program = {
             qubits: qprogram.qubits,
-            qiskitCode: qprogram.qCodes[0].code,
+            qiskitCode: qprogram.qCodes[0].code!.split("\n"),
             inputQubits: inputQubits,
             outputQubits: outputQubits
         }
