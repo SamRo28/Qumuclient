@@ -28,9 +28,16 @@ export class ReperService {
     // Crear una copia del circuito para no modificar el original
     const circuitToSend = { ...circuit };
 
-    // Filtrar ciclos de mutantes: solo enviar los nuevos
+    // Enviar todos los ciclos para que el backend no los borre, pero
+    // vaciar el array de mutantes para que no sature la red ni el backend los reemplace.
+    // Los mutantes se mandarán por lotes con saveMutantsBatch/saveExecutionsBatch.
     if (circuit.mutantCycles) {
-      circuitToSend.mutantCycles = circuit.mutantCycles.filter(mc => mc.newlyGenerated);
+      circuitToSend.mutantCycles = circuit.mutantCycles.map(mc => {
+        const mcToSend = { ...mc };
+        // Any para forzar saltarse el tipado estricto si hace falta
+        (mcToSend as any).mutants = null;
+        return mcToSend as any;
+      });
     }
 
     return this.client.put<any>(`${environment.api.core}/projects/save`, {
@@ -38,6 +45,14 @@ export class ReperService {
         id: sessionStorage.getItem('email')
       }
     }, { withCredentials: true })
+  }
+
+  saveMutantsBatch(projectId: string, cycleId: number, mutants: any[]) {
+    return this.client.post<any>(`${environment.api.core}/projects/saveMutantsBatch`, { projectId, cycleId, mutants }, { withCredentials: true })
+  }
+
+  saveExecutionsBatch(projectId: string, cycleId: number, mutants: any[]) {
+    return this.client.post<any>(`${environment.api.core}/projects/saveExecutionsBatch`, { projectId, cycleId, mutants }, { withCredentials: true })
   }
 
   delete(projectId: string) {

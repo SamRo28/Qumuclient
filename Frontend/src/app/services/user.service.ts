@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, Subscription, tap, BehaviorSubject, of, catchError, map } from 'rxjs';
 import { ReperService } from './reper.service';
 import { environment } from 'src/environments/environment';
+import * as localforage from 'localforage';
 
 @Injectable({
   providedIn: 'root'
@@ -59,14 +60,11 @@ export class UserService {
     sessionStorage.removeItem('email');
     this.isAuthenticated$.next(false);
 
-    // Clear all cached projects from localStorage
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('qumu_project_')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    // Clear all cached projects from localforage
+    localforage.keys().then((keys: string[]) => {
+      const keysToRemove = keys.filter(key => key && key.startsWith('qumu_project_'));
+      Promise.all(keysToRemove.map(key => localforage.removeItem(key)))
+        .catch(e => console.warn("Error clearing localForage cache on logout", e));
+    }).catch(e => console.error("Error retrieving localforage keys", e));
   }
 }

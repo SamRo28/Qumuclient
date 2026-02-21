@@ -137,7 +137,7 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     AppComponent.error = ""
     let selectedCircuit = this.manager.selectedProject;
     if (!selectedCircuit) {
-      AppComponent.error = "Please, select the circuit you want to mutate"
+      this.manager.showNotification("Please, select the circuit you want to mutate", "error", 5000);
       return
     }
     selectedCircuit.qProgram.setMutableColumns();
@@ -152,23 +152,25 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     }
     if (selectedOperators.length > 0) {
       this.loading.show()
+      this.manager.showNotification("Generating mutants...", "loading", 0);
       this.service.generateMutants(selectedCircuit.qProgram, selectedOperators).subscribe(
         mutants => {
           this.manager.showSidebar = true
           this.manager.setMutants(mutants)
           this.loading.hide()
-
-
+          this.manager.showNotification("Mutants generated successfully!", "success", 5000);
         },
         error => {
-          AppComponent.error = error.error ? error.error.message : error.error
-          if (!AppComponent.error)
-            AppComponent.error = "Se ha producido un error, probablemente un 500. Intenta generar menos mutantes seleccionando menos operadores, menos columnas o filas. Si has marcado lo de \"Generate with all inputs\", puedes desmarcarlo o disminuir el número de Input qubits"
+          let errorMsg = error.error ? error.error.message : error.error
+          if (!errorMsg)
+            errorMsg = "Se ha producido un error, probablemente un 500. Intenta generar menos mutantes seleccionando menos operadores, menos columnas o filas. Si has marcado lo de \"Generate with all inputs\", puedes desmarcarlo o disminuir el número de Input qubits"
           this.loading.hide()
+          this.manager.showNotification(errorMsg, "error", 10000);
         }
       )
-    } else
-      AppComponent.error = "Please, select one operator at least"
+    } else {
+      this.manager.showNotification("Please, select one operator at least", "error", 5000);
+    }
   }
 
   reloadOriginalCode() {

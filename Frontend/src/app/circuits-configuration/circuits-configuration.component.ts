@@ -85,7 +85,6 @@ export class CircuitsConfigurationComponent implements OnInit, OnDestroy {
   selectTab(tab: 'circuit' | 'mutants') {
     // Usar la validación del ManagerService
     if (tab === 'mutants' && !this.isCircuitValid) return;
-    this.manager.showSaveButton = this.isCircuitValid;
     this.selectedTab = tab;
 
     // Si volvemos a la pestaña circuit, recargar los valores
