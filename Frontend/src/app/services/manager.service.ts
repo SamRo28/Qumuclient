@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject, BehaviorSubject, Observable, of, tap, switchMap } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { Project } from '../model/Project';
 import { Mutant } from '../model/Mutant';
 import { QProgram } from '../model/QProgram';
@@ -25,6 +26,8 @@ export class ManagerService {
   private _projects = new BehaviorSubject<Project[]>([]);
   public projects$ = this._projects.asObservable();
   loadingProjects = false;
+  private projectsCache$: Observable<Project[]> | null = null;
+  private currentEmailForProjects: string | null = null;
 
   mutants: Mutant[] = []
 
@@ -67,21 +70,31 @@ export class ManagerService {
   showMutantsInfo: boolean = false;
   showMutantCycleInfo: boolean = false;
   showSaveButton: boolean = false;
+  isProjectLoading: boolean = false;
 
   constructor(private reperService: ReperService) { }
 
   /**
    * Loads projects from the backend for the current user (by email).
    */
-  loadProjects(email: string): Observable<Project[]> {
+  loadProjects(email: string, forceRefresh = false): Observable<Project[]> {
+    if (this.projectsCache$ && this.currentEmailForProjects === email && !forceRefresh) {
+      return this.projectsCache$;
+    }
+
     this.loadingProjects = true;
-    return this.reperService.getSidebarCircuits(email).pipe(
+    this.currentEmailForProjects = email;
+
+    this.projectsCache$ = this.reperService.getSidebarCircuits(email).pipe(
       tap(data => {
         this.projects = this.processSidebarProjectData(data);
         this._projects.next(this.projects);
         this.loadingProjects = false;
-      })
+      }),
+      shareReplay(1)
     );
+
+    return this.projectsCache$;
   }
 
   /**
@@ -159,6 +172,7 @@ export class ManagerService {
       (!circuit.testSuites || circuit.testSuites.length === 0);
 
     if (isLightweight) {
+      this.isProjectLoading = true;
 
       try {
         const cachedItem = await localforage.getItem<any>(`qumu_project_${circuit.id}`);
@@ -175,6 +189,7 @@ export class ManagerService {
               this._projects.next(this.projects);
             }
             this._finalizeSetSelectedProject(loadedProject);
+            this.isProjectLoading = false;
             return;
           }
         }
@@ -203,15 +218,18 @@ export class ManagerService {
               }
               this._finalizeSetSelectedProject(loadedProject);
             }
+            this.isProjectLoading = false;
           },
           error: (err) => {
             console.error("Failed to lazy load project from backend", err);
             // Failsafe: fall back on what we have even if incomplete
             this._finalizeSetSelectedProject(circuit);
+            this.isProjectLoading = false;
           }
         });
         return; // Finalize happens inside subscribe
       }
+      this.isProjectLoading = false;
     }
 
     // Si estaba completo (e.g. uno que acabamos de crear con setNewselectedProject o ya estaba parseado completo)

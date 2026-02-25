@@ -155,6 +155,36 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return this.router.isActive(`/project/${project.id}/cycle/${cycle.id}/mutant/${mutant.mutantIndex}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
   }
 
+  deleteMutantCycle(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined) return;
+
+    this.manager.openConfirmationModal({
+      title: 'Delete Mutant Cycle',
+      message: `Are you sure you want to delete this mutant cycle? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.reperService.deleteMutantCycle(project.id!, cycle.id!).subscribe({
+          next: () => {
+            // Remove the cycle locally
+            project.mutantCycles = project.mutantCycles.filter(c => c.id !== cycle.id);
+            // If the deleted cycle was selected, navigate to the project
+            if (this.isMutantCycleSelected(cycle, project)) {
+              this.router.navigate(['/project', project.id]);
+            }
+            this.loading = false;
+          },
+          error: (err) => {
+            console.error('Error deleting mutant cycle:', err);
+            this.loading = false;
+          }
+        });
+      }
+    });
+  }
+
   selectCircuit(circuit: Project): void {
     this.router.navigate(['/project', circuit.id]);
   }

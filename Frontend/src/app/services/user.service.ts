@@ -4,6 +4,7 @@ import { Observable, Subject, Subscription, tap, BehaviorSubject, of, catchError
 import { ReperService } from './reper.service';
 import { environment } from 'src/environments/environment';
 import * as localforage from 'localforage';
+import { shareReplay } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class UserService {
   public login$ = new Subject<void>();
 
   public isAuthenticated$ = new BehaviorSubject<boolean>(false);
+  private sessionCache$: Observable<boolean> | null = null;
 
   constructor(private client: HttpClient, private reperService: ReperService) { }
 
@@ -24,12 +26,17 @@ export class UserService {
           sessionStorage.setItem('email', email);
           this.isAuthenticated$.next(true);
           this.login$.next();
+          this.sessionCache$ = null; // Clear cache on login
         })
       );
   }
 
-  checkSession(): Observable<boolean> {
-    return this.reperService.getUser().pipe(
+  checkSession(forceRefresh = false): Observable<boolean> {
+    if (this.sessionCache$ && !forceRefresh) {
+      return this.sessionCache$;
+    }
+
+    this.sessionCache$ = this.reperService.getUser().pipe(
       tap(email => {
         sessionStorage.setItem('email', email);
         this.isAuthenticated$.next(true);
@@ -39,8 +46,11 @@ export class UserService {
         this.isAuthenticated$.next(false);
         sessionStorage.removeItem('email');
         return of(false);
-      })
+      }),
+      shareReplay(1)
     );
+
+    return this.sessionCache$;
   }
 
   logout(): void {
@@ -59,6 +69,7 @@ export class UserService {
   private clearSession(): void {
     sessionStorage.removeItem('email');
     this.isAuthenticated$.next(false);
+    this.sessionCache$ = null;
 
     // Clear all cached projects from localforage
     localforage.keys().then((keys: string[]) => {

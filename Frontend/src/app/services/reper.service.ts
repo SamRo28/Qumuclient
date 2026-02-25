@@ -26,7 +26,15 @@ export class ReperService {
 
   save(circuit: Project) {
     // Crear una copia del circuito para no modificar el original
-    const circuitToSend = { ...circuit };
+    const circuitToSend: any = { ...circuit };
+
+    // Eliminar testSuites y generator porque no se modifican en esta herramienta
+    // y pueden dar de error de proxy de Hibernate al intentar guardarlos
+    delete circuitToSend.testSuites;
+    if (circuitToSend.qProgram) {
+      circuitToSend.qProgram = { ...circuitToSend.qProgram };
+      delete (circuitToSend.qProgram as any).generator;
+    }
 
     // Enviar todos los ciclos para que el backend no los borre, pero
     // vaciar el array de mutantes para que no sature la red ni el backend los reemplace.
@@ -57,6 +65,10 @@ export class ReperService {
 
   delete(projectId: string) {
     return this.client.post<any>(`${environment.api.core}/projects/delete`, { projectId, userId: sessionStorage.getItem('email')! }, { withCredentials: true })
+  }
+
+  deleteMutantCycle(projectId: string, cycleId: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/deleteMutantCycle`, { projectId, cycleId }, { withCredentials: true })
   }
 
   getUser() {

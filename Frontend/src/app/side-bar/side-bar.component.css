@@ -590,9 +590,9 @@
 }
 
 .sidebar.open .user-section {
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
 }
 
 /* User Menu Container */
@@ -605,8 +605,8 @@
 }
 
 .sidebar.open .user-menu-container {
-    justify-content: flex-start;
-    flex: 1;
+  justify-content: flex-start;
+  flex: 1;
 }
 
 /* User Icon Wrapper */
@@ -634,9 +634,9 @@
 }
 
 .user-label {
-    font-size: 0.9rem;
-    color: #ecfdf5;
-    font-weight: 500;
+  font-size: 0.9rem;
+  color: #ecfdf5;
+  font-weight: 500;
 }
 
 /* User Dropdown */
@@ -661,22 +661,30 @@
 }
 
 .sidebar:not(.open) .user-dropdown {
-    left: 45px; /* Offset for collapsed sidebar */
-    bottom: 0;
+  left: 45px;
+  /* Offset for collapsed sidebar */
+  bottom: 0;
 }
 
 
 @keyframes slideUpFade {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdown-header {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.25rem;
 }
 
 .dropdown-item {
@@ -718,21 +726,45 @@
 }
 
 .logout-wrapper:hover {
-  background: rgba(239, 68, 68, 0.2); /* Red tint for logout */
+  background: rgba(239, 68, 68, 0.2);
+  /* Red tint for logout */
 }
 
 .logout-icon {
   font-size: 1.25rem;
-  color: #fca5a5; /* Light red */
+  color: #fca5a5;
+  /* Light red */
 }
 
 .logout-label {
-    font-size: 0.9rem;
-    color: #fca5a5;
-    font-weight: 500;
+  font-size: 0.9rem;
+  color: #fca5a5;
+  font-weight: 500;
 }
 
 .logout-wrapper:hover .logout-icon,
 .logout-wrapper:hover .logout-label {
-    color: #ef4444; /* Red */
+  color: #ef4444;
+  /* Red */
+}
+
+/* Delete Cycle Button */
+.delete-cycle-btn {
+  background: transparent;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms;
+  opacity: 0.6;
+}
+
+.delete-cycle-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  opacity: 1;
 }
