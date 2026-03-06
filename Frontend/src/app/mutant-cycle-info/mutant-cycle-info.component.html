@@ -7,8 +7,8 @@
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
       <span class="title-text">Mutant Cycle: {{ mutantCycle.id }}</span>
-      <button class="execute-btn" (click)="runMutants()" [disabled]="runningMutants || hasExecutionResults()">
-        <span class="execute-text">EXECUTE</span>
+      <button class="execute-btn" (click)="runMutants()" [disabled]="runningMutants || areAllMutantsExecuted()">
+        <span class="execute-text">{{ hasExecutionResults() && !areAllMutantsExecuted() ? 'RESUME' : 'EXECUTE' }}</span>
         <span class="execute-icon">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M5 3l14 9-14 9V3z" />

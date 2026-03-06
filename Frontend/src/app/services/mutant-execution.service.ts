@@ -60,8 +60,24 @@ export class MutantExecutionService {
     }
 
     public startExecution(mutantCycle: MutantCycle, project: Project) {
-
         const cycleId = mutantCycle.id as number;
+
+        // Calculate start index based on existing results
+        let startIndex = 0;
+        if (mutantCycle.mutants) {
+            for (let i = 0; i < mutantCycle.mutants.length; i++) {
+                const mutant = mutantCycle.mutants[i];
+                if (!mutant.mutantResults || mutant.mutantResults.length === 0) {
+                    startIndex = i;
+                    break;
+                }
+                // If we reached the end and all have results
+                if (i === mutantCycle.mutants.length - 1 && mutant.mutantResults && mutant.mutantResults.length > 0) {
+                    this.manager.showNotification("Todas las ejecuciones ya se han completado para este ciclo.", "success");
+                    return;
+                }
+            }
+        }
 
         if (this.activeExecutions.has(cycleId)) {
             console.warn(`Execution for cycle ${cycleId} is already running.`);
@@ -131,8 +147,8 @@ export class MutantExecutionService {
         ).subscribe({
             next: (originalResults) => {
                 // Prepare to run mutants
-                this.updateStatus(cycleId, { message: 'Running mutants...' });
-                this.runMutantsBatch(mutantCycle, project, originalResults, 0, 5, inputQubits, outputQubits, inputs);
+                this.updateStatus(cycleId, { message: startIndex > 0 ? `Resuming execution from mutant ${startIndex}...` : 'Running mutants...' });
+                this.runMutantsBatch(mutantCycle, project, originalResults, startIndex, 5, inputQubits, outputQubits, inputs);
             },
             error: (err) => {
                 console.error("Error running original circuit", err);

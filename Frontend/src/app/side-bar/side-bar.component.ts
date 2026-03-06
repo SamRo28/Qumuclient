@@ -87,8 +87,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     // Suscribirse a eliminación de proyectos
     this.subs.add(
       this.manager.projectDeleted$.subscribe((projectId) => {
-        // Refresh list
-        this.loadCircuitsFromService();
+        // Removed this.loadCircuitsFromService(); to prevent unnecessary network request
+        // array updates are handled by ManagerService natively.
       })
     );
   }
@@ -170,6 +170,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
           next: () => {
             // Remove the cycle locally
             project.mutantCycles = project.mutantCycles.filter(c => c.id !== cycle.id);
+            // Save removed cycle to local cache
+            this.manager.cacheProjectLocally(project);
             // If the deleted cycle was selected, navigate to the project
             if (this.isMutantCycleSelected(cycle, project)) {
               this.router.navigate(['/project', project.id]);
@@ -244,21 +246,21 @@ export class SideBarComponent implements OnInit, OnDestroy {
         cancelText: 'Cancel',
         type: 'warning',
         onConfirm: () => {
-          this.loadCircuitsFromService();
+          this.loadCircuitsFromService(true);
         }
       });
       return;
     }
 
-    this.loadCircuitsFromService();
+    this.loadCircuitsFromService(true);
   }
 
-  loadCircuitsFromService(): void {
+  loadCircuitsFromService(forceRefresh = false): void {
     const email = sessionStorage.getItem('email');
     if (!email) return;
 
     this.loading = true;
-    this.manager.loadProjects(email).subscribe({
+    this.manager.loadProjects(email, forceRefresh).subscribe({
       next: () => {
         this.loading = false;
       },

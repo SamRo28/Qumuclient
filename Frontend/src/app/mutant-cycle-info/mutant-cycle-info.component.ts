@@ -507,6 +507,11 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       (this.mutantCycle?.mutants?.some(m => m.result !== undefined && m.result !== null) ?? false);
   }
 
+  areAllMutantsExecuted(): boolean {
+    if (!this.mutantCycle?.mutants || this.mutantCycle.mutants.length === 0) return false;
+    return this.mutantCycle.mutants.every(m => m.mutantResults && m.mutantResults.length > 0);
+  }
+
   private generateCSVContent(): string | null {
     if (!this.matrixRows || this.matrixRows.length === 0) return null;
 
@@ -571,7 +576,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       error: (err) => {
         console.error('Error calculating statistics', err);
         this.isLoadingStats = false;
-        this.manager.showNotification('Error calculating statistics', 'error');
+        this.manager.showNotification('Error calculating statistics', 'error', 5000);
       }
     });
   }

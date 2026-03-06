@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ReperService } from '../services/reper.service';
 import { Subscription } from 'rxjs';
@@ -32,7 +33,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
   circuits: Project[] = []
   selectedTab: string = 'circuit';
 
-  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService, private userService: UserService) {
+  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService, private userService: UserService, private router: Router) {
     this.url = '';
   }
   ngOnInit(): void {
@@ -205,6 +206,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
         this.reper.delete(this.selectedProject!.id!).subscribe({
           next: () => {
             this.manager.notifyProjectDeleted(this.selectedProject!.id!);
+            this.router.navigate(['/']); // Navigate to home
           },
           error: (error) => {
             console.error('Error deleting project:', error);

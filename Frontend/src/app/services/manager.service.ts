@@ -144,6 +144,8 @@ export class ManagerService {
 
   notifyProjectDeleted(projectId: string): void {
     localforage.removeItem(`qumu_project_${projectId}`).catch(e => console.warn("Error removing project cache", e));
+    this.projects = this.projects.filter(p => p.id !== projectId);
+    this._projects.next(this.projects);
     this.projectDeletedSubject.next(projectId);
   }
 
@@ -154,7 +156,7 @@ export class ManagerService {
     return this.selectedProject?.saved ?? true;
   }
 
-  private cacheProjectLocally(project: Project): void {
+  public cacheProjectLocally(project: Project): void {
     if (project && project.id) {
       localforage.setItem(`qumu_project_${project.id}`, project).catch(e => {
         console.warn("Could not cache project to localForage", e);
