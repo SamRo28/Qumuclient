@@ -121,17 +121,26 @@ export class MutantExecutionService {
 
         // SNAPSHOT: Capture current Input/Output Qubits.
         // These values will be used throughout the entire execution process.
-        // If empty (e.g. new circuit), calculate default "0,1,2..." string.
-        let inputQubits = this.manager.inputQubits;
+        let originalInputQubits = this.manager.inputQubits;
+        let inputQubits = originalInputQubits;
         let outputQubits = this.manager.outputQubits;
 
-        // If empty, default to all qubits (0..n-1)
-        if (!inputQubits || !outputQubits) {
-            const qubitCount = project.qProgram.qubits; // or calculate from code if 0?
+        // If outputQubits is empty, default to all qubits (0..n-1)
+        if (!outputQubits) {
+            const qubitCount = project.qProgram.qubits;
             if (qubitCount > 0) {
-                const defaultString = Array.from({ length: qubitCount }, (_, i) => i).join(',');
-                if (!inputQubits) inputQubits = defaultString;
-                if (!outputQubits) outputQubits = defaultString;
+                outputQubits = Array.from({ length: qubitCount }, (_, i) => i).join(',');
+            }
+        }
+
+        // If inputQubits is empty, default to all qubits and explicitly evaluate only '00...0' when AllAgainstAll
+        if (!inputQubits || inputQubits.trim() === '') {
+            const qubitCount = project.qProgram.qubits;
+            if (qubitCount > 0) {
+                inputQubits = Array.from({ length: qubitCount }, (_, i) => i).join(',');
+                if (this.manager.executionAlgorithm === 'AllAgainstAll') {
+                    inputs = ['0'.repeat(qubitCount)];
+                }
             }
         }
 

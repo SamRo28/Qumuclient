@@ -3,10 +3,9 @@ export const environment = {
   api: {
     core: 'https://alarcosj.esi.uclm.es/qsauronback',
     mutation: 'https://alarcosj.esi.uclm.es/qumugen',
-    execution: 'http://localhost:8502',
-    //statistics: 'http://10.204.94.216:8503'
-    statistics: 'http://192.168.0.7:8503'
+    execution: 'https://alarcosj.esi.uclm.es/qiskitexec',
+    statistics: 'https://alarcosj.esi.uclm.es/qsauronback/mutantanalytics'
   },
-  loginUrl: 'http://localhost:4201'
+  loginUrl: 'https://alarcosj.esi.uclm.es/qsauron'
 };
 

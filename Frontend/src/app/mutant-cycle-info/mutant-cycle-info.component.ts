@@ -16,9 +16,11 @@ import { QiskitExecutorService } from '../services/qiskit-executor.service';
 import { TestSuite } from '../model/TestSuite';
 import { Deterministic } from '../model/Deterministic';
 import { MutantExecutionService, ExecutionStatus } from '../services/mutant-execution.service';
+import { ExecConfiguration } from '../model/ExecConfiguration';
+import { QCircuit } from '../model/QCircuit';
+import { Operator } from '../model/OperatorFamily';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
-import { ExecConfiguration } from '../model/ExecConfiguration';
 
 @Component({
   selector: 'app-mutant-cycle-info',
@@ -34,7 +36,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
   // Pagination properties
   currentPage: number = 1;
-  pageSize: number = 10;
+  pageSize: number = 100;
   totalPages: number = 0;
 
   paginatedMutants: Mutant[] = [];
@@ -341,6 +343,77 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     }
   }
 
+  duplicateCycle(): void {
+    if (!this.mutantCycle || !this.manager.selectedProject) return;
+
+    this.manager.openConfirmationModal({
+      title: 'Duplicate Mutant Cycle',
+      message: '¿Estás seguro de que deseas duplicar este ciclo? Se creará uno nuevo idéntico pero con todos los resultados en pendiente.',
+      confirmText: 'Duplicate',
+      type: 'info',
+      onConfirm: () => {
+        // Deep clone mutants array
+        const clonedMutants: Mutant[] = this.mutantCycle!.mutants.map(m => {
+          const newMutant = new Mutant();
+          newMutant.id = undefined; // Let backend generate new ID
+          newMutant.mutantIndex = m.mutantIndex;
+          newMutant.mutatedColumn = m.mutatedColumn;
+          newMutant.mutatedRow = m.mutatedRow;
+          newMutant.mutationOperator = m.mutationOperator;
+
+          if (m.operator) {
+            newMutant.operator = new Operator({
+              name: m.operator.name,
+              type: m.operator.id, // Assuming id is mapped to type in OperatorFamily
+              enabled: m.operator.enabled,
+              description: m.operator.description
+            });
+          }
+
+          if (m.circuit) {
+            const newProgram = new QProgram();
+            // Let the frontend generate a new unique ID to avoid JPA merge conflicts
+            newProgram.id = crypto.randomUUID();
+            newProgram.qubits = m.circuit.qubits;
+            newProgram.inputQubits = m.circuit.inputQubits;
+            newProgram.outputQubits = m.circuit.outputQubits;
+            if (m.circuit.qCircuit) {
+              newProgram.qCircuit = new QCircuit(undefined, m.circuit.qCircuit.quirkCode);
+            }
+            newMutant.circuit = newProgram;
+          }
+
+          // Reset results to pending
+          newMutant.mutantResults = [];
+          newMutant.result = undefined;
+          return newMutant;
+        });
+
+        // Clone execution configuration
+        let clonedConfig: ExecConfiguration | undefined;
+        if (this.mutantCycle!.execConfiguration) {
+          clonedConfig = new ExecConfiguration(this.mutantCycle!.execConfiguration);
+          clonedConfig.id = crypto.randomUUID();
+          clonedConfig.executionDate = new Date();
+        }
+
+        // Create new cycle
+        const newCycleId = this.manager.selectedProject!.mutantCycles.length; // Assign local ID, will be updated by backend upon save
+        const newCycle = new MutantCycle(clonedMutants, newCycleId, clonedConfig);
+        newCycle.newlyGenerated = true;
+
+        // Push to project cycles and redirect
+        this.manager.selectedProject!.mutantCycles.push(newCycle);
+        this.manager.markProjectAsModified(this.manager.selectedProject!);
+
+        // Route to the new cycle explicitly (so URL changes) or switch view
+        // The best way in Angular is to navigate to the new ID if using routes
+        this.router.navigate(['/projects', this.manager.selectedProject!.id, 'cycle', newCycleId]);
+        this.manager.showNotification('El ciclo se ha duplicado correctamente.', 'success', 3000);
+      }
+    });
+  }
+
 
   formatDate(date?: Date): string {
     if (!date) return '';
@@ -462,6 +535,13 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
     this.inputHeaders = [];
 
+    let maxLength = 1;
+    if (this.manager.inputQubits && this.manager.inputQubits.trim() !== '') {
+      maxLength = this.manager.inputQubits.split(',').length;
+    } else if (this.manager.selectedProject?.qProgram.qubits) {
+      maxLength = this.manager.selectedProject.qProgram.qubits;
+    }
+
     this.mutantCycle.mutants.forEach((mutant, index) => {
       const row = this.matrixRows[index];
       if (!row || !mutant.mutantResults) return;
@@ -469,7 +549,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       mutant.mutantResults.forEach(result => {
         if (result.id === undefined) return;
 
-        const binaryInput = (result.id).toString(2);
+        const binaryInput = (result.id).toString(2).padStart(maxLength, '0');
 
         if (!this.inputHeaders.includes(binaryInput)) {
           this.inputHeaders.push(binaryInput);
@@ -566,14 +646,14 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
     this.isLoadingStats = true;
     this.statisticsService.calculateStatistics(file).subscribe({
-      next: (stats) => {
+      next: (stats: any) => {
         // this.statisticsService.setStatistics(stats); // Optional if we just want to show it here
         this.statistics = stats;
         this.isLoadingStats = false;
         this.currentTab = 'statistics'; // Switch tab
         // this.router.navigate(['/statistics']); // Removed
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error calculating statistics', err);
         this.isLoadingStats = false;
         this.manager.showNotification('Error calculating statistics', 'error', 5000);

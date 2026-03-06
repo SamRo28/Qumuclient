@@ -76,6 +76,12 @@
     --toggle-border: rgba(16, 185, 129, 0.3);
 }
 
+html {
+    background: var(--bg-primary);
+    /* Base color to prevent white flashes */
+    min-height: 100%;
+}
+
 body {
     background: var(--bg-gradient);
     color: var(--text-primary);
@@ -84,4 +90,6 @@ body {
     margin: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     letter-spacing: -0.01em;
+    background-attachment: fixed;
+    /* Ensures gradient doesn't scroll up */
 }

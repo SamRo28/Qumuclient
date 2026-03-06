@@ -262,10 +262,12 @@ export class ManagerService {
         currentInputQubits = currentInputQubits.join(',');
       }
 
-      if (currentInputQubits && typeof currentInputQubits === 'string' && currentInputQubits.trim() !== '') {
-        this.inputQubits = currentInputQubits;
+      if (currentInputQubits !== null && currentInputQubits !== undefined) {
+        // If it exists (even if empty string `""`), we respect it
+        this.inputQubits = currentInputQubits as string;
         this.selectedProject.qProgram.inputQubits = currentInputQubits; // Ensure it's stored as string
       } else {
+        // Only if completely undefined we default to "0,1,2..."
         this.inputQubits = allInputQubits;
         this.selectedProject.qProgram.inputQubits = this.inputQubits;
       }
