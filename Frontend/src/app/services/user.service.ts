@@ -54,7 +54,7 @@ export class UserService {
   }
 
   logout(): void {
-    this.client.post(`${environment.api.core}/logout`, {}, { withCredentials: true }).subscribe({
+    this.client.post(`${environment.api.core}/users/logout`, {}, { withCredentials: true }).subscribe({
       next: () => {
         this.clearSession();
       },

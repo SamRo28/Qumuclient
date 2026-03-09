@@ -18,13 +18,21 @@ export class AppComponent implements OnInit {
   constructor(public manager: ManagerService, private userService: UserService) { }
 
   ngOnInit(): void {
-    this.userService.checkSession().subscribe(isAuthenticated => {
+    // Initial session check
+    this.userService.checkSession().subscribe();
+
+    // React to authentication changes (login/logout)
+    this.userService.isAuthenticated$.subscribe(isAuthenticated => {
       if (isAuthenticated) {
         const email = sessionStorage.getItem('email');
         if (email) {
           this.manager.showSidebar = true;
           this.manager.loadProjects(email).subscribe();
         }
+      } else {
+        this.manager.showSidebar = false;
+        this.manager.clearProjects();
+        this.goToHome();
       }
     });
   }

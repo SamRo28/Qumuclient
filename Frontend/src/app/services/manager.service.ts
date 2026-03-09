@@ -321,7 +321,7 @@ export class ManagerService {
       this.selectedProject.qProgram.outputQubits = ""
     }
 
-    if (sessionStorage.getItem('token')) {
+    if (sessionStorage.getItem('email')) {
       this.showSidebar = true
     }
 
@@ -629,6 +629,23 @@ export class ManagerService {
 
       return project;
     });
+  }
+
+  clearProjects(): void {
+    this.projects = [];
+    this._projects.next(this.projects);
+    this.selectedProject = undefined;
+    this._selectedProject.next(null);
+    this._selectedMutant.next(null);
+    this._selectedMutantCycle.next(null);
+    this.mutants = [];
+    this.qubitCount = 0;
+    this.qubits = [];
+    this.inputQubits = "";
+    this.outputQubits = "";
+    this.showSaveButton = false;
+    this.currentEmailForProjects = null;
+    this.projectsCache$ = null;
   }
 }
 

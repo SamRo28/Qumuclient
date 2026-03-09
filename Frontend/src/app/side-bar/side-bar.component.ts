@@ -5,6 +5,10 @@ import { ReperService } from '../services/reper.service';
 import { ManagerService } from '../services/manager.service';
 import { MutantCycle } from '../model/MutantCycle';
 import { Mutant } from '../model/Mutant';
+import { Operator } from '../model/OperatorFamily';
+import { QProgram } from '../model/QProgram';
+import { QCircuit } from '../model/QCircuit';
+import { ExecConfiguration } from '../model/ExecConfiguration';
 import { QumugenService } from '../services/qumugen.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Project } from '../model/Project';
@@ -183,6 +187,72 @@ export class SideBarComponent implements OnInit, OnDestroy {
             this.loading = false;
           }
         });
+      }
+    });
+  }
+
+  duplicateMutantCycle(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined) return;
+
+    this.manager.openConfirmationModal({
+      title: 'Duplicate Mutant Cycle',
+      message: '¿Estás seguro de que deseas duplicar este ciclo? Se creará uno nuevo idéntico pero con todos los resultados en pendiente.',
+      confirmText: 'Duplicate',
+      type: 'info',
+      onConfirm: () => {
+        // Deep clone mutants array
+        const clonedMutants: Mutant[] = cycle.mutants.map(m => {
+          const newMutant = new Mutant();
+          newMutant.id = undefined;
+          newMutant.mutantIndex = m.mutantIndex;
+          newMutant.mutatedColumn = m.mutatedColumn;
+          newMutant.mutatedRow = m.mutatedRow;
+          newMutant.mutationOperator = m.mutationOperator;
+
+          if (m.operator) {
+            newMutant.operator = new Operator({
+              name: m.operator.name,
+              type: m.operator.id,
+              enabled: m.operator.enabled,
+              description: m.operator.description
+            });
+          }
+
+          if (m.circuit) {
+            const newProgram = new QProgram();
+            newProgram.id = crypto.randomUUID();
+            newProgram.qubits = m.circuit.qubits;
+            newProgram.inputQubits = m.circuit.inputQubits;
+            newProgram.outputQubits = m.circuit.outputQubits;
+            if (m.circuit.qCircuit) {
+              newProgram.qCircuit = new QCircuit(undefined, m.circuit.qCircuit.quirkCode);
+            }
+            newMutant.circuit = newProgram;
+          }
+
+          newMutant.mutantResults = [];
+          newMutant.result = undefined;
+          return newMutant;
+        });
+
+        // Clone execution configuration
+        let clonedConfig: ExecConfiguration | undefined;
+        if (cycle.execConfiguration) {
+          clonedConfig = new ExecConfiguration(cycle.execConfiguration);
+          clonedConfig.id = crypto.randomUUID();
+          clonedConfig.executionDate = new Date();
+        }
+
+        // Create new cycle
+        const newCycleId = project.mutantCycles.length;
+        const newCycle = new MutantCycle(clonedMutants, newCycleId, clonedConfig);
+        newCycle.newlyGenerated = true;
+
+        project.mutantCycles.push(newCycle);
+        this.manager.markProjectAsModified(project);
+
+        this.router.navigate(['/projects', project.id, 'cycle', newCycleId]);
+        this.manager.showNotification('El ciclo se ha duplicado correctamente.', 'success', 3000);
       }
     });
   }

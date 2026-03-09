@@ -62,6 +62,11 @@
                 (click)="selectMutantCycle(project, circuit); $event.stopPropagation()">
                 Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
               </span>
+              <button *ngIf="menuAbierto" class="duplicate-cycle-btn"
+                (click)="duplicateMutantCycle(project, circuit); $event.stopPropagation()"
+                title="Duplicate Mutant Cycle" aria-label="Duplicate Mutant Cycle">
+                <i class="fas fa-copy"></i>
+              </button>
               <button *ngIf="menuAbierto" class="delete-cycle-btn"
                 (click)="deleteMutantCycle(project, circuit); $event.stopPropagation()" title="Delete Mutant Cycle"
                 aria-label="Delete Mutant Cycle">
