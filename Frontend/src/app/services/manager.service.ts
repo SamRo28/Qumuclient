@@ -360,7 +360,9 @@ export class ManagerService {
       this.mutants.push(mutant)
 
     }
-    let mutantPrj = new MutantCycle(this.mutants, this.selectedProject?.mutantCycles.length);
+    let nextId = this.selectedProject ? this.selectedProject.getNextMutantCycleId() : 0;
+    let mutantPrj = new MutantCycle(this.mutants, nextId);
+    mutantPrj.name = 'Mutant Cycle ' + mutantPrj.id;
     mutantPrj.newlyGenerated = true;
     this.selectedProject?.mutantCycles.push(mutantPrj);
 
@@ -517,6 +519,7 @@ export class ManagerService {
       project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
         const mutantCycle = new MutantCycle();
         mutantCycle.id = cycleData.id;
+        mutantCycle.name = cycleData.name || ('Mutant Cycle ' + cycleData.id);
         mutantCycle.date = cycleData.date;
         mutantCycle.execConfiguration = new ExecConfiguration(cycleData.execConfiguration);
 
@@ -613,6 +616,7 @@ export class ManagerService {
       project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
         const mutantCycle = new MutantCycle();
         mutantCycle.id = cycleData.id;
+        mutantCycle.name = cycleData.name || ('Mutant Cycle ' + cycleData.id);
 
         mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
           const mutant = new Mutant();

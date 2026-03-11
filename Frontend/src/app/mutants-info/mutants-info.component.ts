@@ -24,7 +24,7 @@ export class MutantsInfoComponent implements OnInit, OnDestroy {
         const cycleId = params.get('cycleId');
         const mutantId = params.get('mutantId'); // This is mutantIndex
 
-        if (projectId && cycleId && mutantId) {
+        if (projectId !== null && cycleId !== null && mutantId !== null) {
           this.subscriptions.add(
             this.manager.projects$.subscribe(projects => {
               const project = projects.find(p => p.id === projectId);

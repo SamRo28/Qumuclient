@@ -83,8 +83,8 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     this.inputQubitsSelection = {};
     const inputQubitsStr = this.manager.selectedProject.qProgram.inputQubits || "";
     if (inputQubitsStr.trim() === "") {
-      // Si está vacío, marcar todos
-      this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = true);
+      // Si está vacío, dejarlos desmarcados en lugar de marcarlos todos
+      this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = false);
     } else {
       const selectedInputs = inputQubitsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
       this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = selectedInputs.includes(i));
@@ -94,8 +94,8 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     this.outputQubitsSelection = {};
     const outputQubitsStr = this.manager.selectedProject.qProgram.outputQubits || "";
     if (outputQubitsStr.trim() === "") {
-      // Si está vacío, marcar todos
-      this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = true);
+      // Si está vacío, dejarlos desmarcados en lugar de marcarlos todos
+      this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = false);
     } else {
       const selectedOutputs = outputQubitsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
       this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = selectedOutputs.includes(i));
@@ -124,13 +124,36 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleAllInputQubits() {
+    const allSelected = this.qubitsIndices.every(i => this.inputQubitsSelection[i]);
+    this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = !allSelected);
+    this.updateInputQubits();
+  }
+
+  toggleAllOutputQubits() {
+    const allSelected = this.qubitsIndices.every(i => this.outputQubitsSelection[i]);
+    this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = !allSelected);
+    this.updateOutputQubits();
+  }
+
   selectAll() {
-    this.families.forEach(f =>
-      f.select())
+    // Check if every enabled operator across all families is selected
+    const allSelected = this.families.every(family =>
+      this.getEnabledOperators(family).every(op => op.selected)
+    );
+
+    // Toggle all based on the uniform check
+    this.families.forEach(family => {
+      this.getEnabledOperators(family).forEach(op => op.selected = !allSelected);
+    });
   }
 
   selectFamily(family: OperatorFamily) {
-    family.select();
+    // Check if every enabled operator in THIS family is selected
+    const allSelected = this.getEnabledOperators(family).every(op => op.selected);
+
+    // Toggle all based on the uniform check
+    this.getEnabledOperators(family).forEach(op => op.selected = !allSelected);
   }
 
   generateMutants() {

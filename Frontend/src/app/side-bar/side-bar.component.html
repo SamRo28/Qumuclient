@@ -58,21 +58,32 @@
               <i class="fas fa-chevron-right expand-icon"
                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
-              <span *ngIf="menuAbierto" class="node-label"
+              <span *ngIf="menuAbierto && editingCycleId !== project.id" class="node-label"
                 (click)="selectMutantCycle(project, circuit); $event.stopPropagation()">
-                Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
+                {{ project.name || 'Mutant Cycle ' + project.id }} ({{ project.mutants.length }} mutants)
               </span>
-              <button *ngIf="menuAbierto" class="duplicate-cycle-btn"
-                (click)="duplicateMutantCycle(project, circuit); $event.stopPropagation()"
-                title="Duplicate Mutant Cycle" aria-label="Duplicate Mutant Cycle">
-                <i class="fas fa-copy"></i>
-              </button>
-              <button *ngIf="menuAbierto" class="delete-cycle-btn"
-                (click)="deleteMutantCycle(project, circuit); $event.stopPropagation()" title="Delete Mutant Cycle"
-                aria-label="Delete Mutant Cycle">
-                <i class="fas fa-trash"></i>
-              </button>
-              <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>
+
+              <!-- Inline Edit Input -->
+              <input *ngIf="menuAbierto && editingCycleId === project.id" type="text" class="edit-cycle-name-input"
+                [(ngModel)]="editCycleNameCache" (keyup.enter)="saveMutantCycleName(project, circuit)"
+                (keyup.escape)="cancelRename()" (blur)="saveMutantCycleName(project, circuit)"
+                (click)="$event.stopPropagation()" autofocus>
+              <div *ngIf="menuAbierto" class="node-actions">
+                <button class="rename-cycle-btn" (click)="renameMutantCycle(project, circuit); $event.stopPropagation()"
+                  title="Rename Mutant Cycle" aria-label="Rename Mutant Cycle">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="duplicate-cycle-btn"
+                  (click)="duplicateMutantCycle(project, circuit); $event.stopPropagation()"
+                  title="Duplicate Mutant Cycle" aria-label="Duplicate Mutant Cycle">
+                  <i class="fas fa-copy"></i>
+                </button>
+                <button class="delete-cycle-btn" (click)="deleteMutantCycle(project, circuit); $event.stopPropagation()"
+                  title="Delete Mutant Cycle" aria-label="Delete Mutant Cycle">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+              <span *ngIf="!menuAbierto" class="tooltip">{{ project.name || 'Project ' + project.id }}</span>
             </div>
 
             <!-- Mutants level -->
@@ -123,7 +134,7 @@
             <!-- Logged In Options -->
             <ng-container *ngIf="isLoggedIn()">
               <button (click)="navigateToQSauron()" class="dropdown-item">
-                <i class="fas fa-arrow-left"></i> Back to QSauron
+                <span class="item-logo"></span> Go to Projects
               </button>
               <button (click)="toggleTheme()" class="dropdown-item">
                 <i class="fas fa-adjust"></i> Toggle Theme

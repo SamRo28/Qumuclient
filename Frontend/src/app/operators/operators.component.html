@@ -60,13 +60,24 @@
     <div class="config-row-qubits">
       <!-- Input Qubits -->
       <div class="config-item full-width">
-        <label class="config-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-          Input Qubits
-        </label>
+        <div class="config-label-header"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label class="config-label" style="margin-bottom: 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M15 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Input Qubits
+          </label>
+          <button class="select-all-btn small-btn" (click)="toggleAllInputQubits()"
+            style="padding: 4px 8px; font-size: 0.75rem;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="margin-right: 4px;">
+              <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Toggle All
+          </button>
+        </div>
         <div class="output-qubits-inline">
           <label *ngFor="let qubitIndex of qubitsIndices" class="qubit-checkbox">
             <input type="checkbox" [(ngModel)]="inputQubitsSelection[qubitIndex]" (change)="updateInputQubits()"
@@ -78,13 +89,24 @@
 
       <!-- Output Qubits -->
       <div class="config-item full-width">
-        <label class="config-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round" />
-          </svg>
-          Output Qubits
-        </label>
+        <div class="config-label-header"
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label class="config-label" style="margin-bottom: 0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Output Qubits
+          </label>
+          <button class="select-all-btn small-btn" (click)="toggleAllOutputQubits()"
+            style="padding: 4px 8px; font-size: 0.75rem;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="margin-right: 4px;">
+              <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Toggle All
+          </button>
+        </div>
         <div class="output-qubits-inline">
           <label *ngFor="let qubitIndex of qubitsIndices" class="qubit-checkbox">
             <input type="checkbox" [(ngModel)]="outputQubitsSelection[qubitIndex]" (change)="updateOutputQubits()"

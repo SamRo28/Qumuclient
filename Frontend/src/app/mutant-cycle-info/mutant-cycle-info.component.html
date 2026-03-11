@@ -1,12 +1,17 @@
 <div class="mutant-cycle-container" *ngIf="mutantCycle">
   <div class="header">
     <h2>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <span class="title-text">Mutant Cycle: {{ mutantCycle.id }}</span>
+      <div class="title-container">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div class="input-wrapper">
+          <input type="text" class="cycle-name-input" [(ngModel)]="mutantCycle.name" (change)="onNameChange()"
+            placeholder="Mutant Cycle Name" [style.width.ch]="(mutantCycle.name?.length || 15) + 1">
+        </div>
+      </div>
 
       <button class="execute-btn" (click)="runMutants()" [disabled]="runningMutants || areAllMutantsExecuted()">
         <span class="execute-text">{{ hasExecutionResults() && !areAllMutantsExecuted() ? 'RESUME' : 'EXECUTE' }}</span>
@@ -134,6 +139,16 @@
           Statistics
         </button>
 
+        <!-- Inline Execution Progress Bar -->
+        <div class="execution-progress-inline" *ngIf="executionStatus.isRunning">
+          <div class="progress-details">
+            <span class="progress-text">Executing: {{ executionStatus.progress }} / {{ executionStatus.total }}</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" [style.width.%]="getProgressPercentage()"></div>
+          </div>
+        </div>
+
         <!-- Actions that were in the header (Export/Calc) - Only show for Matrix Tab -->
         <div class="tab-actions" *ngIf="currentTab === 'matrix'">
           <button class="export-btn" (click)="exportMatrixToCSV()" [disabled]="!matrixRows.length">
@@ -170,9 +185,12 @@
                       </span>
                     </td>
                     <td class="operator-column">
-                      <span class="operator-text" [title]="row.mutant.mutationOperator">
-                        {{ row.mutant.mutationOperator || '-' }}
-                      </span>
+                      <div class="operator-tooltip-container" (click)="goToMutant(row.mutant)"
+                        (mouseenter)="showOperatorTooltip($event, row.mutant)" (mouseleave)="hideOperatorTooltip()">
+                        <span class="operator-text">
+                          {{ row.mutant.mutationOperator || '-' }}
+                        </span>
+                      </div>
                     </td>
                     <td *ngFor="let header of inputHeaders" class="result-cell">
                       <ng-container *ngFor="let cell of row.cells">
@@ -187,25 +205,41 @@
               </table>
             </div>
 
-            <!-- Pagination Controls -->
-            <div class="pagination-controls" *ngIf="totalPages > 1">
-              <button (click)="previousPage()" [disabled]="currentPage === 1" class="page-btn" title="Previous Page">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </button>
-              <span class="page-info">
-                Page <input type="number" class="page-input" [value]="currentPage" (change)="onPageInput($event)"
-                  min="1" [max]="totalPages"> of <span class="total-pages">{{ totalPages
-                  }}</span>
-              </span>
-              <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="page-btn" title="Next Page">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round" />
-                </svg>
-              </button>
+            <!-- Footer Controls (Page Size + Pagination) -->
+            <div class="pagination-footer" *ngIf="mutantCycle.mutants && mutantCycle.mutants.length > 0">
+              <div class="page-size-selector">
+                <label>Items per page:</label>
+                <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="page-size-dropdown">
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="25">25</option>
+                  <option [ngValue]="50">50</option>
+                  <option [ngValue]="100">100</option>
+                  <option value="All">Show All</option>
+                  <option value="Custom">Custom</option>
+                </select>
+                <input *ngIf="pageSize === 'Custom'" type="number" class="custom-page-input" [value]="customPageSize" (change)="onCustomPageSizeChange($event)" min="1" placeholder="Qty">
+              </div>
+
+              <!-- Pagination Controls -->
+              <div class="pagination-controls" *ngIf="totalPages > 1">
+                <button (click)="previousPage()" [disabled]="currentPage === 1" class="page-btn" title="Previous Page">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <span class="page-info">
+                  Page <input type="number" class="page-input" [value]="currentPage" (change)="onPageInput($event)"
+                    min="1" [max]="totalPages"> of <span class="total-pages">{{ totalPages
+                    }}</span>
+                </span>
+                <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="page-btn" title="Next Page">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
           </div>
@@ -261,4 +295,21 @@
   </svg>
   <p>Select a Mutant Cycle to view its information</p>
 </div>
-<!-- Removed old modal overlay -->
+
+<!-- Global Operator Tooltip -->
+<div class="global-operator-tooltip" *ngIf="activeTooltip.show && activeTooltip.mutant"
+  [style.top.px]="activeTooltip.top" [style.left.px]="activeTooltip.left">
+  <div class="tooltip-header">Operator Details</div>
+  <div class="tooltip-body">
+    <div class="tooltip-row">
+      <span class="tooltip-label">Row:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.mutatedRow !== undefined && activeTooltip.mutant.mutatedRow
+        !== null ? activeTooltip.mutant.mutatedRow : 'N/A' }}</span>
+    </div>
+    <div class="tooltip-row">
+      <span class="tooltip-label">Column:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.mutatedColumn !== undefined &&
+        activeTooltip.mutant.mutatedColumn !== null ? activeTooltip.mutant.mutatedColumn : 'N/A' }}</span>
+    </div>
+  </div>
+</div>

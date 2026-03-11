@@ -56,11 +56,11 @@ export class ReperService {
   }
 
   saveMutantsBatch(projectId: string, cycleId: number, mutants: any[]) {
-    return this.client.post<any>(`${environment.api.core}/qumureper/saveMutantsBatch`, { projectId, cycleId, mutants }, { withCredentials: true })
+    return this.client.post<any>(`${environment.api.core}/qumureper/saveMutantsBatch`, { projectId, cycleId, mutants, email: sessionStorage.getItem('email')! }, { withCredentials: true })
   }
 
   saveExecutionsBatch(projectId: string, cycleId: number, mutants: any[]) {
-    return this.client.post<any>(`${environment.api.core}/qumureper/saveExecutionsBatch`, { projectId, cycleId, mutants }, { withCredentials: true })
+    return this.client.post<any>(`${environment.api.core}/qumureper/saveExecutionsBatch`, { projectId, cycleId, mutants, email: sessionStorage.getItem('email')! }, { withCredentials: true })
   }
 
   delete(projectId: string) {

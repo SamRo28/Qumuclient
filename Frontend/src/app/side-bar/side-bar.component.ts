@@ -196,7 +196,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
     this.manager.openConfirmationModal({
       title: 'Duplicate Mutant Cycle',
-      message: '¿Estás seguro de que deseas duplicar este ciclo? Se creará uno nuevo idéntico pero con todos los resultados en pendiente.',
+      message: 'Are you sure you want to duplicate this mutant cycle? An identical cycle with pending results will be created.',
       confirmText: 'Duplicate',
       type: 'info',
       onConfirm: () => {
@@ -244,7 +244,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
         }
 
         // Create new cycle
-        const newCycleId = project.mutantCycles.length;
+        const newCycleId = project.getNextMutantCycleId();
         const newCycle = new MutantCycle(clonedMutants, newCycleId, clonedConfig);
         newCycle.newlyGenerated = true;
 
@@ -252,9 +252,34 @@ export class SideBarComponent implements OnInit, OnDestroy {
         this.manager.markProjectAsModified(project);
 
         this.router.navigate(['/projects', project.id, 'cycle', newCycleId]);
-        this.manager.showNotification('El ciclo se ha duplicado correctamente.', 'success', 3000);
+        this.manager.showNotification('The cycle has been duplicated successfully.', 'success', 3000);
       }
     });
+  }
+
+  // Inline editing state: stores the ID of the mutant cycle currently being renamed
+  editingCycleId: number | null = null;
+  editCycleNameCache: string = "";
+
+  renameMutantCycle(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined) return;
+    this.editingCycleId = cycle.id;
+    this.editCycleNameCache = cycle.name || `Mutant Cycle ${cycle.id}`;
+  }
+
+  saveMutantCycleName(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined || this.editingCycleId !== cycle.id) return;
+
+    const newName = this.editCycleNameCache.trim();
+    if (newName !== "" && newName !== cycle.name) {
+      cycle.name = newName;
+      this.manager.markProjectAsModified(project);
+    }
+    this.editingCycleId = null;
+  }
+
+  cancelRename(): void {
+    this.editingCycleId = null;
   }
 
   selectCircuit(circuit: Project): void {

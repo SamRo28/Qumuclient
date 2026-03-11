@@ -3,6 +3,7 @@ import { Mutant } from "./Mutant"
 
 export class MutantCycle {
     id: number = 0
+    name?: string
     mutants: Mutant[] = []
     execConfiguration?: ExecConfiguration
     date: Date = new Date();
@@ -10,13 +11,14 @@ export class MutantCycle {
 
     newlyGenerated: boolean = false;
 
-    constructor(mutants?: Mutant[], id?: number, execConfiguration?: ExecConfiguration) {
+    constructor(mutants?: Mutant[], id?: number, execConfiguration?: ExecConfiguration, name?: string) {
         if (mutants) {
             this.mutants = [...mutants]
 
         }
         if (id) {
             this.id = id
+            this.name = name || 'Mutant Cycle ' + id;
         }
         if (execConfiguration) {
             this.execConfiguration = execConfiguration;

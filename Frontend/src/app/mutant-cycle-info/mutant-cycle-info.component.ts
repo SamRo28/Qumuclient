@@ -36,7 +36,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
   // Pagination properties
   currentPage: number = 1;
-  pageSize: number = 100;
+  pageSize: number | 'All' | 'Custom' = 100;
+  customPageSize: number = 100;
   totalPages: number = 0;
 
   paginatedMutants: Mutant[] = [];
@@ -57,9 +58,23 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   // Execution State
   executionStatus: ExecutionStatus = { isRunning: false, progress: 0, total: 0, message: '' };
 
+  // Tooltip State
+  activeTooltip: {
+    show: boolean;
+    mutant: Mutant | null;
+    top: number;
+    left: number;
+  } = { show: false, mutant: null, top: 0, left: 0 };
+
   // Statistics State
   isLoadingStats = false;
   statistics: StatisticsResponse | null = null;
+
+  onNameChange(): void {
+    if (this.manager.selectedProject) {
+      this.manager.markProjectAsModified();
+    }
+  }
   // showStatsModal = false; // Removed legacy modal
 
   currentTab: 'matrix' | 'statistics' = 'matrix';
@@ -249,22 +264,34 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     if (!this.mutantCycle || !this.mutantCycle.id) return;
     const cycleId = this.mutantCycle.id as number;
 
+    let previousIsRunning = false;
+
     this.subscriptions.add(
       this.mutantExecutionService.getStatus(cycleId).subscribe(status => {
+        const isStarting = !previousIsRunning && status.isRunning;
+        const isFinishing = previousIsRunning && !status.isRunning && status.message === 'Execution finished.';
+        const isError = !status.isRunning && status.message.toLowerCase().includes('error');
+
         this.executionStatus = status;
-        // Map service status to component flags for UI compatibility if needed
         this.runningMutants = status.isRunning;
 
-        if (status.isRunning) {
-          this.showModal(status.message);
-        } else {
-          this.hideModal();
-          if (status.message === 'Execution finished.') {
-            // Can show notification if not already shown by service
-          }
+        if (isStarting) {
+          this.manager.showNotification(status.message, 'loading', 3000);
+        } else if (isFinishing) {
+          this.manager.showNotification('The mutants execution has finished', 'success', 5000);
+        } else if (isError) {
+          this.manager.showNotification(status.message, 'error', 5000);
         }
+
+        previousIsRunning = status.isRunning;
+        this.cdr.detectChanges();
       })
     );
+  }
+
+  getProgressPercentage(): number {
+    if (!this.executionStatus.total || this.executionStatus.total === 0) return 0;
+    return (this.executionStatus.progress / this.executionStatus.total) * 100;
   }
 
   ngOnDestroy() {
@@ -287,15 +314,50 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     }
   }
 
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  onCustomPageSizeChange(event: any): void {
+    const size = parseInt(event.target.value, 10);
+    if (!isNaN(size) && size > 0) {
+      this.customPageSize = size;
+      this.currentPage = 1;
+      this.updatePagination();
+    } else {
+      event.target.value = this.customPageSize;
+    }
+  }
+
   updatePagination(): void {
     if (!this.mutantCycle || !this.mutantCycle.mutants) {
       this.paginatedMutants = [];
       this.totalPages = 0;
       return;
     }
-    this.totalPages = Math.ceil(this.mutantCycle.mutants.length / this.pageSize);
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
+    
+    let effectivePageSize = 100;
+    if (this.pageSize === 'All') {
+      effectivePageSize = this.mutantCycle.mutants.length || 1;
+    } else if (this.pageSize === 'Custom') {
+      effectivePageSize = this.customPageSize || 100;
+    } else {
+      effectivePageSize = this.pageSize as number;
+    }
+
+    if (effectivePageSize <= 0) effectivePageSize = 1;
+
+    this.totalPages = Math.ceil(this.mutantCycle.mutants.length / effectivePageSize);
+    
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = this.totalPages;
+    } else if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
+
+    const startIndex = (this.currentPage - 1) * effectivePageSize;
+    const endIndex = startIndex + effectivePageSize;
 
     this.paginatedMutants = this.mutantCycle.mutants.slice(startIndex, endIndex);
     this.paginatedMatrixRows = this.matrixRows.slice(startIndex, endIndex);
@@ -398,7 +460,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         }
 
         // Create new cycle
-        const newCycleId = this.manager.selectedProject!.mutantCycles.length; // Assign local ID, will be updated by backend upon save
+        const newCycleId = this.manager.selectedProject!.getNextMutantCycleId();
         const newCycle = new MutantCycle(clonedMutants, newCycleId, clonedConfig);
         newCycle.newlyGenerated = true;
 
@@ -664,5 +726,30 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   // NOTE: showStatsModal logic is removed/superseded by tabs but we can keep closeStatsModal empty or remove it.
   // I will just remove the usage of showStatsModal in HTML and here.
 
-}
+  goToMutant(mutant: Mutant): void {
+    if (!this.manager.selectedProject || !this.mutantCycle) return;
+    if (mutant.mutantIndex === undefined) {
+      this.manager.showNotification('Mutant Index not found.', 'error', 3000);
+      return;
+    }
+    this.router.navigate(['/project', this.manager.selectedProject.id, 'cycle', this.mutantCycle.id, 'mutant', mutant.mutantIndex]);
+  }
 
+  showOperatorTooltip(event: MouseEvent, mutant: Mutant): void {
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    // Position to the right of the cell, vertically centered
+    this.activeTooltip = {
+      show: true,
+      mutant: mutant,
+      top: rect.top + (rect.height / 2),
+      left: rect.right + 10 // 10px spacing
+    };
+  }
+
+  hideOperatorTooltip(): void {
+    this.activeTooltip.show = false;
+  }
+
+}

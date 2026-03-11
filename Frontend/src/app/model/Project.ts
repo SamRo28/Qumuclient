@@ -70,6 +70,11 @@ export class Project {
         this.mutantCycles.push(mutantCycle)
     }
 
+    getNextMutantCycleId(): number {
+        if (!this.mutantCycles || this.mutantCycles.length === 0) return 0;
+        return Math.max(...this.mutantCycles.map(mc => mc.id)) + 1;
+    }
+
     getQubits(): number {
         return this.qProgram.getQubits();
     }
