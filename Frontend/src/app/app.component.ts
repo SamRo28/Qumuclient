@@ -13,7 +13,7 @@ export class AppComponent implements OnInit {
 
   public static error: string = ""
 
-  public static quirkUrl = "https://algassert.com/quirk"
+  public static quirkUrl = "https://alarcosj.esi.uclm.es/quirk/"
 
   constructor(public manager: ManagerService, private userService: UserService) { }
 

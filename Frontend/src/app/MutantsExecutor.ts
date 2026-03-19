@@ -2,15 +2,15 @@ import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser"
 import { QProgram } from "./model/QProgram"
 
 export abstract class MutantsExecutor {
-    originalResults : any
-    mutantResults : any[] = []
-    runningMutants : boolean = false
-    killedMutants : number = 0
-    aliveMutants : number = 0
-    nonCompilableMutants : number = 0
+    originalResults: any
+    mutantResults: any[] = []
+    runningMutants: boolean = false
+    killedMutants: number = 0
+    aliveMutants: number = 0
+    nonCompilableMutants: number = 0
 
-    quirkUrl : string = "https://algassert.com/quirk"
-    url?  : SafeResourceUrl
+    quirkUrl: string = "https://alarcosj.esi.uclm.es/quirk/"
+    url?: SafeResourceUrl
     JSON: JSON
 
     stopped = false
@@ -19,19 +19,19 @@ export abstract class MutantsExecutor {
         this.JSON = JSON
     }
 
-    abstract runOne(circuit : QProgram, program? : string) : void
-    abstract runMutants() : void
+    abstract runOne(circuit: QProgram, program?: string): void
+    abstract runMutants(): void
 
     stopExecution() {
         this.showModal("Stopping execution")
         this.stopped = true
-    }    
+    }
 
     protected showModal(message: string) {
         let existingModal = document.getElementById("modal");
         if (existingModal)
             existingModal.remove(); // Eliminar el modal existente si hay uno
-    
+
         let modal = document.createElement("div");
         modal.id = "modal";
         modal.style.position = "fixed";
@@ -44,15 +44,14 @@ export abstract class MutantsExecutor {
         modal.style.borderRadius = "10px";
         modal.style.textAlign = "center";
         modal.style.zIndex = "1000";
-    
+
         modal.innerHTML = `<p>${message}</p>`;
         document.body.appendChild(modal);
     }
-    
+
     protected hideModal() {
         let modal = document.getElementById("modal");
-        if (modal) 
-        modal.remove();
+        if (modal)
+            modal.remove();
     }
 }
-  
