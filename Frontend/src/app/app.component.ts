@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ManagerService } from './services/manager.service';
 import { UserService } from './services/user.service';
+import * as localforage from 'localforage';
 
 @Component({
   selector: 'app-root',
@@ -18,8 +19,13 @@ export class AppComponent implements OnInit {
   constructor(public manager: ManagerService, private userService: UserService) { }
 
   ngOnInit(): void {
-    // Initial session check
-    this.userService.checkSession().subscribe();
+    // Clear localforage to avoid inconsistent data before checking session
+    localforage.clear().then(() => {
+      this.userService.checkSession().subscribe();
+    }).catch((e: any) => {
+      console.error("Error clearing localforage", e);
+      this.userService.checkSession().subscribe();
+    });
 
     // React to authentication changes (login/logout)
     this.userService.isAuthenticated$.subscribe(isAuthenticated => {

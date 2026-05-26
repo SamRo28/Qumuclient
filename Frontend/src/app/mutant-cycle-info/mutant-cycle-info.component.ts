@@ -36,7 +36,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
   // Pagination properties
   currentPage: number = 1;
-  pageSize: number | 'All' | 'Custom' = 100;
+  pageSize: number | 'All' | 'Custom' = 50;
   customPageSize: number = 100;
   totalPages: number = 0;
 
@@ -54,6 +54,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
   // Subscription management
   private subscriptions = new Subscription();
+  private executionStatusSubscription?: Subscription;
 
   // Execution State
   executionStatus: ExecutionStatus = { isRunning: false, progress: 0, total: 0, message: '' };
@@ -264,29 +265,31 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     if (!this.mutantCycle || !this.mutantCycle.id) return;
     const cycleId = this.mutantCycle.id as number;
 
+    if (this.executionStatusSubscription) {
+      this.executionStatusSubscription.unsubscribe();
+    }
+
     let previousIsRunning = false;
 
-    this.subscriptions.add(
-      this.mutantExecutionService.getStatus(cycleId).subscribe(status => {
-        const isStarting = !previousIsRunning && status.isRunning;
-        const isFinishing = previousIsRunning && !status.isRunning && status.message === 'Execution finished.';
-        const isError = !status.isRunning && status.message.toLowerCase().includes('error');
+    this.executionStatusSubscription = this.mutantExecutionService.getStatus(cycleId).subscribe(status => {
+      const isStarting = !previousIsRunning && status.isRunning;
+      const isFinishing = previousIsRunning && !status.isRunning && status.message === 'Execution finished.';
+      const isError = !status.isRunning && status.message.toLowerCase().includes('error');
 
-        this.executionStatus = status;
-        this.runningMutants = status.isRunning;
+      this.executionStatus = status;
+      this.runningMutants = status.isRunning;
 
-        if (isStarting) {
-          this.manager.showNotification(status.message, 'loading', 3000);
-        } else if (isFinishing) {
-          this.manager.showNotification('The mutants execution has finished', 'success', 5000);
-        } else if (isError) {
-          this.manager.showNotification(status.message, 'error', 5000);
-        }
+      if (isStarting) {
+        this.manager.showNotification(status.message, 'loading', 3000);
+      } else if (isFinishing) {
+        this.manager.showNotification('The mutants execution has finished', 'success', 5000);
+      } else if (isError) {
+        this.manager.showNotification(status.message, 'error', 5000);
+      }
 
-        previousIsRunning = status.isRunning;
-        this.cdr.detectChanges();
-      })
-    );
+      previousIsRunning = status.isRunning;
+      this.cdr.detectChanges();
+    });
   }
 
   getProgressPercentage(): number {
@@ -295,6 +298,9 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   ngOnDestroy() {
+    if (this.executionStatusSubscription) {
+      this.executionStatusSubscription.unsubscribe();
+    }
     this.subscriptions.unsubscribe();
   }
 

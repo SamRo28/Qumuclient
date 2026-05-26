@@ -121,6 +121,13 @@ h1 {
   flex-shrink: 0;
 }
 
+.error-icon {
+  width: 20px;
+  height: 20px;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

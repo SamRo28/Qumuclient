@@ -73,7 +73,7 @@ export class MutantExecutionService {
                 }
                 // If we reached the end and all have results
                 if (i === mutantCycle.mutants.length - 1 && mutant.mutantResults && mutant.mutantResults.length > 0) {
-                    this.manager.showNotification("Todas las ejecuciones ya se han completado para este ciclo.", "success");
+                    this.manager.showNotification("Todas las ejecuciones ya se han completado para este ciclo.", "success", 5000);
                     return;
                 }
             }
@@ -163,7 +163,7 @@ export class MutantExecutionService {
                 console.error("Error running original circuit", err);
                 this.stopExecution(cycleId);
                 this.updateStatus(cycleId, { isRunning: false, message: 'Error running original circuit.' });
-                this.manager.showNotification("Error executing original circuit", 'success'); // Using 'success' just to match component logic, maybe should be error?
+                this.manager.showNotification("Error executing original circuit", 'error', 5000);
             }
         });
 
@@ -338,7 +338,15 @@ export class MutantExecutionService {
     }
 
     private updateStatus(cycleId: number, statusScale: Partial<ExecutionStatus>) {
-        const current = this.statusSubjects.get(cycleId)?.value || { isRunning: false, progress: 0, total: 0, message: '' };
-        this.statusSubjects.get(cycleId)?.next({ ...current, ...statusScale });
+        if (!this.statusSubjects.has(cycleId)) {
+            this.statusSubjects.set(cycleId, new BehaviorSubject<ExecutionStatus>({
+                isRunning: false,
+                progress: 0,
+                total: 0,
+                message: ''
+            }));
+        }
+        const current = this.statusSubjects.get(cycleId)!.value;
+        this.statusSubjects.get(cycleId)!.next({ ...current, ...statusScale });
     }
 }
