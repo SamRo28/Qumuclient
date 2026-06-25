@@ -27,7 +27,49 @@ public class CustomizedGate {
 			this.matrix = customizedGate.matrix;
 		else
 			this.circuit = new Circuit(customizedGate.circuit);
-		this.originalQuirk = customizedGate.originalQuirk;
+		this.originalQuirk = new JSONObject(customizedGate.originalQuirk.toString());
+	}
+
+	public CustomizedGate(CustomizedGate original, Circuit mutatedCircuit, String newId, String newName) {
+		this.id = newId;
+		this.name = newName;
+		this.circuit = mutatedCircuit;
+		this.originalQuirk = new JSONObject();
+		this.originalQuirk.put("id", newId);
+		this.originalQuirk.put("name", newName);
+		this.originalQuirk.put("circuit", mutatedCircuit.toQuirk());
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Circuit getCircuit() {
+		return circuit;
+	}
+
+	public void setCircuit(Circuit circuit) {
+		this.circuit = circuit;
+	}
+
+	public JSONObject getOriginalQuirk() {
+		return originalQuirk;
+	}
+
+	public void setOriginalQuirk(JSONObject originalQuirk) {
+		this.originalQuirk = originalQuirk;
 	}
 
 	public JSONObject toQuirk() {

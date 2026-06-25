@@ -262,7 +262,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   checkAndSubscribeToExecution() {
-    if (!this.mutantCycle || !this.mutantCycle.id) return;
+    if (!this.mutantCycle || this.mutantCycle.id === undefined || this.mutantCycle.id === null) return;
     const cycleId = this.mutantCycle.id as number;
 
     if (this.executionStatusSubscription) {
@@ -428,6 +428,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
           newMutant.mutatedColumn = m.mutatedColumn;
           newMutant.mutatedRow = m.mutatedRow;
           newMutant.mutationOperator = m.mutationOperator;
+          newMutant.oracleName = m.oracleName;
 
           if (m.operator) {
             newMutant.operator = new Operator({

@@ -254,23 +254,22 @@
   margin: 0;
 }
 
-/* Tree Node */
 .tree-node {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 0.75rem;
+  gap: 0.5rem;
+  padding: 0.35rem 0.625rem;
   cursor: pointer;
   transition: all 200ms;
   position: relative;
   border-radius: 8px;
-  margin: 0.125rem 0.25rem;
-  min-height: 40px;
+  margin: 0.05rem 0.25rem;
+  min-height: 32px;
 }
 
 .sidebar:not(.open) .tree-node {
   justify-content: center;
-  padding: 0.625rem 0.5rem;
+  padding: 0.35rem 0.5rem;
 }
 
 .tree-node:hover {
@@ -286,7 +285,7 @@
   /* Darker green background */
   border-left: 3px solid #10b981;
   /* Green accent border */
-  padding-left: calc(0.75rem - 3px);
+  padding-left: calc(0.625rem - 3px);
   /* Adjust padding to interpret border */
   box-shadow: 0 0 15px rgba(6, 78, 59, 0.4);
 }

@@ -20,6 +20,7 @@ public class Circuit {
 	private int mutantIndex;
 	private Map<String, Object> quirk;
 	private String qiskitCode;
+	private String oracleName;
 
 	public Circuit(JSONObject jso) {
 		JSONArray init = jso.optJSONArray("init");
@@ -53,6 +54,7 @@ public class Circuit {
 		for (int i=0; i<circuit.columns.size(); i++) 
 			this.columns.add(new QColumn(circuit.columns.get(i)));
 		this.qubits = circuit.getQubits();
+		this.oracleName = circuit.oracleName;
 	}
 
 	public JSONObject toQuirk() {
@@ -156,5 +158,42 @@ public class Circuit {
 	
 	public void setQiskitCode(String qiskitCode) {
 		this.qiskitCode = qiskitCode;
+	}
+
+	public List<CustomizedGate> getCustomizedGates() {
+		return this.customizedGates;
+	}
+
+	public void setCustomizedGates(List<CustomizedGate> customizedGates) {
+		this.customizedGates = customizedGates;
+	}
+
+	public String getOracleName() {
+		return this.oracleName;
+	}
+
+	public void setOracleName(String oracleName) {
+		this.oracleName = oracleName;
+	}
+
+	public void replaceGateName(Object oldName, Object newName) {
+		if (this.columns != null) {
+			for (QColumn column : this.columns) {
+				if (column.getGates() == null) continue;
+				for (Gate gate : column.getGates()) {
+					if (oldName.equals(gate.getName())) {
+						gate.setName(newName);
+					}
+				}
+			}
+		}
+		if (this.customizedGates != null) {
+			for (CustomizedGate cg : this.customizedGates) {
+				if (cg.getCircuit() != null) {
+					cg.getCircuit().replaceGateName(oldName, newName);
+					cg.getOriginalQuirk().put("circuit", cg.getCircuit().toQuirk());
+				}
+			}
+		}
 	}
 }

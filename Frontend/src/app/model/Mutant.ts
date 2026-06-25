@@ -7,18 +7,20 @@ export class Mutant {
     mutatedColumn?: number
     mutatedRow?: number
     mutationOperator?: string
+    oracleName?: string
     circuit?: QProgram
     result?: MutantResult
     mutantResults: MutantResult[] = []
     operator: Operator
     id?: string
 
-    constructor(mutantIndex?: number, mutatedColumn?: number, mutatedRow?: number, mutationOperator?: string, circuit?: QProgram) {
+    constructor(mutantIndex?: number, mutatedColumn?: number, mutatedRow?: number, mutationOperator?: string, circuit?: QProgram, oracleName?: string) {
 
         this.mutantIndex = mutantIndex;
         this.mutatedColumn = mutatedColumn;
         this.mutatedRow = mutatedRow;
         this.mutationOperator = mutationOperator;
+        this.oracleName = oracleName;
         this.circuit = circuit;
         this.operator = new Operator({});
         this.operator.name = mutationOperator;

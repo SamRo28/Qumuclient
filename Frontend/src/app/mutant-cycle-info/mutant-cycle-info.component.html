@@ -311,5 +311,9 @@
       <span class="tooltip-value">{{ activeTooltip.mutant.mutatedColumn !== undefined &&
         activeTooltip.mutant.mutatedColumn !== null ? activeTooltip.mutant.mutatedColumn : 'N/A' }}</span>
     </div>
+    <div class="tooltip-row" *ngIf="activeTooltip.mutant.oracleName">
+      <span class="tooltip-label">Oracle:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.oracleName }}</span>
+    </div>
   </div>
 </div>
