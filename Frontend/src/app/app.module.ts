@@ -22,6 +22,7 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
 import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
 import { StatisticsVisualizerComponent } from './statistics-visualizer/statistics-visualizer.component';
 import { ChatSideBarComponent } from './chat-side-bar/chat-side-bar.component';
+import { CircuitViewerComponent } from './circuit-viewer/circuit-viewer.component';
 
 @NgModule({
   declarations: [
@@ -42,7 +43,8 @@ import { ChatSideBarComponent } from './chat-side-bar/chat-side-bar.component';
     ThemeToggleComponent,
     ConfirmationModalComponent,
     StatisticsVisualizerComponent,
-    ChatSideBarComponent
+    ChatSideBarComponent,
+    CircuitViewerComponent
   ],
   imports: [
     BrowserModule,

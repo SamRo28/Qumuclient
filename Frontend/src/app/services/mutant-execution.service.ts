@@ -10,6 +10,7 @@ import { AppComponent } from '../app.component';
 import { Project } from '../model/Project';
 import { TestSuite } from '../model/TestSuite';
 import { Deterministic } from '../model/Deterministic';
+import { QCode } from '../model/QCode';
 
 export interface ExecutionStatus {
     isRunning: boolean;
@@ -99,6 +100,9 @@ export class MutantExecutionService {
             if (mutantCycle.execConfiguration.execAlgorithm) {
                 this.manager.executionAlgorithm = mutantCycle.execConfiguration.execAlgorithm;
             }
+            // Persist the error thresholds used for this execution so the zombie range is reconstructable.
+            mutantCycle.execConfiguration.toleratedError = this.manager.toleratedError;
+            mutantCycle.execConfiguration.zombieError = this.manager.zombieError;
         }
 
         let inputs: string[] | undefined = undefined;
@@ -144,7 +148,40 @@ export class MutantExecutionService {
             }
         }
 
-        // 1. Run Original Circuit (RunOne)
+        // Mark as active straight away: the code regeneration below is async and a
+        // stop request during it must still be honoured.
+        this.activeExecutions.set(cycleId, new Subscription());
+
+        // 1. Regenerate the original's Qiskit code with the current shots.
+        // The mutants are generated at execution time (getMultipleQiskitCode), so if
+        // the original kept a stale shots value both would run with a different
+        // number of shots. The error is normalised with the original's frequencies,
+        // so mixing shots would make every error meaningless.
+        this.qumugen.getQiskitCode(project.qProgram).then(
+            (code: any) => {
+                if (!this.activeExecutions.has(cycleId)) return; // stopped meanwhile
+                project.qProgram.qCodes = [new QCode(undefined, code.wholeCode, "QuMu")];
+                this.runOriginal(mutantCycle, project, startIndex, inputQubits, outputQubits, inputs);
+            },
+            (error: any) => {
+                console.error("Error generating the original circuit code", error);
+                this.stopExecution(cycleId);
+                this.updateStatus(cycleId, { isRunning: false, message: 'Error generating original circuit code.' });
+                this.manager.showNotification("Error generating the original circuit code", 'error', 5000);
+            }
+        );
+    }
+
+    private runOriginal(
+        mutantCycle: MutantCycle,
+        project: Project,
+        startIndex: number,
+        inputQubits: string,
+        outputQubits: string,
+        inputs?: string[]
+    ) {
+        const cycleId = mutantCycle.id as number;
+
         const runOneSub = this.qe.runOne(
             project.qProgram,
             inputQubits,
@@ -205,6 +242,7 @@ export class MutantExecutionService {
                         safeOriginalResults,
                         this.manager.executionAlgorithm,
                         this.manager.toleratedError, // Again, relying on manager state.
+                        this.manager.zombieError,
                         false,
                         inputQubits,
                         outputQubits,
@@ -309,13 +347,14 @@ export class MutantExecutionService {
                 if (!batchResult) continue;
 
                 const killed = batchResult.killed;
+                const zombie = batchResult.zombie;
                 const error = batchResult.error;
 
                 const id = inputs ? parseInt(inputs[i], 2) : i;
 
                 const mr = new MutantResult({
                     id: id,
-                    result: killed ? Result.KILLED : Result.ALIVE,
+                    result: killed ? Result.KILLED : (zombie ? Result.ZOMBIE : Result.ALIVE),
                     error: error
                 });
 
@@ -326,7 +365,9 @@ export class MutantExecutionService {
 
             // Determine Overall Result
             const anyKilled = mutant.mutantResults.some(r => r.result === Result.KILLED);
-            mutant.result = new MutantResult({ result: anyKilled ? Result.KILLED : Result.ALIVE });
+            const anyZombie = mutant.mutantResults.some(r => r.result === Result.ZOMBIE);
+            const overallResult = anyKilled ? Result.KILLED : (anyZombie ? Result.ZOMBIE : Result.ALIVE);
+            mutant.result = new MutantResult({ result: overallResult });
         }
 
         // Mark cycle/project as modified?

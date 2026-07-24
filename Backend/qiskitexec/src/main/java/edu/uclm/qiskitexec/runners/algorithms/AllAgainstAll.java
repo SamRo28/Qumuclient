@@ -26,6 +26,7 @@ public class AllAgainstAll extends Strategy {
 			shots = shots + (int) per.getExecutionResults().get(i).get("frequency");
 		shots = 2 * shots;
 		double toleratedError = smec.getToleratedError();
+		double zombieError = smec.getZombieError();
 		List<Integer> inputQubits = smec.getInputQubits();
 		boolean reduceTable = smec.isReduceTable();
 
@@ -40,14 +41,15 @@ public class AllAgainstAll extends Strategy {
 				return mI1.compareTo(mI2);
 			});
 
-			this.calculate(smec.getOriginalResults(), mutantResults, toleratedError, shots, reduceTable);
+			this.calculate(smec.getOriginalResults(), mutantResults, toleratedError, zombieError, shots, reduceTable);
 			this.wholeResults.add(mutantResults);
 		}
 		return this.wholeResults;
 	}
 
 	private void calculate(List<ProgramExecutionResult> originalResults, List<ProgramExecutionResult> mutantResults,
-			double toleratedError, double shots, boolean reduceTable) {
+			double toleratedError, double zombieError, double shots, boolean reduceTable) {
+		double killThreshold = toleratedError + zombieError;
 		for (int i = 0; i < originalResults.size(); i++) {
 			ProgramExecutionResult originalResult = originalResults.get(i);
 			ProgramExecutionResult mutantResult = mutantResults.get(i);
@@ -56,7 +58,8 @@ public class AllAgainstAll extends Strategy {
 			mutantError = Math.round(mutantError * 100.0) / 100.0;
 
 			mutantResult.setError(mutantError);
-			mutantResult.setKilled(toleratedError <= mutantError);
+			mutantResult.setKilled(killThreshold <= mutantError);
+			mutantResult.setZombie(toleratedError <= mutantError && mutantError < killThreshold);
 		}
 	}
 

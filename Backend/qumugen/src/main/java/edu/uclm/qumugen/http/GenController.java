@@ -125,11 +125,21 @@ public class GenController {
 		try {
 			outputQubits = (List<Integer>) info.get("outputQubits");
 		} catch (Exception e) {
-			if (info.containsKey("outputQubits")) {
-				String[] tokens = info.get("outputQubits").toString().split(",");
-				outputQubits = new ArrayList<>();
-				for (int i = 0; i < tokens.length; i++)
-					outputQubits.add(Integer.parseInt(tokens[i].trim()));
+			if (info.containsKey("outputQubits") && info.get("outputQubits") != null) {
+				String val = info.get("outputQubits").toString().trim();
+				if (!val.isEmpty()) {
+					String[] tokens = val.split(",");
+					outputQubits = new ArrayList<>();
+					for (int i = 0; i < tokens.length; i++) {
+						String token = tokens[i].trim();
+						if (!token.isEmpty()) {
+							try {
+								outputQubits.add(Integer.parseInt(token));
+							} catch (NumberFormatException nfe) {
+							}
+						}
+					}
+				}
 			}
 		}
 		return outputQubits;

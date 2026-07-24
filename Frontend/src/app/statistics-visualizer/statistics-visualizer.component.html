@@ -72,10 +72,10 @@
                 </div>
             </div>
 
-            <!-- Dashboard Grid (2 Columns -> 3 Rows) -->
+            <!-- Dashboard Grid (12 Columns) -->
             <div class="dashboard-grid">
                 <!-- 1. Kill Rate per Test -->
-                <div class="chart-card">
+                <div class="chart-card col-6">
                     <h3>
                         Kill Rate per Test
                         <div class="info-icon"
@@ -97,23 +97,13 @@
                             </div>
                             <div class="bar-value-group">
                                 <div class="bar-value-text">{{ item.displayValue }}</div>
-                                <!-- Extract numbers from tooltip for display matching request? Or just rely on tooltip? 
-                                     Request: "al porcentajes le tienes que agregar el número de muertos"
-                                     I will put it next to percentage or in a small subtext.
-                                     Let's use the tooltip string parsing or just pass data if I wanted cleaner HTML.
-                                     But I have tooltip string: "Killed: 50, Total: 100".
-                                     Let's just show the tooltip on hover as implemented in [title], 
-                                     OR explicitly show it if space permits. 
-                                     The user said "agregar el número de muertos". 
-                                     I'll add it in the text.
-                                -->
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. Kill Rate per Mutant -->
-                <div class="chart-card">
+                <div class="chart-card col-6">
                     <h3>
                         Kill Rate per Mutant
                         <div class="info-icon"
@@ -138,8 +128,57 @@
                     </div>
                 </div>
 
+                <!-- 2b. Most Lethal Operators -->
+                <div class="chart-card col-6">
+                    <h3>
+                        Most Lethal Operators
+                        <div class="info-icon"
+                            data-tooltip="Mutation operators whose mutants are killed most often (highest kill rate). A very high rate can mean the operator produces 'easy', low-value mutations.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="custom-chart-container">
+                        <div *ngIf="mostLethalOperators.length === 0" class="empty-text">No operator data available.</div>
+                        <div class="chart-bar-row" *ngFor="let item of mostLethalOperators" [attr.title]="item.tooltip">
+                            <div class="bar-label" [title]="item.operator">{{ item.operator }}</div>
+                            <div class="bar-track">
+                                <div class="bar-fill lethal-fill" [style.width.%]="item.killRate * 100"></div>
+                            </div>
+                            <div class="bar-value-text">{{ item.displayValue }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2c. Innocuous Operators -->
+                <div class="chart-card col-6">
+                    <h3>
+                        Innocuous Operators
+                        <div class="info-icon"
+                            data-tooltip="Mutation operators whose mutants are killed the least (lowest kill rate). They often signal equivalent/trivial mutations or real coverage gaps to address.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="custom-chart-container">
+                        <div *ngIf="innocuousOperators.length === 0" class="empty-text">No operator data available.</div>
+                        <div class="chart-bar-row" *ngFor="let item of innocuousOperators" [attr.title]="item.tooltip">
+                            <div class="bar-label" [title]="item.operator">{{ item.operator }}</div>
+                            <div class="innocuous-badge">Kill rate 0%</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 3. Rarely Killed Mutants -->
-                <div class="list-card">
+                <div class="list-card col-6">
                     <h3>
                         Rarely Killed Mutants
                         <div class="info-icon"
@@ -160,30 +199,8 @@
                     </div>
                 </div>
 
-                <!-- 4. Subsumed Mutants -->
-                <div class="list-card">
-                    <h3>
-                        Subsumed Mutants
-                        <div class="info-icon"
-                            data-tooltip="Mutants properly killed by a set of tests that also kill another mutant. Helps identify redundant equivalents.">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        </div>
-                    </h3>
-                    <div class="list-container">
-                        <div *ngIf="statistics.subsumed_mutants.length === 0" class="empty-text">None</div>
-                        <div *ngFor="let item of statistics.subsumed_mutants" class="list-item">
-                            Mutant {{ item }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. Tests with Unique Kills -->
-                <div class="list-card">
+                <!-- 4. Tests with Unique Kills -->
+                <div class="list-card col-6">
                     <h3>
                         Tests with Unique Kills
                         <div class="info-icon"
@@ -205,8 +222,83 @@
                     </div>
                 </div>
 
+                <!-- 5. Subsumed Mutants -->
+                <div class="list-card col-12">
+                    <h3>
+                        Subsumed Mutants
+                        <div class="info-icon"
+                            data-tooltip="Mutants grouped by their non-redundant parent. Targeting the parent (representative) mutant guarantees that all child (redundant) mutants inside it are also killed.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+                    <div class="list-container detailed-list">
+                        <div *ngIf="subsumedGroups.length === 0" class="empty-text">No subsumed mutants detected in this execution.</div>
+                        <div class="subsumed-groups-grid" *ngIf="subsumedGroups.length > 0">
+                            <div class="representative-box" *ngFor="let group of subsumedGroups">
+                                <div class="representative-header" title="Target this representative mutant to cover all redundant mutants shown on the right">
+                                    <span class="rep-title">Mutant {{ group.representative }}</span>
+                                </div>
+                                <div class="redundants-container">
+                                    <div class="redundant-child-box" *ngFor="let child of group.redundants">
+                                        {{ child.mutant }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5b. Zombie / Unstable Operators -->
+                <div class="list-card col-12">
+                    <h3>
+                        Zombie Mutants &amp; Unstable Operators
+                        <div class="info-icon"
+                            data-tooltip="Zombies are probabilistic 'kills' (error inside the tolerated..tolerated+zombie band). They are counted as ALIVE in every kill metric; this panel isolates them because they reveal flaky tests or miscalibrated thresholds.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </div>
+                    </h3>
+
+                    <div class="zombie-panel">
+                        <!-- Global zombie summary -->
+                        <div class="zombie-summary" *ngIf="zombieSummary">
+                            <div class="zombie-summary-value">{{ zombieSummary.percentage | percent:'1.1-1' }}</div>
+                            <div class="zombie-summary-detail">
+                                {{ zombieSummary.zombie }} zombie / {{ zombieSummary.total }} mutants
+                            </div>
+                            <div class="zombie-summary-note">Treated as alive in all kill metrics</div>
+                        </div>
+
+                        <!-- Unstable operators ranking -->
+                        <div class="zombie-operators">
+                            <div class="zombie-operators-title">Most Unstable Operators</div>
+                            <div class="custom-chart-container">
+                                <div *ngIf="unstableOperators.length === 0" class="empty-text">
+                                    No zombie mutants detected in this execution.
+                                </div>
+                                <div class="chart-bar-row" *ngFor="let item of unstableOperators" [attr.title]="item.tooltip">
+                                    <div class="bar-label" [title]="item.operator">{{ item.operator }}</div>
+                                    <div class="bar-track">
+                                        <div class="bar-fill zombie-fill" [style.width.%]="item.zombieRate * 100"></div>
+                                    </div>
+                                    <div class="bar-value-text">{{ item.displayValue }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 6. Surviving Mutants -->
-                <div class="score-card mini-score-card">
+                <div class="score-card mini-score-card col-12">
                     <div class="score-header">
                         <div class="score-label">Surviving Mutants</div>
                         <div class="info-icon"

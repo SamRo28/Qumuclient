@@ -15,6 +15,7 @@ public class OnlyAlive extends Strategy {
 	private List<ProgramExecutionResult> currentMutantResults;
 	private double shots;
 	private double toleratedError;
+	private double zombieError;
 
 	public OnlyAlive() {
 		this.wholeResults = new ArrayList<>();
@@ -29,6 +30,7 @@ public class OnlyAlive extends Strategy {
 			shots = shots + (int) per.getExecutionResults().get(i).get("frequency");
 		shots = 2 * shots;
 		this.toleratedError = smec.getToleratedError();
+		this.zombieError = smec.getZombieError();
 
 		List<Mutant> mutants = smec.getMutants();
 		int outputSize = smec.getOutputsSize();
@@ -72,7 +74,9 @@ public class OnlyAlive extends Strategy {
 		mutantError = Math.round(mutantError * 100.0) / 100.0;
 
 		mutantResult.setError(mutantError);
-		mutantResult.setKilled(toleratedError <= mutantError);
+		double killThreshold = toleratedError + zombieError;
+		mutantResult.setKilled(killThreshold <= mutantError);
+		mutantResult.setZombie(toleratedError <= mutantError && mutantError < killThreshold);
 		this.currentMutantResults.add(mutantResult);
 	}
 

@@ -116,6 +116,19 @@
             (change)="updateToleratedError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05"
             [disabled]="hasExecutionResults()">
         </div>
+
+        <div class="form-group zombie-error-group">
+          <label for="zombieError">Zombie Error</label>
+          <input type="number" id="zombieError" name="zombieError" [value]="manager.zombieError"
+            (change)="updateZombieError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05"
+            [disabled]="hasExecutionResults()">
+        </div>
+
+        <div class="form-group shots-group">
+          <label for="shots">Shots</label>
+          <input type="number" id="shots" name="shots" [value]="manager.shots" (change)="updateShots($event)" step="100"
+            min="1" max="1000000" class="form-input" placeholder="1024" [disabled]="hasExecutionResults()">
+        </div>
       </div>
     </div>
 
@@ -195,8 +208,9 @@
                     <td *ngFor="let header of inputHeaders" class="result-cell">
                       <ng-container *ngFor="let cell of row.cells">
                         <span *ngIf="cell.input === header" class="matrix-cell-badge"
-                          [ngClass]="cell.killed ? 'killed' : 'alive'" [title]="'Error: ' + cell.error">
-                          {{ cell.killed ? 'K' : 'A' }}
+                          [ngClass]="cell.killed ? 'killed' : (cell.zombie ? 'zombie' : 'alive')"
+                          [title]="'Error: ' + cell.error">
+                          {{ cell.killed ? 'K' : (cell.zombie ? 'Z' : 'A') }}
                         </span>
                       </ng-container>
                     </td>

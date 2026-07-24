@@ -53,6 +53,7 @@ public class SimpleExecutorController {
 			SimpleFitnesser fitnesser = new SimpleFitnesser();
 			fitnesser.setOriginalResults(mec.getOriginalResults());
 			fitnesser.setToleratedError(mec.getToleratedError());
+			fitnesser.setZombieError(mec.getZombieError());
 			fitnesser.calculate(result);
 			return result;
 		} catch (Exception e) {

@@ -12,10 +12,12 @@ public class CustomizedGate {
 
 	public CustomizedGate(JSONObject jso) {
 		this.id = jso.getString("id");
-		this.name = jso.getString("name");
+		this.name = jso.optString("name", jso.getString("id"));
+		// Quirk serializa la matriz como String ("{{1,0},{0,1}}"), pero toleramos
+		// cualquier representación para no romper el parseo del circuito.
 		if (jso.has("matrix"))
-			this.matrix = jso.getString("matrix");
-		else
+			this.matrix = jso.get("matrix").toString();
+		else if (jso.has("circuit"))
 			this.circuit = new Circuit(jso.getJSONObject("circuit"));
 		this.originalQuirk = jso;
 	}
@@ -54,6 +56,14 @@ public class CustomizedGate {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getMatrix() {
+		return matrix;
+	}
+
+	public void setMatrix(String matrix) {
+		this.matrix = matrix;
 	}
 
 	public Circuit getCircuit() {

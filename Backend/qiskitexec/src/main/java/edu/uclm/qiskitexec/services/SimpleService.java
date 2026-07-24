@@ -12,12 +12,12 @@ import edu.uclm.qiskitexec.runners.ProgramExecutionResult;
 public class SimpleService extends ExecutionService {
 
 	public ProgramExecutionResult executeOne(ProgramExecutionConf pec) {
-		CentralizedProxyRunner runner = new CentralizedProxyRunner(this.proxyUrl, this.remoteRunnerUrl);
+		CentralizedProxyRunner runner = this.newRunner();
 		return runner.executeOne(pec);
 	}
 
 	public List<ProgramExecutionResult> executeMany(SimpleMutantsExecutionConfiguration mec) {
-		CentralizedProxyRunner runner = new CentralizedProxyRunner(this.proxyUrl, this.remoteRunnerUrl);
+		CentralizedProxyRunner runner = this.newRunner();
 		return runner.executeMutants(mec.getMutants(), mec.getOutputsSize());
 	}
 }

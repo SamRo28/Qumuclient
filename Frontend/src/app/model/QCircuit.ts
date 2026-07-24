@@ -24,7 +24,13 @@ export class QCircuit {
                     this.mutableColumns = this.mutableColumns.substring(0, this.mutableColumns.length - 1);
                 }
 
-                for (let i = 0; i < quirkCode.qubits; i++) {
+                let numQubits = quirkCode.qubits;
+                const calculatedQubits = QCircuit.calculateQubits(quirkCode);
+                if (!numQubits || numQubits < calculatedQubits) {
+                    numQubits = calculatedQubits;
+                }
+
+                for (let i = 0; i < numQubits; i++) {
                     this.mutableRows += i + ",";
                 }
                 if (this.mutableRows.endsWith(",")) {
@@ -56,14 +62,11 @@ export class QCircuit {
             return "";
         }
         let numQubits = 0;
+        const calculatedQubits = QCircuit.calculateQubits(this.quirkCode);
         if (this.quirkCode.qubits) {
-            numQubits = this.quirkCode.qubits;
-        } else if (this.quirkCode.cols) {
-            for (let i = 0; i < this.quirkCode.cols.length; i++) {
-                if (this.quirkCode.cols[i].length > numQubits) {
-                    numQubits = this.quirkCode.cols[i].length;
-                }
-            }
+            numQubits = Math.max(this.quirkCode.qubits, calculatedQubits);
+        } else {
+            numQubits = calculatedQubits;
         }
 
         let mutableRows = "";
@@ -76,7 +79,85 @@ export class QCircuit {
         return mutableRows;
     }
 
+    static calculateQubits(quirkCode: any): number {
+        if (!quirkCode || !Array.isArray(quirkCode.cols)) {
+            return 0;
+        }
 
+        const customGatesMap = new Map<string, any>();
+        if (Array.isArray(quirkCode.gates)) {
+            for (const gate of quirkCode.gates) {
+                if (gate && typeof gate.id === 'string') {
+                    customGatesMap.set(gate.id, gate);
+                }
+            }
+        }
 
+        const calculatedHeights = new Map<string, number>();
+        const calculating = new Set<string>();
 
+        const getCustomGateHeight = (customGate: any): number => {
+            const id = customGate.id;
+            if (calculatedHeights.has(id)) {
+                return calculatedHeights.get(id)!;
+            }
+            if (calculating.has(id)) {
+                return 1;
+            }
+            calculating.add(id);
+
+            let height = 1;
+            if (customGate.matrix) {
+                const matrixLength = Array.isArray(customGate.matrix) ? customGate.matrix.length : 0;
+                if (matrixLength > 0) {
+                    height = Math.round(Math.log2(matrixLength));
+                }
+            } else if (customGate.circuit) {
+                height = getCircuitQubits(customGate.circuit);
+            }
+
+            calculating.delete(id);
+            calculatedHeights.set(id, height);
+            return height;
+        };
+
+        const getGateHeight = (gate: any): number => {
+            if (gate === null || gate === undefined) {
+                return 1;
+            }
+            let id = "";
+            if (typeof gate === 'string') {
+                id = gate;
+            } else if (typeof gate === 'object' && typeof gate.id === 'string') {
+                id = gate.id;
+            } else {
+                return 1;
+            }
+
+            if (id.startsWith('~') && customGatesMap.has(id)) {
+                return getCustomGateHeight(customGatesMap.get(id));
+            }
+            return 1;
+        };
+
+        function getCircuitQubits(circuit: any): number {
+            if (!circuit || !Array.isArray(circuit.cols)) {
+                return 1;
+            }
+            let maxQubits = 1;
+            for (const col of circuit.cols) {
+                if (Array.isArray(col)) {
+                    for (let i = 0; i < col.length; i++) {
+                        const h = getGateHeight(col[i]);
+                        if (i + h > maxQubits) {
+                            maxQubits = i + h;
+                        }
+                    }
+                }
+            }
+            return maxQubits;
+        }
+
+        return getCircuitQubits(quirkCode);
+    }
 }

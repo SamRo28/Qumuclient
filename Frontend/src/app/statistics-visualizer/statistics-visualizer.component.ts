@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { StatisticsService } from '../services/statistics.service';
-import { StatisticsResponse } from '../model/StatisticsResponse';
+import { StatisticsResponse, OperatorStatistic, ZombieOperatorStatistic, ZombieSummary } from '../model/StatisticsResponse';
 import { ManagerService } from '../services/manager.service';
 
 interface ChartItem {
@@ -11,10 +11,36 @@ interface ChartItem {
     tooltip: string; // "Killed: 50, Total: 100"
 }
 
+interface OperatorRankItem {
+    operator: string;
+    killRate: number;      // 0 to 1
+    killed: number;
+    total: number;
+    displayValue: string;  // "80% (4)"
+    tooltip: string;
+}
+
+interface UnstableOperatorItem {
+    operator: string;
+    zombieRate: number;    // 0 to 1
+    zombie: number;
+    total: number;
+    displayValue: string;  // "40% (2)"
+    tooltip: string;
+}
+
 interface uniqueKillItem {
     test: string;
     mutants: string[];
     count: number;
+}
+
+interface SubsumedGroup {
+    representative: string;
+    redundants: {
+        mutant: string;
+        reason: string;
+    }[];
 }
 
 @Component({
@@ -32,6 +58,11 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
     testRates: ChartItem[] = [];
     mutantRates: ChartItem[] = [];
     testsWithUniqueKills: uniqueKillItem[] = [];
+    subsumedGroups: SubsumedGroup[] = [];
+    mostLethalOperators: OperatorRankItem[] = [];
+    innocuousOperators: OperatorRankItem[] = [];
+    unstableOperators: UnstableOperatorItem[] = [];
+    zombieSummary: ZombieSummary | null = null;
 
     survivingMutants: { count: number, total: number, percentage: number } | null = null;
 
@@ -106,11 +137,57 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
             test: key,
             mutants: value,
             count: value.length
-        })).filter(item => item.count > 0); // Only show tests that actually have unique kills? Or all? User just said "hay mas" (there are more). usually we show list. 
-        // Based on JSON "0": [], "1": [] ... most are empty. I'll filter for visual clarity or show generic if empty logic in HTML.
-        // Actually, let's keep all or top? JSON shows MANY tests. If I show all, it will be huge. 
-        // "tests_with_unique_kills" usually interesting if > 0.
-        // Let's keep filter > 0 for now as it's a "list" card.
+        })).filter(item => item.count > 0);
+
+        // Process Subsumed Groups (grouped by representative parent)
+        const groupsMap = new Map<string, { mutant: string; reason: string }[]>();
+        if (this.statistics.subsumed_mutants) {
+            for (const item of this.statistics.subsumed_mutants) {
+                const rep = item.subsumed_by;
+                if (!groupsMap.has(rep)) {
+                    groupsMap.set(rep, []);
+                }
+                groupsMap.get(rep)!.push({
+                    mutant: item.redundant_mutant,
+                    reason: item.reason
+                });
+            }
+        }
+        this.subsumedGroups = Array.from(groupsMap.entries()).map(([rep, redundants]) => ({
+            representative: rep,
+            redundants: redundants
+        }));
+
+        // Process Operator Rankings (most lethal / innocuous). Zombies count as
+        // alive here, so we only show the kill rate — no alive/dead/zombie split.
+        this.mostLethalOperators = (this.statistics.most_lethal_operators || []).map(op => this.toOperatorRankItem(op));
+        this.innocuousOperators = (this.statistics.innocuous_operators || []).map(op => this.toOperatorRankItem(op));
+
+        // Process Zombie-specific statistics (probabilistic / unstable mutations)
+        this.zombieSummary = this.statistics.zombie_summary || null;
+        this.unstableOperators = (this.statistics.unstable_operators || []).map(op => this.toUnstableOperatorItem(op));
+    }
+
+    private toOperatorRankItem(op: OperatorStatistic): OperatorRankItem {
+        return {
+            operator: op.operator,
+            killRate: op.kill_rate,
+            killed: op.killed,
+            total: op.total,
+            displayValue: `${(op.kill_rate * 100).toFixed(0)}% (${op.killed})`,
+            tooltip: `Kill rate: ${(op.kill_rate * 100).toFixed(1)}% — Killed ${op.killed}/${op.total}`
+        };
+    }
+
+    private toUnstableOperatorItem(op: ZombieOperatorStatistic): UnstableOperatorItem {
+        return {
+            operator: op.operator,
+            zombieRate: op.zombie_rate,
+            zombie: op.zombie,
+            total: op.total,
+            displayValue: `${(op.zombie_rate * 100).toFixed(0)}% (${op.zombie})`,
+            tooltip: `Zombie rate: ${(op.zombie_rate * 100).toFixed(1)}% — Zombie ${op.zombie}/${op.total}`
+        };
     }
 
     toggleSidebar() {

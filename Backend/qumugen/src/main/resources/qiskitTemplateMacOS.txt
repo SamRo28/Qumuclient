@@ -10,6 +10,7 @@ import numpy
 from qiskit.visualization import plot_state_city 
 from qiskit.visualization import plot_histogram
 from qiskit.circuit.library import MCMT
+from qiskit.circuit.library import UnitaryGate
 
 
 #DECLARATION#

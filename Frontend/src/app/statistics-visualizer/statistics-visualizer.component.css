@@ -173,17 +173,35 @@
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(12, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-/* 1400px query is now redundant but harmless, or we can remove it. Let's remove it for cleanliness if I can match lines. */
+/* 12-Column Responsive Grid System */
+.col-6 {
+    grid-column: span 6;
+}
 
+.col-12 {
+    grid-column: span 12;
+}
+
+@media (max-width: 1100px) {
+    .col-6 {
+        grid-column: span 6;
+    }
+    .col-12 {
+        grid-column: span 12;
+    }
+}
 
 @media (max-width: 768px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+    }
+    .col-6, .col-12 {
+        grid-column: span 1;
     }
 }
 
@@ -265,6 +283,80 @@
 
 .mutant-fill {
     background: var(--accent-gradient);
+}
+
+.lethal-fill {
+    background: linear-gradient(90deg, #f97316, #ef4444);
+}
+
+.zombie-fill {
+    background: linear-gradient(90deg, #a855f7, #7c3aed);
+}
+
+/* Innocuous operators: all have 0% kill rate, so we show a badge instead of an empty bar */
+.innocuous-badge {
+    flex: 1;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.12);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    text-align: center;
+}
+
+/* Zombie panel: global summary + unstable operators ranking */
+.zombie-panel {
+    display: flex;
+    gap: 1.5rem;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.zombie-summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-width: 180px;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.zombie-summary-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #a855f7;
+    line-height: 1.1;
+}
+
+.zombie-summary-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.zombie-summary-note {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+    font-style: italic;
+}
+
+.zombie-operators {
+    flex: 1;
+    min-width: 260px;
+}
+
+.zombie-operators-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
 }
 
 .bar-value-text {
@@ -485,4 +577,81 @@
     /* Take remaining height */
     max-height: 250px;
     /* Or whatever fixed height matches design */
+}
+
+/* Subsumed detailed layout styles are now managed by col-8 class */
+
+.subsumed-groups-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.representative-box {
+    background: rgba(16, 185, 129, 0.04);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+:host-context([data-theme='dark']) .representative-box {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.representative-box:hover {
+    transform: translateY(-1px);
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+.representative-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #10b981;
+}
+
+.rep-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.redundants-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-left: 0.6rem;
+    border-left: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:host-context([data-theme='dark']) .redundants-container {
+    border-left-color: rgba(255, 255, 255, 0.1);
+}
+
+.redundant-child-box {
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: default;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.redundant-child-box:hover {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
 }

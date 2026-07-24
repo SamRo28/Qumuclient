@@ -34,16 +34,18 @@ export class QProgram {
     }
 
     getQubits() {
+        const calculatedQubits = this.qCircuit.quirkCode ? QCircuit.calculateQubits(this.qCircuit.quirkCode) : 0;
         if (this.qubits == -1) {
             // Verificar si quirkCode existe y tiene la estructura correcta
             if (!this.qCircuit.quirkCode || !this.qCircuit.quirkCode.cols || this.qCircuit.quirkCode.cols.length == 0)
                 return 0; // Retornar 0 en lugar de -1 para circuitos sin código
-            let columns = this.qCircuit.quirkCode.cols
-            for (let i = 0; i < columns.length; i++)
-                if (columns[i].length > this.qubits)
-                    this.qubits = columns[i].length
+            if (this.qCircuit.quirkCode.qubits) {
+                this.qubits = this.qCircuit.quirkCode.qubits;
+            } else {
+                this.qubits = calculatedQubits;
+            }
         }
-        return this.qubits
+        return Math.max(this.qubits, calculatedQubits);
     }
 
     buildFromQiskitCode(code: string) {

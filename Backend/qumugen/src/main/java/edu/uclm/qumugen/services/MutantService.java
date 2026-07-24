@@ -32,18 +32,46 @@ public class MutantService {
 		Circuit circuit = new Circuit(jsoQuirk);
 		List<Circuit> mutants = new ArrayList<>();
 		List<Integer> columns = new ArrayList<>();
-		String[] sTokens = mutableColumns.split(",");
-		for (int i = 0; i < sTokens.length; i++)
-			columns.add(Integer.parseInt(sTokens[i]));
+		if (mutableColumns != null && !mutableColumns.trim().isEmpty()) {
+			String[] sTokens = mutableColumns.split(",");
+			for (int i = 0; i < sTokens.length; i++) {
+				String token = sTokens[i].trim();
+				if (!token.isEmpty()) {
+					try {
+						columns.add(Integer.parseInt(token));
+					} catch (NumberFormatException e) {
+					}
+				}
+			}
+		}
 
-		sTokens = mutableRows.split(",");
 		List<Integer> rows = new ArrayList<>();
-		for (int i = 0; i < sTokens.length; i++)
-			rows.add(Integer.parseInt(sTokens[i]));
+		if (mutableRows != null && !mutableRows.trim().isEmpty()) {
+			String[] sTokens = mutableRows.split(",");
+			for (int i = 0; i < sTokens.length; i++) {
+				String token = sTokens[i].trim();
+				if (!token.isEmpty()) {
+					try {
+						rows.add(Integer.parseInt(token));
+					} catch (NumberFormatException e) {
+					}
+				}
+			}
+		}
 
 		int numberOfInputQubits = -1;
-		if (generateWithAllInputs)
-			numberOfInputQubits = sInputQubits.split(",").length;
+		if (generateWithAllInputs && sInputQubits != null && !sInputQubits.trim().isEmpty()) {
+			String[] tokens = sInputQubits.split(",");
+			int count = 0;
+			for (String t : tokens) {
+				if (!t.trim().isEmpty()) {
+					count++;
+				}
+			}
+			if (count > 0) {
+				numberOfInputQubits = count;
+			}
+		}
 
 		for (String operatorName : operatorNames) {
 			Operator operator = this.operatorsService.find(operatorName);

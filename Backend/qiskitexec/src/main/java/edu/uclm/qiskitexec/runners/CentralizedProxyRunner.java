@@ -12,22 +12,40 @@ import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import edu.uclm.qiskitexec.model.Mutant;
 import edu.uclm.qiskitexec.model.ProgramExecutionConf;
 
+/**
+ * Envía los programas al runner remoto y traduce sus respuestas.
+ *
+ * El runner ejecuta en paralelo la lista de códigos que se le pase, pero un lote
+ * grande de circuitos pesados puede tardar minutos. Por eso el envío se trocea:
+ * así ninguna petición se eterniza y el progreso es incremental.
+ *
+ * El proxy es opcional: solo hace falta para alcanzar al runner desde fuera de
+ * la red de la UCLM. Yendo directo se evita además su timeout, ya que nginx
+ * responde 504 al pasarse de proxy_read_timeout aunque el runner siga trabajando.
+ */
 public class CentralizedProxyRunner {
 
     private String proxyUrl;
     private String remoteRunnerUrl;
+    private int batchSize;
     private RestTemplate restTemplate;
 
-    public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl) {
+    public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds) {
         this.proxyUrl = proxyUrl;
         this.remoteRunnerUrl = remoteRunnerUrl;
-        this.restTemplate = new RestTemplate();
+        this.batchSize = batchSize > 0 ? batchSize : Integer.MAX_VALUE;
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(30000);
+        factory.setReadTimeout(timeoutSeconds > 0 ? timeoutSeconds * 1000 : 600000);
+        this.restTemplate = new RestTemplate(factory);
     }
 
     public List<ProgramExecutionResult> executeMutants(List<Mutant> mutants, int outputsSize) {
@@ -47,18 +65,44 @@ public class CentralizedProxyRunner {
         return results.get(0);
     }
 
+    /** Destino real: el proxy solo se interpone si está configurado. */
+    private URI targetUrl() throws Exception {
+        if (this.proxyUrl == null || this.proxyUrl.trim().isEmpty())
+            return new URI(this.remoteRunnerUrl);
+        return new URI(this.proxyUrl + "?url=" + this.remoteRunnerUrl);
+    }
+
     private List<ProgramExecutionResult> executeAndParse(List<String> codes, List<Mutant> mutants,
             ProgramExecutionConf pec, int outputsSize) {
-        try {
-            // El proxy recibe los parámetros para reenviar: ?url=<remoteRunnerUrl>
-            String url = this.proxyUrl + "?url=" + this.remoteRunnerUrl;
 
+        List<ProgramExecutionResult> programResults = new ArrayList<>();
+
+        for (int from = 0; from < codes.size(); from += this.batchSize) {
+            int to = Math.min(from + this.batchSize, codes.size());
+            JSONArray resultsArray = this.executeBatch(codes.subList(from, to));
+
+            if (resultsArray.length() != to - from)
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "The remote runner returned "
+                        + resultsArray.length() + " results for a batch of " + (to - from) + " programs");
+
+            for (int i = 0; i < resultsArray.length(); i++) {
+                // El índice del mutante es global, no relativo al lote.
+                int mutantIndex = mutants != null ? mutants.get(from + i).getMutantIndex() : 0;
+                programResults.add(this.parseResult(resultsArray.getJSONObject(i), outputsSize, mutantIndex));
+            }
+        }
+
+        return programResults;
+    }
+
+    private JSONArray executeBatch(List<String> codes) {
+        try {
             HttpEntity<List<String>> request = new HttpEntity<>(codes);
-            ResponseEntity<String> response = restTemplate.postForEntity(new URI(url), request, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(this.targetUrl(), request, String.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Error from Proxy: " + response.getStatusCode());
+                        "Error from the remote runner: " + response.getStatusCode());
             }
 
             JSONObject responseJson = new JSONObject(response.getBody());
@@ -67,28 +111,26 @@ public class CentralizedProxyRunner {
                         "Remote runner error: " + responseJson.getString("error"));
             }
 
-            JSONArray resultsArray = responseJson.getJSONArray("results");
-            List<ProgramExecutionResult> programResults = new ArrayList<>();
+            return responseJson.getJSONArray("results");
 
-            for (int i = 0; i < resultsArray.length(); i++) {
-                JSONObject res = resultsArray.getJSONObject(i);
-                String stdout = res.optString("stdout", "{}");
-
-                int mutantIndex = 0;
-                if (mutants != null) {
-                    mutantIndex = mutants.get(i).getMutantIndex();
-                }
-
-                ProgramExecutionResult per = parseStdout(stdout, outputsSize, mutantIndex);
-                programResults.add(per);
-            }
-
-            return programResults;
-
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed centralized execution via proxy: " + e.getMessage());
+                    "Failed centralized execution: " + e.getMessage());
         }
+    }
+
+    private ProgramExecutionResult parseResult(JSONObject result, int outputsSize, int mutantIndex) {
+        int returncode = result.optInt("returncode", 0);
+        if (returncode != 0) {
+            // Si el script falla, stdout viene vacío y las frecuencias se quedan a cero,
+            // que aguas arriba parece un error máximo (mutante muerto). Se deja
+            // constancia para poder distinguir un mutante muerto de uno que no ejecuta.
+            System.err.println("Remote execution failed for mutant " + mutantIndex + " (returncode " + returncode
+                    + "): " + result.optString("stderr", ""));
+        }
+        return parseStdout(result.optString("stdout", "{}"), outputsSize, mutantIndex);
     }
 
     private ProgramExecutionResult parseStdout(String stdout, int outputsSize, int mutantIndex) {

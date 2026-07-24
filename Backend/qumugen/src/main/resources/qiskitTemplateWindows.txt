@@ -10,6 +10,7 @@ import numpy
 from qiskit.visualization import plot_state_city 
 from qiskit.visualization import plot_histogram
 from qiskit.circuit.library import MCMT
+from qiskit.circuit.library import UnitaryGate
 
 
 #DECLARATION#
@@ -19,8 +20,11 @@ from qiskit.circuit.library import MCMT
 
 # For execution
 simulator = AerSimulator()
-compiled_circuit = transpile(circuit, simulator)
-result = simulator.run(compiled_circuit).result()
+# optimization_level=0: con oraculos anidados el circuito se descompone en cientos de
+# miles de puertas y las pasadas de optimizacion tardan mas que la propia simulacion
+# (20s frente a 2s). Como el destino es un simulador, optimizar no aporta nada.
+compiled_circuit = transpile(circuit, simulator, optimization_level=0)
+result = simulator.run(compiled_circuit, shots=#SHOTS#).result()
 histogram = result.get_counts()
 
 

@@ -15,13 +15,15 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
   // URLs or paths for circuit visualizations
   originalCircuitUrl: SafeResourceUrl | null = null;
   mutantCircuitUrl: SafeResourceUrl | null = null;
+  originalCircuitQuirk: any = null;
+  mutantCircuitQuirk: any = null;
   selectedMutant: Mutant | null = null;
   private subscription = new Subscription();
 
   constructor(private manager: ManagerService, private sanitizer: DomSanitizer) { }
 
   ngOnInit(): void {
-    // Initialize original circuit URL
+    // Initialize original circuit URL and quirk code
     this.updateOriginalCircuitUrl();
 
     // Subscribe to selected mutant changes
@@ -38,6 +40,7 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
       const url = AppComponent.quirkUrl + "#circuit=" + this.manager.selectedProject.qProgram.qCircuit.textQuirkCode;
       this.originalCircuitUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
     }
+    this.originalCircuitQuirk = this.manager.selectedProject?.qProgram.qCircuit.quirkCode || null;
   }
 
   private updateCircuitUrls(): void {
@@ -48,8 +51,10 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
     if (this.selectedMutant?.circuit?.qCircuit.textQuirkCode) {
       const url = AppComponent.quirkUrl + "#circuit=" + this.selectedMutant.circuit.qCircuit.textQuirkCode;
       this.mutantCircuitUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      this.mutantCircuitQuirk = this.selectedMutant.circuit.qCircuit.quirkCode || null;
     } else {
       this.mutantCircuitUrl = null;
+      this.mutantCircuitQuirk = null;
     }
   }
 

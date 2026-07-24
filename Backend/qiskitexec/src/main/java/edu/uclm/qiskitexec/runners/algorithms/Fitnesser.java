@@ -7,6 +7,7 @@ import edu.uclm.qiskitexec.runners.ProgramExecutionResult;
 public abstract class Fitnesser {
 
 	protected double toleratedError;
+	protected double zombieError;
 	protected ProgramExecutionResult originalResults;
 
 	public abstract void calculate(List<ProgramExecutionResult> mutantResults);
@@ -17,5 +18,9 @@ public abstract class Fitnesser {
 
 	public void setToleratedError(double toleratedError) {
 		this.toleratedError = toleratedError;
+	}
+
+	public void setZombieError(double zombieError) {
+		this.zombieError = zombieError;
 	}
 }

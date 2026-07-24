@@ -9,6 +9,7 @@ public class StrategyMutantsExecutionConfiguration {
 	
 	private String algorithm;
 	private double toleratedError;
+	private double zombieError;
 	private List<ProgramExecutionResult> originalResults;
 	private int qubits;
 	private List<Mutant> mutants;
@@ -30,7 +31,15 @@ public class StrategyMutantsExecutionConfiguration {
 	public void setToleratedError(double toleratedError) {
 		this.toleratedError = toleratedError;
 	}
-	
+
+	public double getZombieError() {
+		return zombieError;
+	}
+
+	public void setZombieError(double zombieError) {
+		this.zombieError = zombieError;
+	}
+
 	public List<ProgramExecutionResult> getOriginalResults() {
 		return originalResults;
 	}

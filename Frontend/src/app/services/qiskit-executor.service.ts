@@ -56,7 +56,7 @@ export class QiskitExecutorService {
         return 1
     }
 
-    executeWithoutStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number) {
+    executeWithoutStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number, zombieError: number) {
         let capped = []
         for (let i = 0; i < mutants.length; i++) {
             capped.push({
@@ -68,6 +68,7 @@ export class QiskitExecutorService {
             outputQubits: this.manager.outputQubits,
             algorithm: algorithm,
             toleratedError: toleratedError,
+            zombieError: zombieError,
             originalResults: originalResults,
             qubits: this.manager.selectedProject!.qProgram.qubits,
             mutants: capped
@@ -76,7 +77,7 @@ export class QiskitExecutorService {
         return this.client.put<any>(url, info)
     }
 
-    executeWithStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number, reduceTable: boolean, inputQubits: string, outputQubits: string, Einputs?: string[]) {
+    executeWithStrategy(mutants: any[], originalResults: any[], algorithm: string, toleratedError: number, zombieError: number, reduceTable: boolean, inputQubits: string, outputQubits: string, Einputs?: string[]) {
         let capped = []
         for (let i = 0; i < mutants.length; i++) {
             capped.push({
@@ -91,6 +92,7 @@ export class QiskitExecutorService {
             outputQubits: outputQubits,
             algorithm: algorithm,
             toleratedError: toleratedError,
+            zombieError: zombieError,
             originalResults: originalResults,
             qubits: this.manager.selectedProject?.qProgram?.qubits,
             mutants: capped,

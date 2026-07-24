@@ -1,8 +1,13 @@
 package edu.uclm.qumugen.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -10,6 +15,8 @@ import org.json.JSONObject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Circuit {
+
+	private static final Pattern MATRIX_ROW = Pattern.compile("\\{([^{}]*)\\}");
 	private int qubits;
 	private InitColumn init;
 	private List<QColumn> columns;
@@ -35,11 +42,83 @@ public class Circuit {
 		JSONArray cols = jso.getJSONArray("cols");
 		for (int i=0; i<cols.length(); i++) {
 			JSONArray col = cols.getJSONArray(i);
-			QColumn column = new QColumn(i, col); 
+			QColumn column = new QColumn(i, col);
 			this.columns.add(column);
 			if (column.getGates().size()>this.qubits)
 				this.qubits = column.getGates().size();
 		}
+		// El número de filas de una columna no basta: una puerta customizada ocupa
+		// varios qubits a partir de su fila (p. ej. una columna ["~oraculo"] tiene
+		// una sola fila pero puede ocupar 4 qubits).
+		this.qubits = Math.max(this.qubits, heightOfCircuit(this, this.customGatesById(), new HashMap<>()));
+	}
+
+	/** Indexa por id las puertas customizadas declaradas en este circuito. */
+	public Map<String, CustomizedGate> customGatesById() {
+		Map<String, CustomizedGate> byId = new HashMap<>();
+		if (this.customizedGates != null)
+			for (CustomizedGate cg : this.customizedGates)
+				if (cg != null && cg.getId() != null)
+					byId.put(cg.getId(), cg);
+		return byId;
+	}
+
+	/** Qubits que ocupa un circuito, teniendo en cuenta la altura de cada puerta. */
+	public static int heightOfCircuit(Circuit circuit, Map<String, CustomizedGate> byId, Map<String, Integer> cache) {
+		return heightOfCircuit(circuit, byId, cache, new HashSet<>());
+	}
+
+	/** Qubits que ocupa una puerta: 1, salvo que sea customizada. */
+	public static int heightOfGate(String gateName, Map<String, CustomizedGate> byId, Map<String, Integer> cache) {
+		return heightOfGate(gateName, byId, cache, new HashSet<>());
+	}
+
+	private static int heightOfCircuit(Circuit circuit, Map<String, CustomizedGate> byId, Map<String, Integer> cache,
+			Set<String> visiting) {
+		int max = 1;
+		if (circuit == null || circuit.columns == null)
+			return max;
+		for (QColumn column : circuit.columns)
+			for (int row = 0; row < column.getGates().size(); row++) {
+				String name = String.valueOf(column.getGates().get(row).getName());
+				int height = heightOfGate(name, byId, cache, visiting);
+				if (row + height > max)
+					max = row + height;
+			}
+		return max;
+	}
+
+	private static int heightOfGate(String gateName, Map<String, CustomizedGate> byId, Map<String, Integer> cache,
+			Set<String> visiting) {
+		CustomizedGate cg = byId.get(gateName);
+		if (cg == null)
+			return 1;
+		if (cache.containsKey(gateName))
+			return cache.get(gateName);
+		if (!visiting.add(gateName))
+			return 1; // definición cíclica: se corta aquí
+
+		int height = 1;
+		if (cg.getCircuit() != null)
+			height = heightOfCircuit(cg.getCircuit(), byId, cache, visiting);
+		else if (cg.getMatrix() != null) {
+			int dimension = matrixDimension(cg.getMatrix());
+			if (dimension > 1)
+				height = Math.max(1, (int) Math.round(Math.log(dimension) / Math.log(2)));
+		}
+
+		visiting.remove(gateName);
+		cache.put(gateName, height);
+		return height;
+	}
+
+	/** Filas de una matriz en formato Quirk ("{{1,0},{0,1}}" -> 2). */
+	private static int matrixDimension(String matrix) {
+		Matcher matcher = MATRIX_ROW.matcher(matrix);
+		int rows = 0;
+		while (matcher.find())
+			rows++;
+		return rows;
 	}
 
 	public Circuit(Circuit circuit) {

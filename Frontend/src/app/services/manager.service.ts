@@ -61,10 +61,14 @@ export class ManagerService {
   outputQubits: string = ""
   qubitCount: number = 0
   qubits: number[] = []
-  shots: number = 100
+  // Hasta ahora la plantilla ignoraba este valor y siempre ejecutaba con los 1024
+  // de Aer. Ya se respeta, así que el defecto es 1024: con 100 el ruido de muestreo
+  // (~0.18) supera al error tolerado y hasta un mutante equivalente saldría muerto.
+  shots: number = 1024
 
   executionAlgorithm: string = "AllAgainstAll"
   toleratedError: number = 0.05
+  zombieError: number = 0.05
   generateWithAllInputs: boolean = false;
 
   showMutantsInfo: boolean = false;
@@ -239,8 +243,13 @@ export class ManagerService {
   }
 
   private _finalizeSetSelectedProject(circuit: Project) {
-    this.selectedProject = circuit
-    this.qubitCount = this.selectedProject.getQubits()
+    this.selectedProject = circuit;
+    this.qubitCount = this.selectedProject.getQubits();
+    
+    // Check if qubits count was saved in the database and is valid (not outdated compared to calculated count)
+    const isQubitsSaved = this.selectedProject.qProgram.qubits !== undefined && 
+                          this.selectedProject.qProgram.qubits !== null && 
+                          this.selectedProject.qProgram.qubits >= this.qubitCount;
 
     // Solo procesar qubits si hay código Quirk válido
     if (this.qubitCount > 0) {
@@ -256,13 +265,19 @@ export class ManagerService {
       if (allInputQubits.endsWith(",")) allInputQubits = allInputQubits.substring(0, allInputQubits.length - 1);
       if (allOutputQubits.endsWith(",")) allOutputQubits = allOutputQubits.substring(0, allOutputQubits.length - 1);
 
-      // Input Qubits Logic: Handle Array or String
-      let currentInputQubits: any = this.selectedProject.qProgram.inputQubits;
+      // Respect database values only if qubits count was saved in DB. Otherwise, default to all qubits.
+      let currentInputQubits: any = null;
+      let currentOutputQubits: any = null;
+      if (isQubitsSaved) {
+        currentInputQubits = this.selectedProject.qProgram.inputQubits;
+        currentOutputQubits = this.selectedProject.qProgram.outputQubits;
+      }
+
       if (Array.isArray(currentInputQubits)) {
         currentInputQubits = currentInputQubits.join(',');
       }
 
-      if (currentInputQubits !== null && currentInputQubits !== undefined) {
+      if (currentInputQubits !== null && currentInputQubits !== undefined && currentInputQubits !== '') {
         // If it exists (even if empty string `""`), we respect it
         this.inputQubits = currentInputQubits as string;
         this.selectedProject.qProgram.inputQubits = currentInputQubits; // Ensure it's stored as string
@@ -273,7 +288,6 @@ export class ManagerService {
       }
 
       // Output Qubits Logic: Handle Array or String
-      let currentOutputQubits: any = this.selectedProject.qProgram.outputQubits;
       if (Array.isArray(currentOutputQubits)) {
         currentOutputQubits = currentOutputQubits.join(',');
       }

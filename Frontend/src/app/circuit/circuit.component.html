@@ -79,6 +79,20 @@
     </div>
   </div>
 
+  <!-- Live Circuit Preview Card -->
+  <div class="glass-card preview-card" *ngIf="selectedProject?.qProgram?.qCircuit?.quirkCode">
+    <div class="card-header">
+      <svg class="card-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2" />
+        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" stroke-width="2" />
+      </svg>
+      <label class="card-label">Live Circuit Canvas</label>
+    </div>
+    <div class="preview-wrapper" style="min-height: 400px; display: flex; flex-direction: column;">
+      <app-circuit-viewer [quirkCode]="selectedProject?.qProgram?.qCircuit?.quirkCode" [isMutant]="false"></app-circuit-viewer>
+    </div>
+  </div>
+
   <!-- Floating particles decoration (optional) -->
   <div class="particle particle-1"></div>
   <div class="particle particle-2"></div>

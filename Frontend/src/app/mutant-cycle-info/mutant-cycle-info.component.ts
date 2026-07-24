@@ -43,8 +43,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   paginatedMutants: Mutant[] = [];
 
   // Matrix properties
-  matrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, error: number }[] }[] = [];
-  paginatedMatrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, error: number }[] }[] = [];
+  matrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, zombie: boolean, error: number }[] }[] = [];
+  paginatedMatrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, zombie: boolean, error: number }[] }[] = [];
   inputHeaders: string[] = [];
 
   // Dropdown UI state
@@ -244,6 +244,17 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       }
 
       this.manager.executionAlgorithm = this.mutantCycle.execConfiguration.execAlgorithm;
+
+      // Restore the error thresholds saved with this cycle (fall back to current manager defaults).
+      if (this.mutantCycle.execConfiguration.toleratedError !== undefined && this.mutantCycle.execConfiguration.toleratedError !== null) {
+        this.manager.toleratedError = this.mutantCycle.execConfiguration.toleratedError;
+      }
+      if (this.mutantCycle.execConfiguration.zombieError !== undefined && this.mutantCycle.execConfiguration.zombieError !== null) {
+        this.manager.zombieError = this.mutantCycle.execConfiguration.zombieError;
+      }
+      if (this.mutantCycle.execConfiguration.shots !== undefined && this.mutantCycle.execConfiguration.shots !== null) {
+        this.manager.shots = this.mutantCycle.execConfiguration.shots;
+      }
     }
 
     // Initialize matrix rows
@@ -517,6 +528,37 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       event.target.value = this.manager.toleratedError; // Revert to previous value
     } else {
       this.manager.toleratedError = value;
+      if (this.mutantCycle?.execConfiguration) {
+        this.mutantCycle.execConfiguration.toleratedError = value;
+      }
+      AppComponent.error = ""; // Clear error if valid
+    }
+  }
+
+  updateZombieError(event: any): void {
+    const value = parseFloat(event.target.value);
+    if (isNaN(value) || value < 0 || value > 1) {
+      AppComponent.error = "Zombie Error must be between 0 and 1";
+      event.target.value = this.manager.zombieError; // Revert to previous value
+    } else {
+      this.manager.zombieError = value;
+      if (this.mutantCycle?.execConfiguration) {
+        this.mutantCycle.execConfiguration.zombieError = value;
+      }
+      AppComponent.error = ""; // Clear error if valid
+    }
+  }
+
+  updateShots(event: any): void {
+    const value = parseInt(event.target.value, 10);
+    if (isNaN(value) || value < 1 || value > 1000000) {
+      AppComponent.error = "Shots must be between 1 and 1000000";
+      event.target.value = this.manager.shots; // Revert to previous value
+    } else {
+      this.manager.shots = value;
+      if (this.mutantCycle?.execConfiguration) {
+        this.mutantCycle.execConfiguration.shots = value;
+      }
       AppComponent.error = ""; // Clear error if valid
     }
   }
@@ -581,9 +623,12 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   recalculateStats() {
     this.killedMutants = 0;
     this.aliveMutants = 0;
+    this.zombieMutants = 0;
     this.matrixRows.forEach(row => {
       if (row.mutant.result?.result === Result.KILLED) {
         this.killedMutants++;
+      } else if (row.mutant.result?.result === Result.ZOMBIE) {
+        this.zombieMutants++;
       } else if (row.mutant.result?.result === Result.ALIVE) {
         this.aliveMutants++;
       }
@@ -626,16 +671,19 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         }
 
         const killed = result.result === Result.KILLED;
+        const zombie = result.result === Result.ZOMBIE;
         const error = result.error || 0;
 
         let cell = row.cells.find(c => c.input === binaryInput);
         if (cell) {
           cell.killed = killed;
+          cell.zombie = zombie;
           cell.error = error;
         } else {
           row.cells.push({
             input: binaryInput,
             killed: killed, // boolean
+            zombie: zombie, // boolean
             error: error
           });
         }
@@ -644,7 +692,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       // Ensure overall result is set if not already
       if (!mutant.result && mutant.mutantResults.length > 0) {
         const anyKilled = mutant.mutantResults.some(r => r.result === Result.KILLED);
-        mutant.result = new MutantResult({ result: anyKilled ? Result.KILLED : Result.ALIVE });
+        const anyZombie = mutant.mutantResults.some(r => r.result === Result.ZOMBIE);
+        mutant.result = new MutantResult({ result: anyKilled ? Result.KILLED : (anyZombie ? Result.ZOMBIE : Result.ALIVE) });
       }
     });
 
@@ -676,7 +725,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       const rowData = this.inputHeaders.map(inputCtx => {
         const cell = row.cells.find(c => c.input === inputCtx);
         if (cell) {
-          return cell.killed ? 'Killed' : 'Alive';
+          return cell.killed ? 'Killed' : (cell.zombie ? 'Zombie' : 'Alive');
         } else {
           return 'Alive';
         }

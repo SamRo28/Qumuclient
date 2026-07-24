@@ -7,6 +7,7 @@ export abstract class MutantsExecutor {
     runningMutants: boolean = false
     killedMutants: number = 0
     aliveMutants: number = 0
+    zombieMutants: number = 0
     nonCompilableMutants: number = 0
 
     quirkUrl: string = "https://alarcosj.esi.uclm.es/quirk/"

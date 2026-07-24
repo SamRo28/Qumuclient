@@ -20,7 +20,7 @@ public class StrategyService extends ExecutionService {
 		// CentralizedProxyRunner can execute all mutants in one batch.
 		// However, executeOne originally built a Delco with ALL inputs and returned a
 		// list of results.
-		CentralizedProxyRunner runner = new CentralizedProxyRunner(this.proxyUrl, this.remoteRunnerUrl);
+		CentralizedProxyRunner runner = this.newRunner();
 		// Strategy executeOne was previously rebuilding mutants using Initializer.
 		// We still need to call Initializer to build the mutants if needed, or if we
 		// should use Delco?
@@ -33,7 +33,7 @@ public class StrategyService extends ExecutionService {
 	public List<List<ProgramExecutionResult>> executeMany(StrategyMutantsExecutionConfiguration smec) {
 		List<List<ProgramExecutionResult>> wholeResults = new ArrayList<>();
 		Strategy strategy = Strategy.newInstance(smec.getAlgorithm());
-		CentralizedProxyRunner runner = new CentralizedProxyRunner(this.proxyUrl, this.remoteRunnerUrl);
+		CentralizedProxyRunner runner = this.newRunner();
 		try {
 			wholeResults.addAll(
 					strategy.execute(runner, smec));

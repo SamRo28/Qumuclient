@@ -92,9 +92,11 @@ export class CircuitComponent implements OnInit, OnDestroy {
   set circuitName(value: string) {
     this._circuitName = value;
     if (this.selectedProject) {
+      // Se muta en sitio (es la misma referencia que tiene el manager) y se marca
+      // modificado. NO se llama a setselectedProject: reemitiría selectedProject$,
+      // que este mismo componente escucha, y recargaría los campos del editor en
+      // cada tecla (había que pegar el texto de golpe para poder cambiarlo).
       this.selectedProject.name = value;
-      this.manager.setselectedProject(this.selectedProject);
-      // Marcar proyecto como modificado cuando cambia el nombre
       this.manager.markProjectAsModified();
     }
     this.checkValidity();
@@ -121,8 +123,10 @@ export class CircuitComponent implements OnInit, OnDestroy {
         this.selectedProject.qProgram.qCircuit.quirkCode = null;
       }
 
-      this.manager.setselectedProject(this.selectedProject);
-      // Marcar proyecto como modificado cuando cambia el código Quirk
+      // Mutación en sitio + marcar modificado. Sin setselectedProject para no
+      // reemitir selectedProject$ (bucle que recargaba el editor en cada tecla).
+      // El preview vivo se actualiza igual: JSON.parse crea un quirkCode nuevo y
+      // su binding [quirkCode] cambia de referencia, disparando el re-render.
       this.manager.markProjectAsModified();
     }
     this.checkValidity();

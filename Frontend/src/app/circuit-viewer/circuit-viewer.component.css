@@ -1,0 +1,467 @@
+/* Circuit Viewer Component - Glassmorphism CSS Styles */
+
+.circuit-viewer-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid var(--border-glass-light);
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Floating Navigation Toolbar */
+.navigation-toolbar {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  box-shadow: var(--shadow-glass) 0px 4px 12px;
+  backdrop-filter: blur(12px);
+  user-select: none;
+  animation: fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-primary);
+}
+
+.nav-btn:active {
+  transform: scale(0.9);
+}
+
+.reset-btn {
+  width: auto;
+  padding: 0 0.5rem;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  gap: 4px;
+}
+
+.drag-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  border-left: 1px solid var(--border-glass-light);
+  padding-left: 8px;
+  margin-left: 4px;
+}
+
+.drag-indicator.active {
+  color: var(--accent-primary);
+}
+
+/* Canvas Container */
+.circuit-canvas-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  background: var(--glass-bg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) transparent;
+}
+
+.circuit-canvas-container.grabbing {
+  cursor: grabbing;
+}
+
+/* Empty State */
+.empty-circuit-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  gap: 1rem;
+}
+
+.empty-circuit-state p {
+  font-size: 0.875rem;
+}
+
+/* SVG Rendering Styles */
+.circuit-svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Wires & Labels */
+.wire-line {
+  stroke: var(--text-muted);
+  stroke-width: 1.5px;
+  opacity: 0.25;
+}
+
+.wire-label {
+  fill: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Initial qubit state ket (|0⟩, |+⟩, ...) shown at the wire input */
+.wire-init-state {
+  fill: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.wire-init-state.non-zero {
+  fill: var(--accent-primary);
+  font-weight: 700;
+}
+
+/* Column vertical connection lines */
+.column-line {
+  stroke: var(--accent-primary);
+  stroke-width: 2px;
+  opacity: 0.6;
+}
+
+/* Gate - Control Dots */
+.gate-control {
+  fill: var(--accent-primary);
+  stroke: var(--glass-bg);
+  stroke-width: 1.5px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gate-control:hover {
+  transform: scale(1.3);
+  fill: var(--accent-secondary);
+}
+
+/* Gate - Anti Control Dots */
+.gate-anti-control {
+  fill: var(--glass-bg);
+  stroke: var(--accent-primary);
+  stroke-width: 2.5px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gate-anti-control:hover {
+  transform: scale(1.3);
+  stroke: var(--accent-secondary);
+}
+
+/* Gate - Target Crosshairs */
+.gate-target-group {
+  cursor: pointer;
+}
+
+.gate-target-circle {
+  fill: var(--glass-bg-card);
+  stroke: var(--accent-primary);
+  stroke-width: 2px;
+  transition: all 0.2s ease;
+}
+
+.gate-target-line {
+  stroke: var(--accent-primary);
+  stroke-width: 2px;
+  transition: all 0.2s ease;
+}
+
+.gate-target-group:hover .gate-target-circle {
+  fill: rgba(16, 185, 129, 0.1);
+  stroke: var(--accent-secondary);
+}
+
+.gate-target-group:hover .gate-target-line {
+  stroke: var(--accent-secondary);
+}
+
+/* Gate - Swap crosses */
+.gate-swap-group {
+  cursor: pointer;
+}
+
+.gate-swap-line {
+  stroke: var(--accent-primary);
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  transition: all 0.2s ease;
+}
+
+.gate-swap-group:hover .gate-swap-line {
+  stroke: var(--accent-secondary);
+  stroke-width: 3px;
+}
+
+/* Gate - Measure component */
+.gate-measure-group {
+  cursor: pointer;
+}
+
+.gate-measure-group .gate-box {
+  fill: var(--glass-bg-card);
+  stroke: var(--border-glass);
+  stroke-width: 1.5px;
+  transition: all 0.2s ease;
+}
+
+.gate-measure-arc {
+  stroke: var(--text-primary);
+  stroke-linecap: round;
+}
+
+.gate-measure-needle {
+  stroke: var(--accent-primary);
+  stroke-linecap: round;
+  transform-origin: 19px 28px;
+  transition: transform 0.3s ease;
+}
+
+.gate-measure-group:hover .gate-measure-needle {
+  transform: rotate(15deg);
+}
+
+.gate-measure-group:hover .gate-box {
+  stroke: var(--accent-primary);
+  fill: rgba(16, 185, 129, 0.05);
+}
+
+/* Normal & Multi-wire Gate Group */
+.gate-group {
+  cursor: pointer;
+}
+
+.gate-box {
+  fill: var(--glass-bg-card);
+  stroke: var(--border-glass-light);
+  stroke-width: 1.5px;
+  filter: drop-shadow(0 2px 6px var(--shadow-glass));
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gate-text {
+  fill: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.gate-group:hover .gate-box {
+  fill: var(--glass-bg-hover);
+  stroke: var(--accent-primary);
+  transform: translateY(-1px);
+  filter: drop-shadow(0 4px 10px rgba(16, 185, 129, 0.2));
+}
+
+.gate-group:hover .gate-text {
+  fill: var(--accent-primary);
+}
+
+/* Oracle Boxes (Expanded Circuit Boxes) */
+.oracle-box-rect {
+  fill: rgba(16, 185, 129, 0.03);
+  stroke: var(--border-glass-light);
+  stroke-width: 1.5px;
+  stroke-dasharray: 4 4;
+  transition: all 0.3s ease;
+}
+
+.oracle-box-tag-rect {
+  fill: var(--bg-primary);
+  stroke: var(--border-glass-light);
+  stroke-width: 1.2px;
+  transition: all 0.3s ease;
+}
+
+.oracle-box-title {
+  fill: var(--accent-primary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.oracle-box-group:hover .oracle-box-rect {
+  fill: rgba(16, 185, 129, 0.06);
+  stroke-width: 1.8px;
+  stroke: var(--accent-primary);
+}
+
+.oracle-box-group:hover .oracle-box-tag-rect {
+  stroke: var(--accent-primary);
+}
+
+/* Multi-depth Oracle boxes styles */
+.oracle-box-group[data-depth="1"] .oracle-box-rect {
+  fill: rgba(52, 211, 153, 0.03);
+  stroke: rgba(52, 211, 153, 0.4);
+}
+
+.oracle-box-group[data-depth="2"] .oracle-box-rect {
+  fill: rgba(110, 231, 183, 0.02);
+  stroke: rgba(110, 231, 183, 0.3);
+}
+
+/* ==========================================================================
+   MUTATION HIGHLIGHTS (Rose Red / Pink Theme)
+   ========================================================================== */
+.gate-control.mutated {
+  fill: #f43f5e !important;
+  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.6));
+}
+
+.gate-anti-control.mutated {
+  stroke: #f43f5e !important;
+  filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.6));
+}
+
+.gate-target-group.mutated .gate-target-circle,
+.gate-target-group.mutated .gate-target-line {
+  stroke: #f43f5e !important;
+}
+.gate-target-group.mutated:hover .gate-target-circle {
+  fill: rgba(244, 63, 94, 0.1) !important;
+}
+
+.gate-swap-group.mutated .gate-swap-line {
+  stroke: #f43f5e !important;
+}
+
+.gate-measure-group.mutated .gate-box {
+  stroke: #f43f5e !important;
+  fill: rgba(244, 63, 94, 0.05) !important;
+}
+.gate-measure-group.mutated .gate-measure-needle {
+  stroke: #f43f5e !important;
+}
+
+.gate-group.mutated .gate-box {
+  fill: rgba(244, 63, 94, 0.08) !important;
+  stroke: #f43f5e !important;
+  filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.3));
+}
+.gate-group.mutated .gate-text {
+  fill: #f43f5e !important;
+}
+
+.gate-group.mutated:hover .gate-box {
+  fill: rgba(244, 63, 94, 0.12) !important;
+  filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.5));
+}
+
+/* ==========================================================================
+   SLEEK HTML TOOLTIP
+   ========================================================================== */
+.circuit-tooltip {
+  position: absolute;
+  z-index: 100;
+  transform: translate(-50%, -100%);
+  margin-top: -5px;
+  pointer-events: none;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  box-shadow: 0 4px 16px var(--shadow-glass-strong);
+  backdrop-filter: blur(16px);
+  min-width: 200px;
+  max-width: 320px;
+  animation: tooltipFadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-primary);
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translate(-50%, -90%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -100%) scale(1); }
+}
+
+.tooltip-arrow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--glass-bg);
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-glass-light);
+  padding-bottom: 0.3rem;
+}
+
+.gate-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.mutated-badge {
+  background: rgba(244, 63, 94, 0.15) !important;
+  color: #f43f5e !important;
+}
+
+.gate-coord {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.tooltip-body {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+  font-weight: 450;
+}
