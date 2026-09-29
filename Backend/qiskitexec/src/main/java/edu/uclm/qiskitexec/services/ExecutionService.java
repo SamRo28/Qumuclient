@@ -23,10 +23,16 @@ public abstract class ExecutionService {
 	@Value("${execution.timeout.seconds:600}")
 	protected int timeoutSeconds;
 
+	@Value("${execution.mode:async}")
+	protected String executionMode;
+
+	@Value("${execution.poll.max-interval-ms:2000}")
+	protected int pollMaxIntervalMs;
+
 	/** Crea el runner con la configuración de proxy, troceado y timeout. */
 	protected CentralizedProxyRunner newRunner() {
 		return new CentralizedProxyRunner(this.proxyEnabled ? this.proxyUrl : null, this.remoteRunnerUrl,
-				this.batchSize, this.timeoutSeconds);
+				this.batchSize, this.timeoutSeconds, this.executionMode, this.pollMaxIntervalMs);
 	}
 
 	public String getQiskitTemplate() {

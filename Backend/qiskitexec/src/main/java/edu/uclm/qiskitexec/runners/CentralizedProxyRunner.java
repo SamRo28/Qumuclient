@@ -2,11 +2,12 @@ package edu.uclm.qiskitexec.runners;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ import edu.uclm.qiskitexec.model.Mutant;
 import edu.uclm.qiskitexec.model.ProgramExecutionConf;
 
 /**
- * Envía los programas al runner remoto de forma asíncrona mediante /run_qiskit_editor
+ * Envía los programas al runner remoto (/run_code_async o /run_code)
  * y traduce sus respuestas a ProgramExecutionResult.
  */
 public class CentralizedProxyRunner {
@@ -32,19 +33,33 @@ public class CentralizedProxyRunner {
     private String remoteRunnerUrl;
     private int batchSize;
     private int timeoutSeconds;
-    private RestTemplate restTemplate;
+    private String mode;
+    private int pollMaxMs;
+    private RestTemplate asyncRestTemplate;
+    private RestTemplate syncRestTemplate;
 
-    public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds) {
+    public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds,
+            String mode, int pollMaxMs) {
         this.proxyUrl = proxyUrl;
         this.remoteRunnerUrl = remoteRunnerUrl;
         this.batchSize = batchSize > 0 ? batchSize : Integer.MAX_VALUE;
         this.timeoutSeconds = timeoutSeconds > 0 ? timeoutSeconds : 600;
+        this.mode = mode != null ? mode.trim().toLowerCase() : "async";
+        this.pollMaxMs = pollMaxMs > 0 ? pollMaxMs : 2000;
 
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(30000);
-        // Cada petición HTTP individual es inmediata (<1-2s); 30s de timeout de lectura es más que suficiente
-        factory.setReadTimeout(30000);
-        this.restTemplate = new RestTemplate(factory);
+        SimpleClientHttpRequestFactory asyncFactory = new SimpleClientHttpRequestFactory();
+        asyncFactory.setConnectTimeout(30000);
+        asyncFactory.setReadTimeout(30000);
+        this.asyncRestTemplate = new RestTemplate(asyncFactory);
+
+        SimpleClientHttpRequestFactory syncFactory = new SimpleClientHttpRequestFactory();
+        syncFactory.setConnectTimeout(30000);
+        syncFactory.setReadTimeout(this.timeoutSeconds * 1000);
+        this.syncRestTemplate = new RestTemplate(syncFactory);
+    }
+
+    public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds) {
+        this(proxyUrl, remoteRunnerUrl, batchSize, timeoutSeconds, "async", 2000);
     }
 
     public List<ProgramExecutionResult> executeMutants(List<Mutant> mutants, int outputsSize) {
@@ -68,6 +83,8 @@ public class CentralizedProxyRunner {
         String url = this.remoteRunnerUrl != null ? this.remoteRunnerUrl.trim() : "";
         if (url.endsWith("/run_code")) {
             url = url.substring(0, url.length() - "/run_code".length());
+        } else if (url.endsWith("/run_code_async")) {
+            url = url.substring(0, url.length() - "/run_code_async".length());
         }
         while (url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
@@ -92,27 +109,65 @@ public class CentralizedProxyRunner {
         for (int from = 0; from < codes.size(); from += this.batchSize) {
             int to = Math.min(from + this.batchSize, codes.size());
             List<String> batchCodes = codes.subList(from, to);
-            List<ProgramExecutionResult> batchResults = this.executeBatchAsync(batchCodes, mutants, from, outputsSize);
-            programResults.addAll(batchResults);
+            JSONArray results = "sync".equals(this.mode)
+                    ? executeBatchSync(batchCodes)
+                    : executeBatchAsync(batchCodes);
+
+            if (results.length() != to - from) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "The remote runner returned " + results.length() + " results for a batch of " + (to - from) + " programs");
+            }
+
+            for (int i = 0; i < results.length(); i++) {
+                int mutantIndex = mutants != null ? mutants.get(from + i).getMutantIndex() : 0;
+                programResults.add(this.parseResult(results.getJSONObject(i), outputsSize, mutantIndex));
+            }
         }
 
         return programResults;
     }
 
-    private List<ProgramExecutionResult> executeBatchAsync(List<String> codes, List<Mutant> mutants, int from,
-            int outputsSize) {
+    private JSONArray executeBatchSync(List<String> codes) {
         try {
             String baseUrl = getBaseRemoteUrl();
-            String runUrl = baseUrl + "/run_qiskit_editor?iterations=1&overwrite=n&runner=1";
+            String runUrl = baseUrl + "/run_code";
 
-            List<String> preparedCodes = new ArrayList<>();
-            for (String c : codes) {
-                preparedCodes.add(ensureShotsVariable(c));
+            HttpEntity<List<String>> request = new HttpEntity<>(codes);
+            long t0 = System.nanoTime();
+            ResponseEntity<String> response = syncRestTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
+            long submitMs = (System.nanoTime() - t0) / 1_000_000;
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Error from the remote runner: " + response.getStatusCode());
             }
 
-            HttpEntity<List<String>> request = new HttpEntity<>(preparedCodes);
+            JSONObject responseJson = new JSONObject(response.getBody());
+            if (responseJson.optString("error", null) != null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Remote runner error: " + responseJson.getString("error"));
+            }
+
+            log.info("[PERF] runner mode=sync batch=N/A codes={} submitMs={} waitMs=0 polls=0 resultsMs=0",
+                    codes.size(), submitMs);
+
+            return responseJson.getJSONArray("results");
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed centralized sync execution: " + e.getMessage(), e);
+        }
+    }
+
+    private JSONArray executeBatchAsync(List<String> codes) {
+        try {
+            String baseUrl = getBaseRemoteUrl();
+            String runUrl = baseUrl + "/run_code_async";
+
+            HttpEntity<List<String>> request = new HttpEntity<>(codes);
             long tSubmitStart = System.nanoTime();
-            ResponseEntity<String> response = restTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
+            ResponseEntity<String> response = asyncRestTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
             long submitMs = (System.nanoTime() - tSubmitStart) / 1_000_000;
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
@@ -129,16 +184,17 @@ public class CentralizedProxyRunner {
             String batchId = String.valueOf(responseJson.get("batch_id"));
 
             // Polling loop
-            String statusUrl = baseUrl + "/run_qiskit_editor/status/" + batchId;
+            String statusUrl = baseUrl + "/run_code_async/status/" + batchId;
             long startTime = System.currentTimeMillis();
             long maxWaitMillis = this.timeoutSeconds * 1000L;
             boolean finished = false;
             int polls = 0;
+            long sleepMs = 200;
             long tWaitStart = System.nanoTime();
 
             while (System.currentTimeMillis() - startTime < maxWaitMillis) {
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(sleepMs);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Execution interrupted");
@@ -146,7 +202,7 @@ public class CentralizedProxyRunner {
 
                 polls++;
                 try {
-                    ResponseEntity<String> statusResp = restTemplate.getForEntity(this.targetUrl(statusUrl), String.class);
+                    ResponseEntity<String> statusResp = asyncRestTemplate.getForEntity(this.targetUrl(statusUrl), String.class);
                     if (statusResp.getStatusCode().is2xxSuccessful() && statusResp.getBody() != null) {
                         JSONObject statusJson = new JSONObject(statusResp.getBody());
                         String state = statusJson.optString("state", "running");
@@ -155,7 +211,7 @@ public class CentralizedProxyRunner {
                             break;
                         } else if ("error".equalsIgnoreCase(state)) {
                             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                                    "Remote runner finished with error for batch " + batchId);
+                                    "Remote runner finished with error for batch " + batchId + ": " + statusJson.optString("error"));
                         }
                     }
                 } catch (ResponseStatusException rse) {
@@ -163,6 +219,8 @@ public class CentralizedProxyRunner {
                 } catch (Exception ex) {
                     log.warn("Warning polling status for batch {}: {}", batchId, ex.getMessage());
                 }
+
+                sleepMs = Math.min((long) (sleepMs * 1.5), this.pollMaxMs);
             }
 
             long waitMs = (System.nanoTime() - tWaitStart) / 1_000_000;
@@ -172,46 +230,21 @@ public class CentralizedProxyRunner {
                         "Timeout waiting for remote runner batch " + batchId + " after " + this.timeoutSeconds + " seconds");
             }
 
-            // Descarga de all_results.csv
-            String fileUrl = baseUrl + "/run_qiskit_editor/get_file/" + batchId + "/all_results.csv";
-            long tDownloadStart = System.nanoTime();
-            ResponseEntity<String> csvResp = restTemplate.getForEntity(this.targetUrl(fileUrl), String.class);
-            long downloadMs = (System.nanoTime() - tDownloadStart) / 1_000_000;
-            if (!csvResp.getStatusCode().is2xxSuccessful() || csvResp.getBody() == null) {
+            // Retrieval of results
+            String resultsUrl = baseUrl + "/run_code_async/results/" + batchId;
+            long tResultsStart = System.nanoTime();
+            ResponseEntity<String> resultsResp = asyncRestTemplate.getForEntity(this.targetUrl(resultsUrl), String.class);
+            long resultsMs = (System.nanoTime() - tResultsStart) / 1_000_000;
+            if (!resultsResp.getStatusCode().is2xxSuccessful() || resultsResp.getBody() == null) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Could not retrieve all_results.csv for batch " + batchId);
+                        "Could not retrieve results for batch " + batchId);
             }
 
-            long tParseStart = System.nanoTime();
-            String csvContent = csvResp.getBody();
-            Map<String, Map<Integer, Integer>> problemFrequencies = parseResultsCsv(csvContent);
+            JSONObject resultsJson = new JSONObject(resultsResp.getBody());
+            log.info("[PERF] runner mode=async batch={} codes={} submitMs={} waitMs={} polls={} resultsMs={}",
+                    batchId, codes.size(), submitMs, waitMs, polls, resultsMs);
 
-            List<ProgramExecutionResult> batchResults = new ArrayList<>();
-            for (int i = 0; i < codes.size(); i++) {
-                String problemName = "p" + (i + 1);
-                Map<Integer, Integer> freqMap = problemFrequencies.getOrDefault(problemName, Collections.emptyMap());
-
-                List<Map<String, Object>> executionResults = new ArrayList<>();
-                for (int o = 0; o < outputsSize; o++) {
-                    Map<String, Object> line = new HashMap<>();
-                    line.put("order", o);
-                    line.put("binary", Integer.toBinaryString(o));
-                    line.put("frequency", freqMap.getOrDefault(o, 0));
-                    executionResults.add(line);
-                }
-
-                int mutantIndex = mutants != null ? mutants.get(from + i).getMutantIndex() : 0;
-                ProgramExecutionResult result = new ProgramExecutionResult();
-                result.setMutantIndex(mutantIndex);
-                result.setExecutionResults(executionResults);
-                batchResults.add(result);
-            }
-            long parseMs = (System.nanoTime() - tParseStart) / 1_000_000;
-
-            log.info("[PERF] runner batch={} codes={} submitMs={} waitMs={} polls={} downloadMs={} parseMs={}",
-                    batchId, codes.size(), submitMs, waitMs, polls, downloadMs, parseMs);
-
-            return batchResults;
+            return resultsJson.getJSONArray("results");
 
         } catch (ResponseStatusException e) {
             throw e;
@@ -221,38 +254,45 @@ public class CentralizedProxyRunner {
         }
     }
 
-    private Map<String, Map<Integer, Integer>> parseResultsCsv(String csvContent) {
-        Map<String, Map<Integer, Integer>> problemFrequencies = new HashMap<>();
-        if (csvContent == null || csvContent.trim().isEmpty()) {
-            return problemFrequencies;
+    private ProgramExecutionResult parseResult(JSONObject result, int outputsSize, int mutantIndex) {
+        int returncode = result.optInt("returncode", 0);
+        if (returncode != 0) {
+            log.warn("Remote execution failed for mutant {} (returncode {}): {}", mutantIndex, returncode,
+                    result.optString("stderr", ""));
         }
-
-        String[] lines = csvContent.split("\r?\n");
-        for (String line : lines) {
-            line = line.trim();
-            if (line.isEmpty() || line.startsWith("Iter")) {
-                continue;
-            }
-            String[] parts = line.split("\t");
-            if (parts.length >= 7) {
-                String problem = parts[1].trim(); // e.g. "p1"
-                try {
-                    int dec = Integer.parseInt(parts[4].trim());
-                    int obtained = Integer.parseInt(parts[6].trim());
-                    problemFrequencies
-                            .computeIfAbsent(problem, k -> new HashMap<>())
-                            .put(dec, obtained);
-                } catch (NumberFormatException ignored) {}
-            }
-        }
-        return problemFrequencies;
+        return parseStdout(result.optString("stdout", "{}"), outputsSize, mutantIndex);
     }
 
-    private String ensureShotsVariable(String code) {
-        if (code == null) return "";
-        if (code.contains("shots =") || code.contains("shots=")) {
-            return code;
+    private ProgramExecutionResult parseStdout(String stdout, int outputsSize, int mutantIndex) {
+        List<Map<String, Object>> executionResults = new ArrayList<>();
+
+        for (int i = 0; i < outputsSize; i++) {
+            Map<String, Object> line = new HashMap<>();
+            line.put("order", i);
+            line.put("binary", Integer.toBinaryString(i));
+            line.put("frequency", 0);
+            executionResults.add(line);
         }
-        return "shots = 1000\n" + code;
+
+        try {
+            if (stdout != null && !stdout.trim().isEmpty()) {
+                JSONObject jso = new JSONObject(stdout);
+                Iterator<String> keys = jso.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    int order = Integer.parseInt(key, 2);
+                    int frequency = jso.getInt(key);
+                    Map<String, Object> line = executionResults.get(order);
+                    line.put("frequency", frequency);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to parse remote stdout: {}", stdout);
+        }
+
+        ProgramExecutionResult result = new ProgramExecutionResult();
+        result.setMutantIndex(mutantIndex);
+        result.setExecutionResults(executionResults);
+        return result;
     }
 }
