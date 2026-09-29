@@ -31,10 +31,36 @@ public class OnlyAlive extends Strategy {
 		boolean reduceTable = smec.isReduceTable();
 
 		List<Mutant> mutants = smec.getMutants();
+		if (mutants == null || mutants.isEmpty()) {
+			return this.wholeResults;
+		}
+
+		List<Mutant> all = new ArrayList<>();
+		int[] sizes = new int[mutants.size()];
+		int totalSize = 0;
+
 		for (int i = 0; i < mutants.size(); i++) {
 			String mutantCode = mutants.get(i).getWholeCode();
 			Delco delco = new Delco(mutantCode, inputQubits, smec.getOutputsSize(), smec.getInputs());
-			List<ProgramExecutionResult> mutantResults = delco.executeWithAllInputsRemote(runner);
+			List<Mutant> variants = delco.buildVariants();
+			sizes[i] = variants != null ? variants.size() : 0;
+			if (variants != null) {
+				all.addAll(variants);
+			}
+			totalSize += sizes[i];
+		}
+
+		List<ProgramExecutionResult> allResults = runner.executeMutants(all, smec.getOutputsSize());
+		if (allResults == null || allResults.size() != totalSize) {
+			throw new IllegalStateException("Expected " + totalSize + " results from runner, but got "
+					+ (allResults != null ? allResults.size() : 0));
+		}
+
+		int offset = 0;
+		for (int i = 0; i < mutants.size(); i++) {
+			List<ProgramExecutionResult> mutantResults = new ArrayList<>(allResults.subList(offset, offset + sizes[i]));
+			offset += sizes[i];
+
 			mutantResults.sort((o1, o2) -> {
 				Integer mI1 = (int) o1.getMutantIndex();
 				Integer mI2 = (int) o2.getMutantIndex();

@@ -45,7 +45,7 @@ public class Delco implements ISimpleRunnerListener {
 		return this.executeMutants(pythonPath, commands, outputDirectory, workingDirectory);
 	}
 
-	public List<ProgramExecutionResult> executeWithAllInputsRemote(CentralizedProxyRunner runner) {
+	public List<Mutant> buildVariants() {
 		int initialization = this.code.indexOf("#Initialization");
 		int translation = code.indexOf(Strategy.translationString);
 		String start, end;
@@ -57,7 +57,11 @@ public class Delco implements ISimpleRunnerListener {
 			end = code.substring(translation + Strategy.translationString.length());
 		}
 		this.mutants = Initializer.buildCircuitsWithAllEntries(start, end, this.inputQubits, this.inputs);
-		return runner.executeMutants(this.mutants, this.outputsSize);
+		return this.mutants;
+	}
+
+	public List<ProgramExecutionResult> executeWithAllInputsRemote(CentralizedProxyRunner runner) {
+		return runner.executeMutants(buildVariants(), this.outputsSize);
 	}
 
 	public List<ProgramExecutionResult> executeMutants(String pythonPath, String[] commands, String outputDirectory,
