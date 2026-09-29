@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ import edu.uclm.qiskitexec.model.ProgramExecutionConf;
  * y traduce sus respuestas a ProgramExecutionResult.
  */
 public class CentralizedProxyRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(CentralizedProxyRunner.class);
 
     private String proxyUrl;
     private String remoteRunnerUrl;
@@ -107,7 +111,9 @@ public class CentralizedProxyRunner {
             }
 
             HttpEntity<List<String>> request = new HttpEntity<>(preparedCodes);
+            long tSubmitStart = System.nanoTime();
             ResponseEntity<String> response = restTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
+            long submitMs = (System.nanoTime() - tSubmitStart) / 1_000_000;
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -127,6 +133,8 @@ public class CentralizedProxyRunner {
             long startTime = System.currentTimeMillis();
             long maxWaitMillis = this.timeoutSeconds * 1000L;
             boolean finished = false;
+            int polls = 0;
+            long tWaitStart = System.nanoTime();
 
             while (System.currentTimeMillis() - startTime < maxWaitMillis) {
                 try {
@@ -136,6 +144,7 @@ public class CentralizedProxyRunner {
                     throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Execution interrupted");
                 }
 
+                polls++;
                 try {
                     ResponseEntity<String> statusResp = restTemplate.getForEntity(this.targetUrl(statusUrl), String.class);
                     if (statusResp.getStatusCode().is2xxSuccessful() && statusResp.getBody() != null) {
@@ -152,9 +161,11 @@ public class CentralizedProxyRunner {
                 } catch (ResponseStatusException rse) {
                     throw rse;
                 } catch (Exception ex) {
-                    System.err.println("Warning polling status for batch " + batchId + ": " + ex.getMessage());
+                    log.warn("Warning polling status for batch {}: {}", batchId, ex.getMessage());
                 }
             }
+
+            long waitMs = (System.nanoTime() - tWaitStart) / 1_000_000;
 
             if (!finished) {
                 throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
@@ -163,12 +174,15 @@ public class CentralizedProxyRunner {
 
             // Descarga de all_results.csv
             String fileUrl = baseUrl + "/run_qiskit_editor/get_file/" + batchId + "/all_results.csv";
+            long tDownloadStart = System.nanoTime();
             ResponseEntity<String> csvResp = restTemplate.getForEntity(this.targetUrl(fileUrl), String.class);
+            long downloadMs = (System.nanoTime() - tDownloadStart) / 1_000_000;
             if (!csvResp.getStatusCode().is2xxSuccessful() || csvResp.getBody() == null) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Could not retrieve all_results.csv for batch " + batchId);
             }
 
+            long tParseStart = System.nanoTime();
             String csvContent = csvResp.getBody();
             Map<String, Map<Integer, Integer>> problemFrequencies = parseResultsCsv(csvContent);
 
@@ -192,6 +206,10 @@ public class CentralizedProxyRunner {
                 result.setExecutionResults(executionResults);
                 batchResults.add(result);
             }
+            long parseMs = (System.nanoTime() - tParseStart) / 1_000_000;
+
+            log.info("[PERF] runner batch={} codes={} submitMs={} waitMs={} polls={} downloadMs={} parseMs={}",
+                    batchId, codes.size(), submitMs, waitMs, polls, downloadMs, parseMs);
 
             return batchResults;
 
