@@ -37,8 +37,11 @@ export class UserService {
     }
 
     this.sessionCache$ = this.reperService.getUser().pipe(
-      tap(email => {
-        sessionStorage.setItem('email', email);
+      tap(user => {
+        const email = typeof user === 'string' ? user : user?.email;
+        if (email) {
+          sessionStorage.setItem('email', email);
+        }
         this.isAuthenticated$.next(true);
       }),
       map(() => true),

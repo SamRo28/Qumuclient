@@ -12,6 +12,11 @@
           <i class="fas fa-sync-alt"></i>
         </button>
 
+        <button *ngIf="isLoggedIn()" class="new-btn" (click)="openExperiments()" title="Mis Experimentos"
+          aria-label="Mis Experimentos">
+          <i class="fas fa-flask"></i>
+        </button>
+
         <button class="new-btn" (click)="createNewCircuit()" [disabled]="isCreatingProject"
           [class.creating]="isCreatingProject" aria-label="Create new quantum circuit project">
           <i class="fas" [ngClass]="isCreatingProject ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
@@ -133,6 +138,12 @@
 
             <!-- Logged In Options -->
             <ng-container *ngIf="isLoggedIn()">
+              <button (click)="navigateToExperiments()" class="dropdown-item">
+                <i class="fas fa-flask"></i> My Experiments
+              </button>
+              <button (click)="navigateToCreateExperiment()" class="dropdown-item">
+                <i class="fas fa-plus-circle"></i> New Experiment
+              </button>
               <button (click)="navigateToQSauron()" class="dropdown-item">
                 <span class="item-logo"></span> Go to Projects
               </button>

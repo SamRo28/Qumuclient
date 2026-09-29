@@ -2,12 +2,11 @@ package edu.uclm.qiskitexec.runners;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -20,31 +19,27 @@ import edu.uclm.qiskitexec.model.Mutant;
 import edu.uclm.qiskitexec.model.ProgramExecutionConf;
 
 /**
- * Envía los programas al runner remoto y traduce sus respuestas.
- *
- * El runner ejecuta en paralelo la lista de códigos que se le pase, pero un lote
- * grande de circuitos pesados puede tardar minutos. Por eso el envío se trocea:
- * así ninguna petición se eterniza y el progreso es incremental.
- *
- * El proxy es opcional: solo hace falta para alcanzar al runner desde fuera de
- * la red de la UCLM. Yendo directo se evita además su timeout, ya que nginx
- * responde 504 al pasarse de proxy_read_timeout aunque el runner siga trabajando.
+ * Envía los programas al runner remoto de forma asíncrona mediante /run_qiskit_editor
+ * y traduce sus respuestas a ProgramExecutionResult.
  */
 public class CentralizedProxyRunner {
 
     private String proxyUrl;
     private String remoteRunnerUrl;
     private int batchSize;
+    private int timeoutSeconds;
     private RestTemplate restTemplate;
 
     public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds) {
         this.proxyUrl = proxyUrl;
         this.remoteRunnerUrl = remoteRunnerUrl;
         this.batchSize = batchSize > 0 ? batchSize : Integer.MAX_VALUE;
+        this.timeoutSeconds = timeoutSeconds > 0 ? timeoutSeconds : 600;
 
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(30000);
-        factory.setReadTimeout(timeoutSeconds > 0 ? timeoutSeconds * 1000 : 600000);
+        // Cada petición HTTP individual es inmediata (<1-2s); 30s de timeout de lectura es más que suficiente
+        factory.setReadTimeout(30000);
         this.restTemplate = new RestTemplate(factory);
     }
 
@@ -65,11 +60,24 @@ public class CentralizedProxyRunner {
         return results.get(0);
     }
 
+    private String getBaseRemoteUrl() {
+        String url = this.remoteRunnerUrl != null ? this.remoteRunnerUrl.trim() : "";
+        if (url.endsWith("/run_code")) {
+            url = url.substring(0, url.length() - "/run_code".length());
+        }
+        while (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url;
+    }
+
     /** Destino real: el proxy solo se interpone si está configurado. */
-    private URI targetUrl() throws Exception {
-        if (this.proxyUrl == null || this.proxyUrl.trim().isEmpty())
-            return new URI(this.remoteRunnerUrl);
-        return new URI(this.proxyUrl + "?url=" + this.remoteRunnerUrl);
+    private URI targetUrl(String target) {
+        if (this.proxyUrl == null || this.proxyUrl.trim().isEmpty()) {
+            return URI.create(target);
+        }
+        String connector = this.proxyUrl.contains("?url=") ? "" : (this.proxyUrl.contains("?") ? "&url=" : "?url=");
+        return URI.create(this.proxyUrl + connector + target);
     }
 
     private List<ProgramExecutionResult> executeAndParse(List<String> codes, List<Mutant> mutants,
@@ -79,26 +87,27 @@ public class CentralizedProxyRunner {
 
         for (int from = 0; from < codes.size(); from += this.batchSize) {
             int to = Math.min(from + this.batchSize, codes.size());
-            JSONArray resultsArray = this.executeBatch(codes.subList(from, to));
-
-            if (resultsArray.length() != to - from)
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "The remote runner returned "
-                        + resultsArray.length() + " results for a batch of " + (to - from) + " programs");
-
-            for (int i = 0; i < resultsArray.length(); i++) {
-                // El índice del mutante es global, no relativo al lote.
-                int mutantIndex = mutants != null ? mutants.get(from + i).getMutantIndex() : 0;
-                programResults.add(this.parseResult(resultsArray.getJSONObject(i), outputsSize, mutantIndex));
-            }
+            List<String> batchCodes = codes.subList(from, to);
+            List<ProgramExecutionResult> batchResults = this.executeBatchAsync(batchCodes, mutants, from, outputsSize);
+            programResults.addAll(batchResults);
         }
 
         return programResults;
     }
 
-    private JSONArray executeBatch(List<String> codes) {
+    private List<ProgramExecutionResult> executeBatchAsync(List<String> codes, List<Mutant> mutants, int from,
+            int outputsSize) {
         try {
-            HttpEntity<List<String>> request = new HttpEntity<>(codes);
-            ResponseEntity<String> response = restTemplate.postForEntity(this.targetUrl(), request, String.class);
+            String baseUrl = getBaseRemoteUrl();
+            String runUrl = baseUrl + "/run_qiskit_editor?iterations=1&overwrite=n&runner=1";
+
+            List<String> preparedCodes = new ArrayList<>();
+            for (String c : codes) {
+                preparedCodes.add(ensureShotsVariable(c));
+            }
+
+            HttpEntity<List<String>> request = new HttpEntity<>(preparedCodes);
+            ResponseEntity<String> response = restTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -111,61 +120,121 @@ public class CentralizedProxyRunner {
                         "Remote runner error: " + responseJson.getString("error"));
             }
 
-            return responseJson.getJSONArray("results");
+            String batchId = String.valueOf(responseJson.get("batch_id"));
+
+            // Polling loop
+            String statusUrl = baseUrl + "/run_qiskit_editor/status/" + batchId;
+            long startTime = System.currentTimeMillis();
+            long maxWaitMillis = this.timeoutSeconds * 1000L;
+            boolean finished = false;
+
+            while (System.currentTimeMillis() - startTime < maxWaitMillis) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Execution interrupted");
+                }
+
+                try {
+                    ResponseEntity<String> statusResp = restTemplate.getForEntity(this.targetUrl(statusUrl), String.class);
+                    if (statusResp.getStatusCode().is2xxSuccessful() && statusResp.getBody() != null) {
+                        JSONObject statusJson = new JSONObject(statusResp.getBody());
+                        String state = statusJson.optString("state", "running");
+                        if ("finished".equalsIgnoreCase(state)) {
+                            finished = true;
+                            break;
+                        } else if ("error".equalsIgnoreCase(state)) {
+                            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "Remote runner finished with error for batch " + batchId);
+                        }
+                    }
+                } catch (ResponseStatusException rse) {
+                    throw rse;
+                } catch (Exception ex) {
+                    System.err.println("Warning polling status for batch " + batchId + ": " + ex.getMessage());
+                }
+            }
+
+            if (!finished) {
+                throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
+                        "Timeout waiting for remote runner batch " + batchId + " after " + this.timeoutSeconds + " seconds");
+            }
+
+            // Descarga de all_results.csv
+            String fileUrl = baseUrl + "/run_qiskit_editor/get_file/" + batchId + "/all_results.csv";
+            ResponseEntity<String> csvResp = restTemplate.getForEntity(this.targetUrl(fileUrl), String.class);
+            if (!csvResp.getStatusCode().is2xxSuccessful() || csvResp.getBody() == null) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Could not retrieve all_results.csv for batch " + batchId);
+            }
+
+            String csvContent = csvResp.getBody();
+            Map<String, Map<Integer, Integer>> problemFrequencies = parseResultsCsv(csvContent);
+
+            List<ProgramExecutionResult> batchResults = new ArrayList<>();
+            for (int i = 0; i < codes.size(); i++) {
+                String problemName = "p" + (i + 1);
+                Map<Integer, Integer> freqMap = problemFrequencies.getOrDefault(problemName, Collections.emptyMap());
+
+                List<Map<String, Object>> executionResults = new ArrayList<>();
+                for (int o = 0; o < outputsSize; o++) {
+                    Map<String, Object> line = new HashMap<>();
+                    line.put("order", o);
+                    line.put("binary", Integer.toBinaryString(o));
+                    line.put("frequency", freqMap.getOrDefault(o, 0));
+                    executionResults.add(line);
+                }
+
+                int mutantIndex = mutants != null ? mutants.get(from + i).getMutantIndex() : 0;
+                ProgramExecutionResult result = new ProgramExecutionResult();
+                result.setMutantIndex(mutantIndex);
+                result.setExecutionResults(executionResults);
+                batchResults.add(result);
+            }
+
+            return batchResults;
 
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Failed centralized execution: " + e.getMessage());
+                    "Failed async centralized execution: " + e.getMessage(), e);
         }
     }
 
-    private ProgramExecutionResult parseResult(JSONObject result, int outputsSize, int mutantIndex) {
-        int returncode = result.optInt("returncode", 0);
-        if (returncode != 0) {
-            // Si el script falla, stdout viene vacío y las frecuencias se quedan a cero,
-            // que aguas arriba parece un error máximo (mutante muerto). Se deja
-            // constancia para poder distinguir un mutante muerto de uno que no ejecuta.
-            System.err.println("Remote execution failed for mutant " + mutantIndex + " (returncode " + returncode
-                    + "): " + result.optString("stderr", ""));
-        }
-        return parseStdout(result.optString("stdout", "{}"), outputsSize, mutantIndex);
-    }
-
-    private ProgramExecutionResult parseStdout(String stdout, int outputsSize, int mutantIndex) {
-        List<Map<String, Object>> executionResults = new ArrayList<>();
-
-        for (int i = 0; i < outputsSize; i++) {
-            Map<String, Object> line = new HashMap<>();
-            line.put("order", i);
-            line.put("binary", Integer.toBinaryString(i));
-            line.put("frequency", 0);
-            executionResults.add(line);
+    private Map<String, Map<Integer, Integer>> parseResultsCsv(String csvContent) {
+        Map<String, Map<Integer, Integer>> problemFrequencies = new HashMap<>();
+        if (csvContent == null || csvContent.trim().isEmpty()) {
+            return problemFrequencies;
         }
 
-        try {
-            // El stdout de los scripts qiskit con qiskitTemplate suele ser JSON
-            // En `run_code` se devuelve por stdout exactamente lo que imprime el script
-            if (stdout != null && !stdout.trim().isEmpty()) {
-                JSONObject jso = new JSONObject(stdout);
-                Iterator<String> keys = jso.keys();
-                while (keys.hasNext()) {
-                    String key = keys.next();
-                    int order = Integer.parseInt(key, 2);
-                    int frequency = jso.getInt(key);
-                    Map<String, Object> line = executionResults.get(order);
-                    line.put("frequency", frequency);
-                }
+        String[] lines = csvContent.split("\r?\n");
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty() || line.startsWith("Iter")) {
+                continue;
             }
-        } catch (Exception e) {
-            System.err.println("Failed to parse remote stdout: " + stdout);
-            // Mantenemos frecuencias a 0, similar al control de excepciones original
+            String[] parts = line.split("\t");
+            if (parts.length >= 7) {
+                String problem = parts[1].trim(); // e.g. "p1"
+                try {
+                    int dec = Integer.parseInt(parts[4].trim());
+                    int obtained = Integer.parseInt(parts[6].trim());
+                    problemFrequencies
+                            .computeIfAbsent(problem, k -> new HashMap<>())
+                            .put(dec, obtained);
+                } catch (NumberFormatException ignored) {}
+            }
         }
+        return problemFrequencies;
+    }
 
-        ProgramExecutionResult result = new ProgramExecutionResult();
-        result.setMutantIndex(mutantIndex);
-        result.setExecutionResults(executionResults);
-        return result;
+    private String ensureShotsVariable(String code) {
+        if (code == null) return "";
+        if (code.contains("shots =") || code.contains("shots=")) {
+            return code;
+        }
+        return "shots = 1000\n" + code;
     }
 }

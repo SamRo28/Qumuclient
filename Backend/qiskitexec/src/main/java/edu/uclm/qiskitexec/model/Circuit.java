@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Circuit {
 	private String id;
 	private Map<String, Object> quirkCode;
@@ -56,20 +58,64 @@ public class Circuit {
 		return outputQubits;
 	}
 	
-	public void setInputQubits(String inputQubits) {
-		String[] tokens = inputQubits.split(",");
-		for (int i=0; i<tokens.length; i++)
-			this.inputQubits.add(Integer.parseInt(tokens[i].trim()));
+	public void setInputQubits(Object inputQubits) {
+		this.inputQubits.clear();
+		if (inputQubits == null) {
+			return;
+		}
+		if (inputQubits instanceof List) {
+			for (Object item : (List<?>) inputQubits) {
+				if (item instanceof Number) {
+					this.inputQubits.add(((Number) item).intValue());
+				} else if (item != null) {
+					try {
+						this.inputQubits.add(Integer.parseInt(item.toString().trim()));
+					} catch (NumberFormatException ignored) {}
+				}
+			}
+		} else {
+			String[] tokens = inputQubits.toString().split(",");
+			for (int i = 0; i < tokens.length; i++) {
+				String t = tokens[i].trim();
+				if (!t.isEmpty()) {
+					try {
+						this.inputQubits.add(Integer.parseInt(t));
+					} catch (NumberFormatException ignored) {}
+				}
+			}
+		}
 	}
 	
 	public List<Integer> getInputQubits() {
 		return inputQubits;
 	}
 
-	public void setOutputQubits(String outputQubits) {
-		String[] tokens = outputQubits.split(",");
-		for (int i=0; i<tokens.length; i++)
-			this.outputQubits.add(Integer.parseInt(tokens[i].trim()));
+	public void setOutputQubits(Object outputQubits) {
+		this.outputQubits.clear();
+		if (outputQubits == null) {
+			return;
+		}
+		if (outputQubits instanceof List) {
+			for (Object item : (List<?>) outputQubits) {
+				if (item instanceof Number) {
+					this.outputQubits.add(((Number) item).intValue());
+				} else if (item != null) {
+					try {
+						this.outputQubits.add(Integer.parseInt(item.toString().trim()));
+					} catch (NumberFormatException ignored) {}
+				}
+			}
+		} else {
+			String[] tokens = outputQubits.toString().split(",");
+			for (int i = 0; i < tokens.length; i++) {
+				String t = tokens[i].trim();
+				if (!t.isEmpty()) {
+					try {
+						this.outputQubits.add(Integer.parseInt(t));
+					} catch (NumberFormatException ignored) {}
+				}
+			}
+		}
 	}
 	
 	public int getOutputsSize() {

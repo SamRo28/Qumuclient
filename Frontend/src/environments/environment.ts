@@ -1,11 +1,10 @@
 export const environment = {
   production: false,
   api: {
-    core: 'https://alarcosj.esi.uclm.es/qsauronback',
-    mutation: 'http://localhost:8500',
+    core: 'http://localhost:8080',
+    mutation: 'https://alarcosj.esi.uclm.es/qumugen',
     execution: 'https://alarcosj.esi.uclm.es/qiskitexec',
     statistics: 'https://alarcosj.esi.uclm.es/qsauronback/mutantanalytics'
   },
-  loginUrl: 'https://alarcosj.esi.uclm.es/qsauron'
+  loginUrl: 'http://localhost:4201'
 };
-

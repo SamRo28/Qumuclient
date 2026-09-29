@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { Project } from '../model/Project';
+import { User } from '../model/User';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -72,11 +73,15 @@ export class ReperService {
   }
 
   getUser() {
-    return this.client.post<string>(`${environment.api.core}/users/getUser`, {}, {
-      withCredentials: true,
-      responseType: 'text' as 'json'
+    return this.client.post<User>(`${environment.api.core}/users/getUser`, {}, {
+      withCredentials: true
     }).pipe(
-      tap(user => sessionStorage.setItem('email', user))
+      tap(user => {
+        const email = typeof user === 'string' ? user : user?.email;
+        if (email) {
+          sessionStorage.setItem('email', email);
+        }
+      })
     );
   }
 

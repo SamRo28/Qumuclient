@@ -23,6 +23,9 @@ import { ConfirmationModalComponent } from './components/confirmation-modal/conf
 import { StatisticsVisualizerComponent } from './statistics-visualizer/statistics-visualizer.component';
 import { ChatSideBarComponent } from './chat-side-bar/chat-side-bar.component';
 import { CircuitViewerComponent } from './circuit-viewer/circuit-viewer.component';
+import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard.component';
+import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
+import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
 
 @NgModule({
   declarations: [
@@ -44,7 +47,10 @@ import { CircuitViewerComponent } from './circuit-viewer/circuit-viewer.componen
     ConfirmationModalComponent,
     StatisticsVisualizerComponent,
     ChatSideBarComponent,
-    CircuitViewerComponent
+    CircuitViewerComponent,
+    ExperimentWizardComponent,
+    ExperimentsDashboardComponent,
+    ExperimentProgressTrackerComponent
   ],
   imports: [
     BrowserModule,

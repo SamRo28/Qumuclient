@@ -4,6 +4,7 @@
   <app-side-bar *ngIf="manager.showSidebar"></app-side-bar>
   <div class="main-content" [class.with-sidebar]="manager.showSidebar"
     [class.sidebar-expanded]="manager.sidebarExpanded">
+    <app-experiment-progress-tracker></app-experiment-progress-tracker>
     <router-outlet></router-outlet>
   </div>
 

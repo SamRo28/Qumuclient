@@ -373,8 +373,22 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.userMenuOpen = false;
     this.userService.logout();
-    this.router.navigate(['/']);
+  }
+
+  openExperiments(): void {
+    this.router.navigate(['/experiments']);
+  }
+
+  navigateToExperiments(): void {
+    this.userMenuOpen = false;
+    this.router.navigate(['/experiments']);
+  }
+
+  navigateToCreateExperiment(): void {
+    this.userMenuOpen = false;
+    this.router.navigate(['/experiments/create']);
   }
 
   navigateToQSauron(): void {

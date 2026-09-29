@@ -1,0 +1,404 @@
+<!-- Experiment Creation Wizard - Glassmorphism Emerald -->
+<div class="wizard-page-container">
+
+  <!-- Header Card -->
+  <div class="wizard-header-card">
+    <div class="header-main">
+      <div class="header-title">
+        <i class="fas fa-vial-circle-check header-icon"></i>
+        <div>
+          <h2>New Quantum Experiment</h2>
+          <p>Create mutation cycles across multiple quantum circuits and run them asynchronously</p>
+        </div>
+      </div>
+      <button class="btn btn-outline" (click)="cancel()">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+    </div>
+
+    <!-- Stepper Navigation -->
+    <div class="stepper-nav">
+      <div class="step-indicator" [class.active]="currentStep === 1" [class.completed]="currentStep > 1" (click)="goToStep(1)">
+        <div class="step-number"><i *ngIf="currentStep > 1" class="fas fa-check"></i><span *ngIf="currentStep <= 1">1</span></div>
+        <span class="step-label">Circuits</span>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 1"></div>
+
+      <div class="step-indicator" [class.active]="currentStep === 2" [class.completed]="currentStep > 2" (click)="goToStep(2)">
+        <div class="step-number"><i *ngIf="currentStep > 2" class="fas fa-check"></i><span *ngIf="currentStep <= 2">2</span></div>
+        <span class="step-label">Qubits</span>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 2"></div>
+
+      <div class="step-indicator" [class.active]="currentStep === 3" [class.completed]="currentStep > 3" (click)="goToStep(3)">
+        <div class="step-number"><i *ngIf="currentStep > 3" class="fas fa-check"></i><span *ngIf="currentStep <= 3">3</span></div>
+        <span class="step-label">Operators</span>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 3"></div>
+
+      <div class="step-indicator" [class.active]="currentStep === 4" [class.completed]="currentStep > 4" (click)="goToStep(4)">
+        <div class="step-number"><i *ngIf="currentStep > 4" class="fas fa-check"></i><span *ngIf="currentStep <= 4">4</span></div>
+        <span class="step-label">Execution</span>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 4"></div>
+
+      <div class="step-indicator" [class.active]="currentStep === 5">
+        <div class="step-number">5</div>
+        <span class="step-label">Summary</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Error Banner -->
+  <div *ngIf="errorMessage" class="wizard-alert-danger">
+    <i class="fas fa-triangle-exclamation"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- STEP 1: Circuit Selection -->
+  <!-- ========================================== -->
+  <div *ngIf="currentStep === 1" class="wizard-step-card">
+    <div class="step-header">
+      <div class="step-title-group">
+        <h3><i class="fas fa-microchip"></i> Step 1: Select Quantum Circuits</h3>
+        <p>Choose the quantum circuits that will be tested in this batch experiment</p>
+      </div>
+      <div class="step-actions">
+        <button class="btn btn-sm btn-outline" (click)="selectAllProjects()">
+          <i class="fas fa-check-double"></i> Select All
+        </button>
+        <button class="btn btn-sm btn-outline" (click)="deselectAllProjects()">
+          <i class="fas fa-times"></i> Deselect All
+        </button>
+      </div>
+    </div>
+
+    <!-- Search input -->
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" [(ngModel)]="projectSearchText" placeholder="Search circuits by name..." class="glass-input">
+      <span class="search-badge">{{ getSelectedProjectsCount() }} selected of {{ availableProjects.length }}</span>
+    </div>
+
+    <!-- Projects Grid -->
+    <div *ngIf="!loading && availableProjects.length > 0" class="projects-grid">
+      <div *ngFor="let project of filteredProjects" 
+           class="project-select-card" 
+           [class.selected]="isProjectSelected(project.id)"
+           (click)="toggleProjectSelection(project)">
+        <div class="project-checkbox">
+          <i *ngIf="isProjectSelected(project.id)" class="fas fa-check-square checked-icon"></i>
+          <i *ngIf="!isProjectSelected(project.id)" class="far fa-square unchecked-icon"></i>
+        </div>
+        <div class="project-info">
+          <span class="project-name">{{ project.name }}</span>
+          <span class="project-meta">
+            <i class="fas fa-layer-group"></i> {{ project.mutantCycles?.length || 0 }} previous cycles
+            <span *ngIf="project.qubits" class="meta-qubits"><i class="fas fa-circle-nodes"></i> {{ project.qubits }} qubits</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="step-loading">
+      <i class="fas fa-circle-notch fa-spin"></i>
+      <span>Loading quantum circuits...</span>
+    </div>
+
+    <div class="wizard-footer-buttons">
+      <div></div>
+      <button class="btn btn-primary" (click)="prepareStep2()" [disabled]="getSelectedProjectsCount() === 0">
+        Next: Configure Qubits <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- STEP 2: Input & Output Qubits (Checkboxes) -->
+  <!-- ========================================== -->
+  <div *ngIf="currentStep === 2" class="wizard-step-card">
+    <div class="step-header">
+      <div class="step-title-group">
+        <h3><i class="fas fa-sliders"></i> Step 2: Configure Input & Output Qubits</h3>
+        <p>Select the input and output qubits for each circuit using the checkboxes below.</p>
+      </div>
+    </div>
+
+    <div class="circuits-qubits-container">
+      <div *ngFor="let config of circuitConfigs" class="circuit-qubit-card glass-card">
+        <div class="circuit-qubit-header">
+          <div class="circuit-title-row">
+            <i class="fas fa-microchip circuit-icon"></i>
+            <strong class="circuit-name">{{ config.projectName }}</strong>
+            <span class="qubit-badge">{{ config.qubits }} Qubits</span>
+          </div>
+        </div>
+
+        <div class="qubit-selectors-grid">
+          <!-- Input Qubits Selector -->
+          <div class="qubit-group">
+            <div class="qubit-group-header">
+              <label class="config-label">
+                <i class="fas fa-arrow-right-to-bracket"></i>
+                Input Qubits
+              </label>
+              <button type="button" class="select-all-btn small-btn" (click)="toggleAllInputQubits(config)">
+                <i class="fas fa-check-double"></i> Select All
+              </button>
+            </div>
+            <div class="qubits-checkboxes-row">
+              <label *ngFor="let qIdx of config.qubitsIndices" class="qubit-checkbox-item">
+                <input type="checkbox" 
+                       [(ngModel)]="config.inputQubitsSelection![qIdx]" 
+                       (change)="updateInputQubits(config)"
+                       class="glass-checkbox">
+                <span>Q{{ qIdx }}</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Output Qubits Selector -->
+          <div class="qubit-group">
+            <div class="qubit-group-header">
+              <label class="config-label">
+                <i class="fas fa-arrow-right-from-bracket"></i>
+                Output Qubits
+              </label>
+              <button type="button" class="select-all-btn small-btn" (click)="toggleAllOutputQubits(config)">
+                <i class="fas fa-check-double"></i> Select All
+              </button>
+            </div>
+            <div class="qubits-checkboxes-row">
+              <label *ngFor="let qIdx of config.qubitsIndices" class="qubit-checkbox-item">
+                <input type="checkbox" 
+                       [(ngModel)]="config.outputQubitsSelection![qIdx]" 
+                       (change)="updateOutputQubits(config)"
+                       class="glass-checkbox">
+                <span>Q{{ qIdx }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer-buttons">
+      <button class="btn btn-outline" (click)="currentStep = 1">
+        <i class="fas fa-arrow-left"></i> Back to Circuits
+      </button>
+      <button class="btn btn-primary" (click)="prepareStep3()">
+        Next: Select Operators <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- STEP 3: Mutation Operators (Exact Match to Operators View) -->
+  <!-- ========================================== -->
+  <div *ngIf="currentStep === 3" class="wizard-step-card operators-step-container">
+    
+    <!-- Operator Families Header -->
+    <div class="operators-header">
+      <div class="step-title-group">
+        <h3 class="operators-title">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor" stroke-width="2" />
+            <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          Mutation Operators
+        </h3>
+        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">
+          Select the mutation operators to apply to each circuit ({{ getSelectedOperatorsCount() }} selected)
+        </p>
+      </div>
+      <button class="select-all-btn" (click)="selectAllOperators()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Select All
+      </button>
+    </div>
+
+    <!-- Operator Families Grid -->
+    <div class="families-grid">
+      <div *ngFor="let family of families" class="glass-card family-card">
+        <div class="family-header">
+          <h4 class="family-name">{{ family.name }}</h4>
+          <div class="family-actions">
+            <button (click)="selectFamily(family)" class="select-family-btn" title="Select all operators in this family">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              Select All
+            </button>
+            <button (click)="showInfo(family)" class="info-btn" title="View operator descriptions">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="operators-list-horizontal">
+          <label *ngFor="let op of getEnabledOperators(family)" class="operator-label">
+            <input type="checkbox" [(ngModel)]="op.selected" class="glass-checkbox">
+            <span class="operator-name">{{ op.name }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer-buttons">
+      <button class="btn btn-outline" (click)="currentStep = 2">
+        <i class="fas fa-arrow-left"></i> Back to Qubits
+      </button>
+      <button class="btn btn-primary" (click)="prepareStep4()" [disabled]="!hasSelectedOperators()">
+        Next: Configure Execution <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- STEP 4: Execution Configuration -->
+  <!-- ========================================== -->
+  <div *ngIf="currentStep === 4" class="wizard-step-card">
+    <div class="step-header">
+      <div class="step-title-group">
+        <h3><i class="fas fa-gears"></i> Step 4: Execution Parameters</h3>
+        <p>Configure the quantum execution settings applied to all experiment cycles</p>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group full-width">
+        <label>Experiment Name</label>
+        <input type="text" [(ngModel)]="experimentName" class="glass-input" placeholder="Descriptive name for the experiment">
+      </div>
+
+      <div class="form-group">
+        <label>Machine / Backend</label>
+        <select [(ngModel)]="machine" class="glass-input">
+          <option *ngFor="let m of availableMachines" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Execution Algorithm</label>
+        <select [(ngModel)]="execAlgorithm" class="glass-input">
+          <option *ngFor="let a of availableAlgorithms" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Shots</label>
+        <input type="number" [(ngModel)]="shots" min="100" step="100" class="glass-input">
+      </div>
+
+      <div class="form-group">
+        <label>Tolerated Error</label>
+        <input type="number" [(ngModel)]="toleratedError" min="0" max="1" step="0.01" class="glass-input">
+      </div>
+
+      <div class="form-group">
+        <label>Zombie Error</label>
+        <input type="number" [(ngModel)]="zombieError" min="0" max="1" step="0.01" class="glass-input">
+      </div>
+    </div>
+
+    <div class="wizard-footer-buttons">
+      <button class="btn btn-outline" (click)="currentStep = 3">
+        <i class="fas fa-arrow-left"></i> Back to Operators
+      </button>
+      <button class="btn btn-primary" (click)="prepareStep5()">
+        Next: Review Summary <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- STEP 5: Summary & Launch -->
+  <!-- ========================================== -->
+  <div *ngIf="currentStep === 5" class="wizard-step-card">
+    <div class="step-header">
+      <div class="step-title-group">
+        <h3><i class="fas fa-flag-checkered"></i> Step 5: Experiment Summary</h3>
+        <p>Review your settings before launching asynchronous execution</p>
+      </div>
+    </div>
+
+    <div class="summary-cards-container">
+      <div class="summary-card">
+        <div class="summary-card-header"><i class="fas fa-tag"></i> General Information</div>
+        <div class="summary-item"><span class="summary-label">Name:</span> <strong>{{ experimentName }}</strong></div>
+        <div class="summary-item"><span class="summary-label">Machine:</span> <span>{{ machine }}</span></div>
+        <div class="summary-item"><span class="summary-label">Algorithm:</span> <span>{{ execAlgorithm }}</span></div>
+        <div class="summary-item"><span class="summary-label">Shots:</span> <span>{{ shots }}</span></div>
+        <div class="summary-item"><span class="summary-label">Tolerated Error:</span> <span>{{ toleratedError }}</span></div>
+        <div class="summary-item"><span class="summary-label">Zombie Error:</span> <span>{{ zombieError }}</span></div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-header"><i class="fas fa-microchip"></i> Circuits ({{ circuitConfigs.length }})</div>
+        <div class="summary-tags-list">
+          <span *ngFor="let c of circuitConfigs" class="summary-tag">
+            <i class="fas fa-cube"></i> {{ c.projectName }} ({{ c.qubits }}q) — In: [{{ c.inputQubits || 'None' }}] | Out: [{{ c.outputQubits }}]
+          </span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-header"><i class="fas fa-dna"></i> Operators ({{ getSelectedOperatorsList().length }})</div>
+        <div class="summary-tags-list">
+          <span *ngFor="let op of getSelectedOperatorsList()" class="summary-tag operator-tag">
+            {{ op }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer-buttons">
+      <button class="btn btn-outline" (click)="currentStep = 4" [disabled]="isSubmitting">
+        <i class="fas fa-arrow-left"></i> Modify Execution
+      </button>
+      <button class="btn btn-primary btn-lg" (click)="submitExperiment()" [disabled]="isSubmitting">
+        <i *ngIf="!isSubmitting" class="fas fa-rocket"></i>
+        <i *ngIf="isSubmitting" class="fas fa-spinner fa-spin"></i>
+        <span>{{ isSubmitting ? 'Launching Experiment...' : 'Launch Experiment' }}</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Operator Info Modal (Exact match to OperatorsComponent) -->
+<div *ngIf="isModalOpen" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+        </svg>
+        {{ selectedFamily?.name }} Operators
+      </h5>
+      <button type="button" class="modal-close" (click)="closeModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div *ngFor="let op of getEnabledOperators(selectedFamily!)" class="operator-info">
+        <div class="operator-info-header">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="3" r="3" fill="currentColor" />
+          </svg>
+          <strong>{{ op.name }}</strong>
+        </div>
+        <p>{{ op.description }}</p>
+      </div>
+    </div>
+  </div>
+</div>

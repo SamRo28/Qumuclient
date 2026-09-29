@@ -30,22 +30,41 @@ public class Circuit {
 	private String oracleName;
 
 	public Circuit(JSONObject jso) {
-		JSONArray init = jso.optJSONArray("init");
-		if (init!=null) {
+		if (jso != null && !jso.has("cols")) {
+			if (jso.has("circuit") && jso.get("circuit") instanceof JSONObject) {
+				jso = jso.getJSONObject("circuit");
+			} else if (jso.has("quirkCode") && jso.get("quirkCode") instanceof JSONObject) {
+				jso = jso.getJSONObject("quirkCode");
+				if (!jso.has("cols") && jso.has("circuit") && jso.get("circuit") instanceof JSONObject) {
+					jso = jso.getJSONObject("circuit");
+				}
+			} else if (jso.has("qCircuit") && jso.get("qCircuit") instanceof JSONObject) {
+				jso = jso.getJSONObject("qCircuit");
+				if (!jso.has("cols") && jso.has("quirkCode") && jso.get("quirkCode") instanceof JSONObject) {
+					jso = jso.getJSONObject("quirkCode");
+				}
+			}
+		}
+		JSONArray init = jso != null ? jso.optJSONArray("init") : null;
+		if (init != null) {
 			this.qubits = this.loadInit(init);
 		}
-		JSONArray gates = jso.optJSONArray("gates");
-		if (gates!=null) {
+		JSONArray gates = jso != null ? jso.optJSONArray("gates") : null;
+		if (gates != null) {
 			this.loadGates(gates);
 		}
 		this.columns = new ArrayList<>();
-		JSONArray cols = jso.getJSONArray("cols");
-		for (int i=0; i<cols.length(); i++) {
-			JSONArray col = cols.getJSONArray(i);
-			QColumn column = new QColumn(i, col);
-			this.columns.add(column);
-			if (column.getGates().size()>this.qubits)
-				this.qubits = column.getGates().size();
+		JSONArray cols = jso != null ? jso.optJSONArray("cols") : null;
+		if (cols != null) {
+			for (int i = 0; i < cols.length(); i++) {
+				JSONArray col = cols.optJSONArray(i);
+				if (col != null) {
+					QColumn column = new QColumn(i, col);
+					this.columns.add(column);
+					if (column.getGates().size() > this.qubits)
+						this.qubits = column.getGates().size();
+				}
+			}
 		}
 		// El número de filas de una columna no basta: una puerta customizada ocupa
 		// varios qubits a partir de su fila (p. ej. una columna ["~oraculo"] tiene

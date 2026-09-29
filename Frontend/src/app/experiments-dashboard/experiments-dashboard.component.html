@@ -1,0 +1,194 @@
+<div class="dashboard-page-container">
+  
+  <div class="dashboard-header-card">
+    <div class="header-main">
+      <div class="header-title">
+        <i class="fas fa-flask header-icon"></i>
+        <div>
+          <h2>My Experiments</h2>
+          <p>History and tracking of quantum mutation batch experiments.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="loadExperiments()" title="Refresh list">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh
+        </button>
+        <button class="btn btn-primary" (click)="createNewExperiment()">
+          <i class="fas fa-plus"></i> New Experiment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <i class="fas fa-spinner fa-spin spinner-icon"></i>
+    <p>Loading experiments...</p>
+  </div>
+
+  <div *ngIf="!loading && experiments.length === 0" class="empty-card">
+    <i class="fas fa-flask empty-icon"></i>
+    <h3>No experiments registered yet</h3>
+    <p>Create your first experiment to run mutation cycles across multiple quantum circuits simultaneously.</p>
+    <button class="btn btn-primary btn-lg" (click)="createNewExperiment()">
+      <i class="fas fa-plus"></i> Create First Experiment
+    </button>
+  </div>
+
+  <div *ngIf="!loading && experiments.length > 0" class="experiments-list">
+    <div *ngFor="let exp of experiments" class="experiment-card" [class.running]="exp.status === 'RUNNING'">
+      
+      <div class="experiment-card-header" (click)="toggleExpand(exp.id)">
+        <div class="header-left">
+          <div class="status-indicator" [ngClass]="exp.status.toLowerCase()">
+            <i *ngIf="exp.status === 'RUNNING'" class="fas fa-spinner fa-spin"></i>
+            <i *ngIf="exp.status === 'COMPLETED'" class="fas fa-check-circle"></i>
+            <i *ngIf="exp.status === 'FAILED'" class="fas fa-times-circle"></i>
+            <i *ngIf="exp.status === 'CANCELLED'" class="fas fa-ban"></i>
+          </div>
+          <div>
+            <h3 class="exp-name">{{ exp.name }}</h3>
+            <span class="exp-date"><i class="far fa-calendar-alt"></i> {{ formatDate(exp.createdAt) }}</span>
+          </div>
+        </div>
+
+        <div class="header-stats">
+          <div class="stat-pill">
+            <span class="stat-label">Progress:</span>
+            <strong class="stat-value">{{ exp.completedCircuits }} / {{ exp.totalCircuits }} circuits</strong>
+          </div>
+          <div class="stat-pill">
+            <span class="stat-label">Duration:</span>
+            <strong class="stat-value">{{ formatDuration(exp.durationSeconds) }}</strong>
+          </div>
+          <div class="stat-pill" *ngIf="exp.machine">
+            <span class="stat-label">Machine:</span>
+            <strong class="stat-value">{{ exp.machine }}</strong>
+          </div>
+          <div class="badge" [ngClass]="'badge-' + exp.status.toLowerCase()">
+            {{ exp.status }}
+          </div>
+          <button class="btn-delete" (click)="openDeleteModal(exp, $event)" title="Delete experiment">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+          <i class="fas expand-icon" [ngClass]="expandedExperimentId === exp.id ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </div>
+      </div>
+
+      <!-- Expandable Details -->
+      <div *ngIf="expandedExperimentId === exp.id" class="experiment-card-body">
+        
+        <div *ngIf="exp.errorMessage" class="error-box">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Execution Error:</strong>
+            <p>{{ exp.errorMessage }}</p>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4>Mutation Cycles & Results:</h4>
+          
+          <div *ngIf="!exp.mutantCycles || exp.mutantCycles.length === 0" class="no-cycles-hint">
+            <p *ngIf="exp.status === 'RUNNING'">Cycles are currently being processed in the background...</p>
+            <p *ngIf="exp.status !== 'RUNNING'">No cycles registered for this experiment.</p>
+          </div>
+
+          <div *ngIf="exp.mutantCycles && exp.mutantCycles.length > 0" class="cycles-table-wrapper">
+            <table class="cycles-table">
+              <thead>
+                <tr>
+                  <th>Circuit / Cycle</th>
+                  <th>Mutants</th>
+                  <th>Killed / Alive / Zombie</th>
+                  <th>Mutation Score</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cycle of exp.mutantCycles">
+                  <td>
+                    <div class="cycle-cell-title">
+                      <i class="fas fa-microchip circuit-icon" *ngIf="cycle.projectName"></i>
+                      <strong class="circuit-name" *ngIf="cycle.projectName">{{ cycle.projectName }} &mdash; </strong>
+                      <span class="cycle-name">{{ cycle.name || 'Cycle ' + cycle.id }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="pill-mutants-count">{{ cycle.mutants?.length || 0 }} mutants</span>
+                  </td>
+                  <td>
+                    <div class="results-pills-row" *ngIf="(cycle.killedCount + cycle.aliveCount + cycle.zombieCount) > 0">
+                      <span class="score-pill pill-killed" title="Killed mutants">
+                        <i class="fas fa-skull"></i> {{ cycle.killedCount }}
+                      </span>
+                      <span class="score-pill pill-zombie" title="Zombie mutants" *ngIf="cycle.zombieCount > 0">
+                        <i class="fas fa-biohazard"></i> {{ cycle.zombieCount }}
+                      </span>
+                      <span class="score-pill pill-alive" title="Alive mutants">
+                        <i class="fas fa-heart"></i> {{ cycle.aliveCount }}
+                      </span>
+                    </div>
+                    <span class="text-muted text-sm" *ngIf="(cycle.killedCount + cycle.aliveCount + cycle.zombieCount) === 0">
+                      Not executed or in progress
+                    </span>
+                  </td>
+                  <td>
+                    <strong class="score-text" [class.high]="cycle.mutationScore >= 70" [class.mid]="cycle.mutationScore >= 40 && cycle.mutationScore < 70" [class.low]="cycle.mutationScore < 40" *ngIf="cycle.mutationScore !== undefined && cycle.mutationScore !== null">
+                      {{ cycle.mutationScore }}%
+                    </strong>
+                    <span class="text-muted" *ngIf="cycle.mutationScore === undefined || cycle.mutationScore === null">-</span>
+                  </td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" (click)="viewMutantCycle(cycle.projectId, cycle.id)" *ngIf="cycle.projectId" title="Open execution matrix and details">
+                      <i class="fas fa-table-cells"></i> View Matrix
+                    </button>
+                    <span class="view-cycle-tag" *ngIf="!cycle.projectId">
+                      <i class="fas fa-check"></i> Generated
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Confirmation Modal (Glassmorphism) -->
+<div *ngIf="isDeleteModalOpen" class="modal-overlay" (click)="closeDeleteModal()">
+  <div class="modal-content delete-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="fas fa-triangle-exclamation text-danger"></i>
+        Delete Experiment
+      </h5>
+      <button type="button" class="modal-close" (click)="closeDeleteModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="delete-msg">
+        Are you sure you want to delete experiment <strong>{{ experimentToDelete?.name }}</strong>?
+      </p>
+      <div class="delete-warning-box">
+        <i class="fas fa-info-circle"></i>
+        <span>This action will permanently delete the experiment and its execution history. This operation cannot be undone.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeDeleteModal()" [disabled]="isDeleting">
+        Cancel
+      </button>
+      <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting">
+        <i *ngIf="isDeleting" class="fas fa-spinner fa-spin"></i>
+        <i *ngIf="!isDeleting" class="fas fa-trash-alt"></i>
+        <span>{{ isDeleting ? 'Deleting...' : 'Delete Experiment' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
