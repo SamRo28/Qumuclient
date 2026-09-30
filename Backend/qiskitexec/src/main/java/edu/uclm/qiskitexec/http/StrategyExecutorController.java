@@ -37,6 +37,8 @@ public class StrategyExecutorController {
 				return mI1.compareTo(mI2);
 			});
 			return result;
+		} catch (ResponseStatusException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
@@ -47,6 +49,8 @@ public class StrategyExecutorController {
 			@RequestBody StrategyMutantsExecutionConfiguration smec) {
 		try {
 			return this.service.executeMany(smec);
+		} catch (ResponseStatusException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
 		}

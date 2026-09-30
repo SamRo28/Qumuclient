@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -35,17 +36,23 @@ public class CentralizedProxyRunner {
     private int timeoutSeconds;
     private String mode;
     private int pollMaxMs;
+    /**
+     * timeoutSeconds = segundos máximos sin progreso, es decir, sin que aumente done.
+     * maxTotalSeconds = tope absoluto por lote.
+     */
+    private int maxTotalSeconds;
     private RestTemplate asyncRestTemplate;
     private RestTemplate syncRestTemplate;
 
     public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds,
-            String mode, int pollMaxMs) {
+            String mode, int pollMaxMs, int maxTotalSeconds) {
         this.proxyUrl = proxyUrl;
         this.remoteRunnerUrl = remoteRunnerUrl;
         this.batchSize = batchSize > 0 ? batchSize : Integer.MAX_VALUE;
         this.timeoutSeconds = timeoutSeconds > 0 ? timeoutSeconds : 600;
         this.mode = mode != null ? mode.trim().toLowerCase() : "async";
         this.pollMaxMs = pollMaxMs > 0 ? pollMaxMs : 2000;
+        this.maxTotalSeconds = maxTotalSeconds > 0 ? maxTotalSeconds : 3000;
 
         SimpleClientHttpRequestFactory asyncFactory = new SimpleClientHttpRequestFactory();
         asyncFactory.setConnectTimeout(30000);
@@ -56,6 +63,11 @@ public class CentralizedProxyRunner {
         syncFactory.setConnectTimeout(30000);
         syncFactory.setReadTimeout(this.timeoutSeconds * 1000);
         this.syncRestTemplate = new RestTemplate(syncFactory);
+    }
+
+    public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds,
+            String mode, int pollMaxMs) {
+        this(proxyUrl, remoteRunnerUrl, batchSize, timeoutSeconds, mode, pollMaxMs, 3000);
     }
 
     public CentralizedProxyRunner(String proxyUrl, String remoteRunnerUrl, int batchSize, int timeoutSeconds) {
@@ -99,6 +111,14 @@ public class CentralizedProxyRunner {
         }
         String connector = this.proxyUrl.contains("?url=") ? "" : (this.proxyUrl.contains("?") ? "&url=" : "?url=");
         return URI.create(this.proxyUrl + connector + target);
+    }
+
+    private void cancelRemoteBatch(String baseUrl, String batchId) {
+        try {
+            asyncRestTemplate.exchange(this.targetUrl(baseUrl + "/run_code_async/" + batchId), HttpMethod.DELETE, null, String.class);
+        } catch (Exception ex) {
+            log.warn("Could not cancel remote batch {}: {}", batchId, ex.getMessage());
+        }
     }
 
     private List<ProgramExecutionResult> executeAndParse(List<String> codes, List<Mutant> mutants,
@@ -161,38 +181,40 @@ public class CentralizedProxyRunner {
     }
 
     private JSONArray executeBatchAsync(List<String> codes) {
+        String baseUrl = getBaseRemoteUrl();
+        String runUrl = baseUrl + "/run_code_async";
+
+        HttpEntity<List<String>> request = new HttpEntity<>(codes);
+        long tSubmitStart = System.nanoTime();
+        ResponseEntity<String> response = asyncRestTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
+        long submitMs = (System.nanoTime() - tSubmitStart) / 1_000_000;
+
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error from the remote runner: " + response.getStatusCode());
+        }
+
+        JSONObject responseJson = new JSONObject(response.getBody());
+        if (responseJson.optString("error", null) != null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Remote runner error: " + responseJson.getString("error"));
+        }
+
+        String batchId = String.valueOf(responseJson.get("batch_id"));
+
+        boolean completed = false;
         try {
-            String baseUrl = getBaseRemoteUrl();
-            String runUrl = baseUrl + "/run_code_async";
-
-            HttpEntity<List<String>> request = new HttpEntity<>(codes);
-            long tSubmitStart = System.nanoTime();
-            ResponseEntity<String> response = asyncRestTemplate.postForEntity(this.targetUrl(runUrl), request, String.class);
-            long submitMs = (System.nanoTime() - tSubmitStart) / 1_000_000;
-
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Error from the remote runner: " + response.getStatusCode());
-            }
-
-            JSONObject responseJson = new JSONObject(response.getBody());
-            if (responseJson.optString("error", null) != null) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Remote runner error: " + responseJson.getString("error"));
-            }
-
-            String batchId = String.valueOf(responseJson.get("batch_id"));
-
             // Polling loop
             String statusUrl = baseUrl + "/run_code_async/status/" + batchId;
             long startTime = System.currentTimeMillis();
-            long maxWaitMillis = this.timeoutSeconds * 1000L;
-            boolean finished = false;
+            long lastProgressAt = startTime;
+            int lastDone = -1;
+            boolean runnerReportsDone = false;
             int polls = 0;
             long sleepMs = 200;
             long tWaitStart = System.nanoTime();
 
-            while (System.currentTimeMillis() - startTime < maxWaitMillis) {
+            while (true) {
                 try {
                     Thread.sleep(sleepMs);
                 } catch (InterruptedException ie) {
@@ -206,9 +228,21 @@ public class CentralizedProxyRunner {
                     if (statusResp.getStatusCode().is2xxSuccessful() && statusResp.getBody() != null) {
                         JSONObject statusJson = new JSONObject(statusResp.getBody());
                         String state = statusJson.optString("state", "running");
+                        int done = statusJson.optInt("done", -1);
+                        long now = System.currentTimeMillis();
+                        if (done >= 0) {
+                            runnerReportsDone = true;
+                            if (done > lastDone) {
+                                lastDone = done;
+                                lastProgressAt = now;
+                            }
+                        }
+
                         if ("finished".equalsIgnoreCase(state)) {
-                            finished = true;
                             break;
+                        } else if ("cancelled".equalsIgnoreCase(state)) {
+                            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                    "Remote runner batch " + batchId + " was cancelled");
                         } else if ("error".equalsIgnoreCase(state)) {
                             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                                     "Remote runner finished with error for batch " + batchId + ": " + statusJson.optString("error"));
@@ -220,15 +254,20 @@ public class CentralizedProxyRunner {
                     log.warn("Warning polling status for batch {}: {}", batchId, ex.getMessage());
                 }
 
+                long now = System.currentTimeMillis();
+                if (now - startTime > maxTotalSeconds * 1000L) {
+                    throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
+                            "Remote runner batch " + batchId + " exceeded " + maxTotalSeconds + " s in total (done " + lastDone + "/" + codes.size() + ")");
+                }
+                if (now - (runnerReportsDone ? lastProgressAt : startTime) > timeoutSeconds * 1000L) {
+                    throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
+                            "No progress from remote runner batch " + batchId + " in " + timeoutSeconds + " s (done " + lastDone + "/" + codes.size() + ")");
+                }
+
                 sleepMs = Math.min((long) (sleepMs * 1.5), this.pollMaxMs);
             }
 
             long waitMs = (System.nanoTime() - tWaitStart) / 1_000_000;
-
-            if (!finished) {
-                throw new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT,
-                        "Timeout waiting for remote runner batch " + batchId + " after " + this.timeoutSeconds + " seconds");
-            }
 
             // Retrieval of results
             String resultsUrl = baseUrl + "/run_code_async/results/" + batchId;
@@ -241,9 +280,10 @@ public class CentralizedProxyRunner {
             }
 
             JSONObject resultsJson = new JSONObject(resultsResp.getBody());
-            log.info("[PERF] runner mode=async batch={} codes={} submitMs={} waitMs={} polls={} resultsMs={}",
-                    batchId, codes.size(), submitMs, waitMs, polls, resultsMs);
+            log.info("[PERF] runner mode=async batch={} codes={} submitMs={} waitMs={} polls={} resultsMs={} done={}",
+                    batchId, codes.size(), submitMs, waitMs, polls, resultsMs, lastDone);
 
+            completed = true;
             return resultsJson.getJSONArray("results");
 
         } catch (ResponseStatusException e) {
@@ -251,14 +291,18 @@ public class CentralizedProxyRunner {
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                     "Failed async centralized execution: " + e.getMessage(), e);
+        } finally {
+            if (!completed) {
+                cancelRemoteBatch(baseUrl, batchId);
+            }
         }
     }
 
     private ProgramExecutionResult parseResult(JSONObject result, int outputsSize, int mutantIndex) {
-        int returncode = result.optInt("returncode", 0);
+        int returncode = result.isNull("returncode") ? -1 : result.optInt("returncode", 0);
         if (returncode != 0) {
-            log.warn("Remote execution failed for mutant {} (returncode {}): {}", mutantIndex, returncode,
-                    result.optString("stderr", ""));
+            log.warn("Remote execution failed for program {} (mutantIndex {}, returncode {}): {}",
+                    result.optString("file", "?"), mutantIndex, returncode, result.optString("stderr", ""));
         }
         return parseStdout(result.optString("stdout", "{}"), outputsSize, mutantIndex);
     }
