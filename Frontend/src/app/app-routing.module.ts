@@ -7,12 +7,14 @@ import { MutantCycleInfoComponent } from './mutant-cycle-info/mutant-cycle-info.
 import { StatisticsVisualizerComponent } from './statistics-visualizer/statistics-visualizer.component';
 import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
 import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard.component';
+import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
 
 const routes: Routes = [
     { path: '', component: HomeComponent },
     { path: 'home', redirectTo: '', pathMatch: 'full' },
     { path: 'experiments', component: ExperimentsDashboardComponent },
     { path: 'experiments/create', component: ExperimentWizardComponent },
+    { path: 'experiments/:experimentId', component: ExperimentDetailComponent },
     { path: 'project/:projectId', component: CircuitsConfigurationComponent },
     { path: 'project/:projectId/cycle/:cycleId', component: MutantCycleInfoComponent },
     { path: 'project/:projectId/cycle/:cycleId/mutant/:mutantId', component: MutantsInfoComponent },

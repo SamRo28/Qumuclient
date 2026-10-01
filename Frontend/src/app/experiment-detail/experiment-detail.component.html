@@ -1,0 +1,145 @@
+<div class="dashboard-page-container">
+
+  <div *ngIf="loading && !experiment" class="loading-container">
+    <i class="fas fa-spinner fa-spin spinner-icon"></i>
+    <p>Loading experiment details...</p>
+  </div>
+
+  <div *ngIf="experiment">
+    <!-- Header Card -->
+    <div class="dashboard-header-card">
+      <div class="header-main">
+        <div class="header-title">
+          <button class="btn btn-outline btn-sm" (click)="back()" title="Back to experiments">
+            <i class="fas fa-arrow-left"></i> Back
+          </button>
+          <div>
+            <div class="title-with-badge">
+              <h2>{{ experiment.name }}</h2>
+              <div class="badge" [ngClass]="'badge-' + experiment.status.toLowerCase()">
+                {{ experiment.status }}
+              </div>
+            </div>
+            <div class="meta-row">
+              <span class="meta-item"><i class="far fa-calendar-alt"></i> Created: {{ formatDate(experiment.createdAt) }}</span>
+              <span class="meta-item" *ngIf="experiment.finishedAt"><i class="fas fa-flag-checkered"></i> Finished: {{ formatDate(experiment.finishedAt) }}</span>
+              <span class="meta-item"><i class="far fa-clock"></i> Duration: {{ formatDuration(experiment.durationSeconds) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn btn-outline" (click)="load()" title="Refresh details">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="header-stats-row">
+        <div class="stat-pill">
+          <span class="stat-label">Progress:</span>
+          <strong class="stat-value">
+            <i *ngIf="experiment.status === 'RUNNING'" class="fas fa-spinner fa-spin text-accent"></i>
+            {{ experiment.completedCircuits }} / {{ experiment.totalCircuits }} circuits
+          </strong>
+        </div>
+        <div class="stat-pill" *ngIf="experiment.machine">
+          <span class="stat-label">Machine:</span>
+          <strong class="stat-value">{{ experiment.machine }}</strong>
+        </div>
+        <div class="stat-pill" *ngIf="experiment.execAlgorithm">
+          <span class="stat-label">Algorithm:</span>
+          <strong class="stat-value">{{ experiment.execAlgorithm }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Box -->
+    <div *ngIf="experiment.errorMessage" class="error-box">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <strong>Execution Error:</strong>
+        <p>{{ experiment.errorMessage }}</p>
+      </div>
+    </div>
+
+    <!-- Global Totals Summary -->
+    <div class="summary-card" *ngIf="experiment.cycles && experiment.cycles.length > 0">
+      <div class="summary-label">
+        <i class="fas fa-chart-pie"></i>
+        <span>Overall Results:</span>
+      </div>
+      <div class="results-badges-row">
+        <span class="matrix-cell-badge with-count killed" title="Killed">K {{ totals.killed }}</span>
+        <span class="matrix-cell-badge with-count alive" title="Alive">A {{ totals.alive }}</span>
+        <span class="matrix-cell-badge with-count zombie" title="Zombie">Z {{ totals.zombie }}</span>
+        <span class="matrix-cell-badge with-count not-executed" *ngIf="totals.notExecuted > 0" title="Not Executed">&ndash; {{ totals.notExecuted }}</span>
+        <strong class="score-text" [class.high]="totals.mutationScore !== null && totals.mutationScore >= 70" [class.mid]="totals.mutationScore !== null && totals.mutationScore >= 40 && totals.mutationScore < 70" [class.low]="totals.mutationScore !== null && totals.mutationScore < 40" *ngIf="totals.mutationScore !== null">
+          Score: {{ totals.mutationScore }}%
+        </strong>
+        <span class="text-muted" *ngIf="totals.mutationScore === null">Score: -</span>
+      </div>
+    </div>
+
+    <!-- Cycles Table Section -->
+    <div class="details-section">
+      <h4>Mutation Cycles & Results:</h4>
+
+      <div *ngIf="!experiment.cycles || experiment.cycles.length === 0" class="no-cycles-hint">
+        <p *ngIf="experiment.status === 'RUNNING'">Cycles are currently being processed in the background...</p>
+        <p *ngIf="experiment.status !== 'RUNNING'">No cycles registered for this experiment.</p>
+      </div>
+
+      <div *ngIf="experiment.cycles && experiment.cycles.length > 0" class="cycles-table-wrapper">
+        <table class="cycles-table">
+          <thead>
+            <tr>
+              <th>Circuit / Cycle</th>
+              <th>Mutants</th>
+              <th>Killed / Alive / Zombie</th>
+              <th>Mutation Score</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cycle of experiment.cycles">
+              <td>
+                <div class="cycle-cell-title">
+                  <i class="fas fa-microchip circuit-icon" *ngIf="cycle.projectName"></i>
+                  <strong class="circuit-name" *ngIf="cycle.projectName">{{ cycle.projectName }} &mdash; </strong>
+                  <span class="cycle-name">{{ cycle.name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="pill-mutants-count">{{ cycle.totalMutants }} mutants</span>
+              </td>
+              <td>
+                <div class="results-badges-row">
+                  <span class="matrix-cell-badge with-count killed" title="Killed">K {{ cycle.killedCount }}</span>
+                  <span class="matrix-cell-badge with-count alive" title="Alive">A {{ cycle.aliveCount }}</span>
+                  <span class="matrix-cell-badge with-count zombie" title="Zombie">Z {{ cycle.zombieCount }}</span>
+                  <span class="matrix-cell-badge with-count not-executed" *ngIf="cycle.notExecutedCount > 0" title="Not Executed">&ndash; {{ cycle.notExecutedCount }}</span>
+                </div>
+              </td>
+              <td>
+                <strong class="score-text" [class.high]="cycle.mutationScore !== null && cycle.mutationScore >= 70" [class.mid]="cycle.mutationScore !== null && cycle.mutationScore >= 40 && cycle.mutationScore < 70" [class.low]="cycle.mutationScore !== null && cycle.mutationScore < 40" *ngIf="cycle.mutationScore !== undefined && cycle.mutationScore !== null">
+                  {{ cycle.mutationScore }}%
+                </strong>
+                <span class="text-muted" *ngIf="cycle.mutationScore === undefined || cycle.mutationScore === null">-</span>
+              </td>
+              <td>
+                <button class="btn btn-outline btn-sm" (click)="viewMatrix(cycle)" *ngIf="cycle.projectId" title="Open execution matrix and details">
+                  <i class="fas fa-table-cells"></i> View Matrix
+                </button>
+                <span class="view-cycle-tag" *ngIf="!cycle.projectId">
+                  <i class="fas fa-check"></i> Generated
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>

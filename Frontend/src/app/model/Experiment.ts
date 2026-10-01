@@ -1,5 +1,3 @@
-import { MutantCycle } from './MutantCycle';
-
 export interface CircuitConfig {
     projectId: string;
     projectName?: string;
@@ -23,10 +21,12 @@ export interface CreateExperimentRequest {
     email: string;
 }
 
+export type ExperimentStatus = 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
 export interface ExperimentProgress {
     id: string;
     name: string;
-    status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    status: ExperimentStatus;
     totalCircuits: number;
     completedCircuits: number;
     percentage: number;
@@ -34,17 +34,34 @@ export interface ExperimentProgress {
     startedAt?: string | Date;
 }
 
-export interface ExperimentSummary {
+export interface ExperimentListItem {
     id: string;
     name: string;
-    status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    status: ExperimentStatus;
     createdAt: string | Date;
     finishedAt?: string | Date;
     durationSeconds?: number;
     totalCircuits: number;
     completedCircuits: number;
+}
+
+export interface CycleStats {
+    id: number;
+    name: string;
+    projectId: string;
+    projectName: string;
+    totalMutants: number;
+    killedCount: number;
+    zombieCount: number;
+    aliveCount: number;
+    notExecutedCount: number;
+    mutationScore?: number | null;
+}
+
+export interface ExperimentDetail extends ExperimentListItem {
     machine?: string;
     execAlgorithm?: string;
     errorMessage?: string;
-    mutantCycles?: any[];
+    cycles: CycleStats[];
 }
+

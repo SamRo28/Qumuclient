@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, interval, of, switchMap, catchError, filter } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { CreateExperimentRequest, ExperimentProgress, ExperimentSummary } from '../model/Experiment';
+import { CreateExperimentRequest, ExperimentProgress, ExperimentListItem, ExperimentDetail } from '../model/Experiment';
 
 @Injectable({
   providedIn: 'root'
@@ -46,10 +46,10 @@ export class ExperimentService {
       );
   }
 
-  public getUserExperiments(): Observable<ExperimentSummary[]> {
+  public getUserExperiments(): Observable<ExperimentListItem[]> {
     const email = this.getUserEmail();
     if (!email) return of([]);
-    return this.http.post<ExperimentSummary[]>(`${environment.api.core}/experiments/user`, { email }, { withCredentials: true })
+    return this.http.post<ExperimentListItem[]>(`${environment.api.core}/experiments/user`, { email }, { withCredentials: true })
       .pipe(
         catchError(err => {
           console.error('Error fetching user experiments', err);
@@ -58,9 +58,9 @@ export class ExperimentService {
       );
   }
 
-  public getExperimentDetails(experimentId: string): Observable<ExperimentSummary> {
+  public getExperimentDetails(experimentId: string): Observable<ExperimentDetail> {
     const email = this.getUserEmail();
-    return this.http.post<ExperimentSummary>(`${environment.api.core}/experiments/details`, { email, experimentId }, { withCredentials: true });
+    return this.http.post<ExperimentDetail>(`${environment.api.core}/experiments/details`, { email, experimentId }, { withCredentials: true });
   }
 
   public deleteExperiment(experimentId: string): Observable<any> {

@@ -25,6 +25,7 @@ import { ChatSideBarComponent } from './chat-side-bar/chat-side-bar.component';
 import { CircuitViewerComponent } from './circuit-viewer/circuit-viewer.component';
 import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard.component';
 import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
+import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
 import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
 
 @NgModule({
@@ -50,6 +51,7 @@ import { ExperimentProgressTrackerComponent } from './experiment-progress-tracke
     CircuitViewerComponent,
     ExperimentWizardComponent,
     ExperimentsDashboardComponent,
+    ExperimentDetailComponent,
     ExperimentProgressTrackerComponent
   ],
   imports: [

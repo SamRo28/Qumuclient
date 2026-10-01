@@ -693,42 +693,6 @@
   min-width: 20px;
 }
 
-/* Matrix Cell Badge (K/A) */
-.matrix-cell-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  cursor: help;
-  /* Show title on hover */
-  transition: all 150ms ease;
-}
-
-.matrix-cell-badge.killed {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.matrix-cell-badge.alive {
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.matrix-cell-badge.zombie {
-  background: rgba(168, 85, 247, 0.15);
-  color: #a855f7;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-}
-
-.matrix-cell-badge:hover {
-  transform: scale(1.1);
-}
 
 /* Clean up old styles if not used, or keep for potential reuse */
 

@@ -1,23 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { Subscription, interval } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { ExperimentService } from '../services/experiment.service';
 import { ManagerService } from '../services/manager.service';
-import { ExperimentSummary } from '../model/Experiment';
+import { ExperimentListItem } from '../model/Experiment';
 
 @Component({
   selector: 'app-experiments-dashboard',
   templateUrl: './experiments-dashboard.component.html',
   styleUrls: ['./experiments-dashboard.component.css']
 })
-export class ExperimentsDashboardComponent implements OnInit {
+export class ExperimentsDashboardComponent implements OnInit, OnDestroy {
 
-  public experiments: ExperimentSummary[] = [];
+  public experiments: ExperimentListItem[] = [];
   public loading: boolean = false;
-  public expandedExperimentId: string | null = null;
+  private refreshSub?: Subscription;
 
   // Delete Modal State
   public isDeleteModalOpen: boolean = false;
-  public experimentToDelete: ExperimentSummary | null = null;
+  public experimentToDelete: ExperimentListItem | null = null;
   public isDeleting: boolean = false;
 
   constructor(
@@ -33,10 +35,24 @@ export class ExperimentsDashboardComponent implements OnInit {
       return;
     }
     this.loadExperiments();
+    this.refreshSub = interval(15000).pipe(filter(() => this.hasRunning)).subscribe(() => this.loadExperiments(true));
   }
 
-  loadExperiments(): void {
-    this.loading = true;
+  ngOnDestroy(): void {
+    if (this.refreshSub) {
+      this.refreshSub.unsubscribe();
+      this.refreshSub = undefined;
+    }
+  }
+
+  get hasRunning(): boolean {
+    return this.experiments.some(e => e.status === 'RUNNING');
+  }
+
+  loadExperiments(silent: boolean = false): void {
+    if (!silent) {
+      this.loading = true;
+    }
     this.experimentService.getUserExperiments().subscribe({
       next: (list) => {
         this.experiments = list || [];
@@ -53,15 +69,11 @@ export class ExperimentsDashboardComponent implements OnInit {
     this.router.navigate(['/experiments/create']);
   }
 
-  toggleExpand(expId: string): void {
-    if (this.expandedExperimentId === expId) {
-      this.expandedExperimentId = null;
-    } else {
-      this.expandedExperimentId = expId;
-    }
+  openExperiment(exp: ExperimentListItem): void {
+    this.router.navigate(['/experiments', exp.id]);
   }
 
-  openDeleteModal(exp: ExperimentSummary, event: Event): void {
+  openDeleteModal(exp: ExperimentListItem, event: Event): void {
     event.stopPropagation();
     this.experimentToDelete = exp;
     this.isDeleteModalOpen = true;
@@ -115,9 +127,5 @@ export class ExperimentsDashboardComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     });
-  }
-
-  viewMutantCycle(projectId: string, cycleId: number): void {
-    this.router.navigate([`/project/${projectId}/cycle/${cycleId}`]);
   }
 }
