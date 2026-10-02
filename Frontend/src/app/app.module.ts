@@ -27,10 +27,12 @@ import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard
 import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
 import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
 import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
+import { OperatorLabelPipe } from './components/operator-label.pipe';
 
 @NgModule({
   declarations: [
     AppComponent,
+    OperatorLabelPipe,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,
