@@ -17,6 +17,19 @@ public class NoiseInsertion extends ColumnInsertion {
 	public static final String NOISE_GATE_NAME = "Noise";
 	public static final String NOISE_MATRIX = "{{0.99875026,-0.04997917i},{-0.04997917i,0.99875026}}";
 
+	private NoiseConfig noiseConfig = NoiseConfig.DEFAULT;
+
+	public NoiseConfig getNoiseConfig() {
+		return this.noiseConfig;
+	}
+
+	public NoiseInsertion withConfig(NoiseConfig config) {
+		NoiseInsertion copy = new NoiseInsertion();
+		copy.setName(this.name);
+		copy.noiseConfig = (config == null ? NoiseConfig.DEFAULT : config);
+		return copy;
+	}
+
 	@Override
 	public void setName(String name) {
 		this.name = name;
@@ -26,11 +39,15 @@ public class NoiseInsertion extends ColumnInsertion {
 
 	@Override
 	protected Gate gateFor(Circuit mutant, int row) {
-		ensureNoiseGate(mutant);
+		ensureNoiseGate(mutant, this.noiseConfig);
 		return new Gate(NOISE_GATE_ID, row);
 	}
 
 	public static void ensureNoiseGate(Circuit c) {
+		ensureNoiseGate(c, NoiseConfig.DEFAULT);
+	}
+
+	public static void ensureNoiseGate(Circuit c, NoiseConfig config) {
 		if (c.getCustomizedGates() == null) {
 			c.setCustomizedGates(new ArrayList<>());
 		}
@@ -45,7 +62,7 @@ public class NoiseInsertion extends ColumnInsertion {
 			JSONObject jso = new JSONObject();
 			jso.put("id", NOISE_GATE_ID);
 			jso.put("name", NOISE_GATE_NAME);
-			jso.put("matrix", NOISE_MATRIX);
+			jso.put("matrix", config == null ? NOISE_MATRIX : config.toQuirkMatrix());
 			c.getCustomizedGates().add(0, new CustomizedGate(jso));
 		}
 	}
