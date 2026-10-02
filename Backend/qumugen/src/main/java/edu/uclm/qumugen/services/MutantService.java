@@ -13,6 +13,7 @@ import edu.uclm.qumugen.model.Circuit;
 import edu.uclm.qumugen.model.CustomizedGate;
 import edu.uclm.qumugen.model.Gate;
 import edu.uclm.qumugen.model.QColumn;
+import edu.uclm.qumugen.operators.NoiseConfig;
 import edu.uclm.qumugen.operators.NoiseInsertion;
 import edu.uclm.qumugen.operators.Operator;
 
@@ -29,6 +30,15 @@ public class MutantService {
 
 	public List<Circuit> generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
 			String mutableColumns, boolean generateWithAllInputs, String sInputQubits) {
+		return this.generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns, generateWithAllInputs,
+				sInputQubits, NoiseConfig.DEFAULT);
+	}
+
+	public List<Circuit> generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
+			String mutableColumns, boolean generateWithAllInputs, String sInputQubits, NoiseConfig noiseConfig) {
+		if (noiseConfig == null) {
+			noiseConfig = NoiseConfig.DEFAULT;
+		}
 		JSONObject jsoQuirk = new JSONObject(quirk);
 		Circuit circuit = new Circuit(jsoQuirk);
 		List<Circuit> mutants = new ArrayList<>();
@@ -76,6 +86,9 @@ public class MutantService {
 
 		for (String operatorName : operatorNames) {
 			Operator operator = this.operatorsService.find(operatorName);
+			if (operator instanceof NoiseInsertion) {
+				operator = ((NoiseInsertion) operator).withConfig(noiseConfig);
+			}
 			List<Circuit> auxi = new ArrayList<>();
 			operator.apply(circuit, auxi, rows, columns);
 			if (numberOfInputQubits != -1) {
@@ -112,7 +125,8 @@ public class MutantService {
 						subMutableRows, 
 						subMutableColumns, 
 						false, 
-						""
+						"",
+						noiseConfig
 					);
 					
 					for (int mIdx = 0; mIdx < subMutants.size(); mIdx++) {
@@ -129,7 +143,7 @@ public class MutantService {
 						CustomizedGate mutatedCG = new CustomizedGate(cg, subMutant, newId, newName);
 						mutantMain.getCustomizedGates().set(cgIdx, mutatedCG);
 						if (hadNoise) {
-							NoiseInsertion.ensureNoiseGate(mutantMain);
+							NoiseInsertion.ensureNoiseGate(mutantMain, noiseConfig);
 						}
 						mutantMain.replaceGateName(oldId, newId);
 						

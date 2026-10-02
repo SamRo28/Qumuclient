@@ -24,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 import edu.uclm.qumugen.model.Circuit;
 import edu.uclm.qumugen.model.Gate;
 import edu.uclm.qumugen.model.QColumn;
+import edu.uclm.qumugen.operators.NoiseConfig;
 import edu.uclm.qumugen.operators.Operator;
 import edu.uclm.qumugen.services.MutantService;
 import edu.uclm.qumugen.services.QiskitService;
@@ -53,8 +54,15 @@ public class GenController {
 		boolean generateWithAllInputs = (boolean) info.get("generateWithAllInputs");
 		String sInputQubits = info.get("inputQubits").toString();
 
+		NoiseConfig noiseConfig;
+		try {
+			noiseConfig = NoiseConfig.from(info.get("noiseConfig"));
+		} catch (IllegalArgumentException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+		}
+
 		List<Circuit> result = this.mutantService.generateQuirkMutants(quirk, operatorNames, mutableRows,
-				mutableColumns, generateWithAllInputs, sInputQubits);
+				mutableColumns, generateWithAllInputs, sInputQubits, noiseConfig);
 
 		return result;
 	}
