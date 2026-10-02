@@ -29,12 +29,14 @@ import { ExperimentDetailComponent } from './experiment-detail/experiment-detail
 import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
 import { OperatorLabelPipe } from './components/operator-label.pipe';
 import { OperatorGridComponent } from './components/operator-grid/operator-grid.component';
+import { NoiseConfigComponent } from './components/noise-config/noise-config.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     OperatorLabelPipe,
     OperatorGridComponent,
+    NoiseConfigComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,

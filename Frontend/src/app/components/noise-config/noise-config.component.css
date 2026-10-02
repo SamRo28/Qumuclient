@@ -1,0 +1,143 @@
+.noise-config-container {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.noise-config-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.noise-config-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.noise-config-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.control-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 45px;
+}
+
+.axis-buttons {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.axis-btn,
+.preset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.65rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.axis-btn:hover,
+.preset-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.axis-btn.active {
+  background: var(--accent-gradient);
+  border-color: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--shadow-glass-strong);
+}
+
+.input-with-suffix {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.glass-input {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 0.35rem 2.2rem 0.35rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  width: 110px;
+  outline: none;
+  transition: all 150ms ease;
+}
+
+.glass-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--shadow-glass-strong);
+}
+
+.input-suffix {
+  position: absolute;
+  right: 0.65rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.noise-preview {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.preview-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--accent-primary);
+  background: var(--glass-bg-hover);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-glass-light);
+}
+
+.validation-error {
+  font-size: 0.8rem;
+  color: #ff4d4f;
+  font-weight: 500;
+}
