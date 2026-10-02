@@ -13,6 +13,7 @@ import edu.uclm.qumugen.model.Circuit;
 import edu.uclm.qumugen.model.CustomizedGate;
 import edu.uclm.qumugen.model.Gate;
 import edu.uclm.qumugen.model.QColumn;
+import edu.uclm.qumugen.operators.NoiseInsertion;
 import edu.uclm.qumugen.operators.Operator;
 
 @Service
@@ -117,6 +118,7 @@ public class MutantService {
 					for (int mIdx = 0; mIdx < subMutants.size(); mIdx++) {
 						Circuit subMutant = subMutants.get(mIdx);
 						Circuit mutantMain = new Circuit(circuit);
+						this.hoistNoiseGate(subMutant, mutantMain);
 						
 						String oldId = cg.getId();
 						String oldName = cg.getName();
@@ -182,6 +184,18 @@ public class MutantService {
 			}
 		}
 		return result;
+	}
+
+	private void hoistNoiseGate(Circuit subMutant, Circuit mutantMain) {
+		if (subMutant.getCustomizedGates() != null) {
+			boolean removed = subMutant.getCustomizedGates().removeIf(cg -> NoiseInsertion.NOISE_GATE_ID.equals(cg.getId()));
+			if (removed) {
+				if (subMutant.getCustomizedGates().isEmpty()) {
+					subMutant.setCustomizedGates(null);
+				}
+				NoiseInsertion.ensureNoiseGate(mutantMain);
+			}
+		}
 	}
 
 }
