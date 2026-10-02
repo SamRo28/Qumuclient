@@ -20,6 +20,16 @@
 		{
 			"family" : "Position errors",
 			"operators" : [ "MoveGateDownAdj", "MoveGateDownAll","MoveGateUpAdj", "MoveGateUpAll","ChangeControlledQubitDown", "ChangeControlledQubitUp","ChangeControlQubitDown", "ChangeControlQubitUp" ]
+		},
+		{
+			"family" : "Noise insertion",
+			"containerClass" : "NoiseInsertion",
+			"operators" : [ "NoiseInsertionStart", "NoiseInsertionEnd", "NoiseInsertionRandom" ]
+		},
+		{
+			"family" : "Gate addition",
+			"containerClass" : "GateAddition",
+			"operators" : [ "AddGateStart_H", "AddGateStart_X", "AddGateStart_X^½", "AddGateStart_X^-½", "AddGateStart_X^¼", "AddGateStart_X^-¼", "AddGateStart_Y", "AddGateStart_Y^½", "AddGateStart_Y^-½", "AddGateStart_Y^¼", "AddGateStart_Y^-¼", "AddGateStart_Z", "AddGateStart_Z^½", "AddGateStart_Z^-½", "AddGateStart_Z^¼", "AddGateStart_Z^-¼", "AddGateEnd_H", "AddGateEnd_X", "AddGateEnd_X^½", "AddGateEnd_X^-½", "AddGateEnd_X^¼", "AddGateEnd_X^-¼", "AddGateEnd_Y", "AddGateEnd_Y^½", "AddGateEnd_Y^-½", "AddGateEnd_Y^¼", "AddGateEnd_Y^-¼", "AddGateEnd_Z", "AddGateEnd_Z^½", "AddGateEnd_Z^-½", "AddGateEnd_Z^¼", "AddGateEnd_Z^-¼", "AddGateRandom_H", "AddGateRandom_X", "AddGateRandom_X^½", "AddGateRandom_X^-½", "AddGateRandom_X^¼", "AddGateRandom_X^-¼", "AddGateRandom_Y", "AddGateRandom_Y^½", "AddGateRandom_Y^-½", "AddGateRandom_Y^¼", "AddGateRandom_Y^-¼", "AddGateRandom_Z", "AddGateRandom_Z^½", "AddGateRandom_Z^-½", "AddGateRandom_Z^¼", "AddGateRandom_Z^-¼" ]
 		}
 	],
 	"gates" : [
