@@ -392,4 +392,114 @@ public class ColumnInsertionOperatorsTest {
 		assertTrue(outputFile.exists() && outputFile.length() > 0, "quirk-mutants.txt debe existir y tener contenido");
 	}
 
+	@Test
+	public void noiseConfigIsApplied() {
+		NoiseConfig cfg = new NoiseConfig(NoiseAxis.Y, Math.PI / 2);
+		List<String> noiseOps = List.of("NoiseInsertionStart", "NoiseInsertionEnd", "NoiseInsertionRandom");
+		List<String> testCircuits = List.of(C1_BELL, C5_SUB);
+
+		for (String cJson : testCircuits) {
+			Circuit c = new Circuit(new JSONObject(cJson));
+			String rows = allRows(c.getQubits());
+
+			for (String op : noiseOps) {
+				List<Circuit> mutants = mutantService.generateQuirkMutants(
+					new JSONObject(cJson).toMap(),
+					List.of(op),
+					rows,
+					"",
+					false,
+					"",
+					cfg
+				);
+
+				for (Circuit m : mutants) {
+					JSONObject q = m.toQuirk();
+					assertTrue(q.has("gates"));
+					JSONArray gates = q.getJSONArray("gates");
+					JSONObject g0 = gates.getJSONObject(0);
+					assertEquals(NoiseInsertion.NOISE_GATE_ID, g0.getString("id"));
+					assertEquals(cfg.toQuirkMatrix(), g0.getString("matrix"));
+
+					if (cJson.equals(C5_SUB)) {
+						for (int i = 0; i < gates.length(); i++) {
+							JSONObject g = gates.getJSONObject(i);
+							if (g.has("circuit")) {
+								assertFalse(g.getJSONObject("circuit").has("gates"),
+										"El sub-circuito en C5 no debe contener la clave 'gates'");
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@Test
+	public void noiseConfigDoesNotLeakBetweenRequests() {
+		NoiseConfig cfg = new NoiseConfig(NoiseAxis.Z, 1.0);
+		Circuit c1 = new Circuit(new JSONObject(C1_BELL));
+		String rows = allRows(c1.getQubits());
+
+		// 1. Llamada con configuración personalizada
+		mutantService.generateQuirkMutants(
+			new JSONObject(C1_BELL).toMap(),
+			List.of("NoiseInsertionStart"),
+			rows,
+			"",
+			false,
+			"",
+			cfg
+		);
+
+		// 2. Llamada posterior con la sobrecarga de 6 parámetros (por defecto)
+		List<Circuit> defaultMutants = mutantService.generateQuirkMutants(
+			new JSONObject(C1_BELL).toMap(),
+			List.of("NoiseInsertionStart"),
+			rows,
+			"",
+			false,
+			""
+		);
+
+		for (Circuit m : defaultMutants) {
+			JSONObject g0 = m.toQuirk().getJSONArray("gates").getJSONObject(0);
+			assertEquals(NoiseInsertion.NOISE_MATRIX, g0.getString("matrix"));
+		}
+
+		Operator registeredOp = Operator.operators.get("NoiseInsertionStart");
+		assertTrue(registeredOp instanceof NoiseInsertion);
+		assertEquals(NoiseConfig.DEFAULT.toQuirkMatrix(), ((NoiseInsertion) registeredOp).getNoiseConfig().toQuirkMatrix());
+	}
+
+	@Test
+	public void configuredNoiseQiskitIsExecutable() {
+		List<String> testCircuits = List.of(C1_BELL, C5_SUB);
+		for (NoiseAxis axis : NoiseAxis.values()) {
+			NoiseConfig cfg = new NoiseConfig(axis, Math.PI / 3);
+			for (String cJson : testCircuits) {
+				Circuit c = new Circuit(new JSONObject(cJson));
+				String rows = allRows(c.getQubits());
+				List<Circuit> mutants = mutantService.generateQuirkMutants(
+					new JSONObject(cJson).toMap(),
+					List.of("NoiseInsertionStart"),
+					rows,
+					"",
+					false,
+					"",
+					cfg
+				);
+
+				for (Circuit m : mutants) {
+					Map<String, Object> code = qiskitService.getCode(m.toQuirk().toMap(), null, m.getQubits());
+					assertEquals(Boolean.TRUE, code.get("executable"),
+							"Qiskit no ejecutable para eje " + axis + " en " + cJson);
+					String decl = code.get("declaration").toString();
+					assertTrue(decl.contains("UnitaryGate("),
+							"Falta UnitaryGate en declaración para eje " + axis);
+				}
+			}
+		}
+	}
+
 }
