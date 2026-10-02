@@ -28,11 +28,13 @@ import { ExperimentsDashboardComponent } from './experiments-dashboard/experimen
 import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
 import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
 import { OperatorLabelPipe } from './components/operator-label.pipe';
+import { OperatorGridComponent } from './components/operator-grid/operator-grid.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     OperatorLabelPipe,
+    OperatorGridComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,

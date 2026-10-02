@@ -1,0 +1,44 @@
+<div *ngIf="mode === 'list'" class="operators-list-horizontal">
+  <label *ngFor="let op of operators" class="operator-label">
+    <input type="checkbox" [(ngModel)]="op.selected" class="glass-checkbox">
+    <span class="operator-name" [title]="op.name">{{ op.name | operatorLabel }}</span>
+  </label>
+</div>
+
+<div *ngIf="mode === 'table'" class="table-container">
+  <table class="operator-table">
+    <thead>
+      <tr *ngIf="tableType === 'swap'" class="super-header-row">
+        <th></th>
+        <th [attr.colspan]="columns.length" class="super-header-title">Replaced by</th>
+      </tr>
+      <tr>
+        <th class="corner-header">{{ rowHeaderTitle }}</th>
+        <th *ngFor="let col of columns" class="col-header">
+          <button type="button" class="header-btn" (click)="toggleColumn(col)" [title]="'Toggle all ' + col">
+            {{ col }}
+          </button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of rows">
+        <th class="row-header">
+          <button type="button" class="header-btn" (click)="toggleRow(row)" [title]="'Toggle all ' + row">
+            {{ row }}
+          </button>
+        </th>
+        <td *ngFor="let col of columns" class="cell">
+          <ng-container *ngIf="getCell(row, col) as cell; else emptyCell">
+            <label class="cell-label" [title]="(cell.name | operatorLabel) + ' (' + cell.name + ')'">
+              <input type="checkbox" [(ngModel)]="cell.selected" class="glass-checkbox">
+            </label>
+          </ng-container>
+          <ng-template #emptyCell>
+            <span class="empty-dash">—</span>
+          </ng-template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
