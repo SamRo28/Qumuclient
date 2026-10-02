@@ -6,6 +6,7 @@ import { ExperimentService } from '../services/experiment.service';
 import { ManagerService } from '../services/manager.service';
 import { CircuitConfig, CreateExperimentRequest } from '../model/Experiment';
 import { OperatorFamily } from '../model/OperatorFamily';
+import { NoiseConfig, DEFAULT_NOISE_CONFIG, isValidNoiseConfig, isNoiseOperator } from '../model/NoiseConfig';
 
 @Component({
   selector: 'app-experiment-wizard',
@@ -31,6 +32,7 @@ export class ExperimentWizardComponent implements OnInit {
   public families: OperatorFamily[] = [];
   public selectedFamily: OperatorFamily | null = null;
   public isModalOpen: boolean = false;
+  public noiseConfig: NoiseConfig = { ...DEFAULT_NOISE_CONFIG };
 
   // Step 4: Execution Configuration (matching original dropdowns)
   public experimentName: string = 'Experiment ' + new Date().toLocaleDateString('en-US') + ' ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -281,10 +283,25 @@ export class ExperimentWizardComponent implements OnInit {
     return list;
   }
 
+  isNoiseFamily(family: OperatorFamily): boolean {
+    if (!family || !family.operators) return false;
+    return family.operators.some(op => isNoiseOperator(op.name));
+  }
+
+  hasNoiseSelected(): boolean {
+    return this.families.some(family =>
+      family.operators && family.operators.some(op => op.selected && isNoiseOperator(op.name))
+    );
+  }
+
   // Step 4 preparation
   prepareStep4(): void {
     if (!this.hasSelectedOperators()) {
       this.errorMessage = 'Please select at least one mutation operator to continue.';
+      return;
+    }
+    if (this.hasNoiseSelected() && !isValidNoiseConfig(this.noiseConfig)) {
+      this.errorMessage = 'Please enter a valid noise angle (0 < angle ≤ 2π radians).';
       return;
     }
     this.errorMessage = '';
@@ -321,7 +338,10 @@ export class ExperimentWizardComponent implements OnInit {
       toleratedError: this.toleratedError,
       zombieError: this.zombieError,
       shots: this.shots,
-      email: sessionStorage.getItem('email') || ''
+      email: sessionStorage.getItem('email') || '',
+      noiseConfig: this.hasNoiseSelected()
+        ? { axis: this.noiseConfig.axis, angle: Number(this.noiseConfig.angle) }
+        : undefined
     };
 
     this.experimentService.createExperiment(payload).subscribe({

@@ -1,3 +1,5 @@
+import { NoiseConfig } from './NoiseConfig';
+
 export interface CircuitConfig {
     projectId: string;
     projectName?: string;
@@ -19,6 +21,7 @@ export interface CreateExperimentRequest {
     zombieError: number;
     shots: number;
     email: string;
+    noiseConfig?: NoiseConfig;
 }
 
 export type ExperimentStatus = 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
