@@ -6,6 +6,7 @@ import { AppComponent } from '../app.component';
 import { ManagerService } from '../services/manager.service';
 import { LoadingService } from '../services/loading.service';
 import { Subscription } from 'rxjs';
+import { NoiseConfig, DEFAULT_NOISE_CONFIG, isValidNoiseConfig, isNoiseOperator } from '../model/NoiseConfig';
 
 @Component({
   selector: 'app-operators',
@@ -19,6 +20,7 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   inputQubitsSelection: { [key: number]: boolean } = {};
   outputQubitsSelection: { [key: number]: boolean } = {};
   qubitsIndices: number[] = [];
+  public noiseConfig: NoiseConfig = { ...DEFAULT_NOISE_CONFIG };
   private projectSubscription?: Subscription;
 
   constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) { }
@@ -173,10 +175,19 @@ export class OperatorsComponent implements OnInit, OnDestroy {
           selectedOperators.push(this.families[i].operators[j].name)
       }
     }
+    if (this.hasNoiseSelected() && !isValidNoiseConfig(this.noiseConfig)) {
+      this.manager.showNotification('Please enter a valid noise angle (0 < angle ≤ 2π radians).', 'error', 5000);
+      return;
+    }
+
     if (selectedOperators.length > 0) {
       this.loading.show()
       this.manager.showNotification("Generating mutants...", "loading", 0);
-      this.service.generateMutants(selectedCircuit.qProgram, selectedOperators).subscribe(
+      this.service.generateMutants(
+        selectedCircuit.qProgram,
+        selectedOperators,
+        this.hasNoiseSelected() ? this.noiseConfig : undefined
+      ).subscribe(
         mutants => {
           this.manager.showSidebar = true
           this.manager.setMutants(mutants)
@@ -225,6 +236,17 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   hasSelectedOperators(): boolean {
     return this.families.some(family =>
       family.operators.some(op => op.selected)
+    );
+  }
+
+  isNoiseFamily(family: OperatorFamily): boolean {
+    if (!family || !family.operators) return false;
+    return family.operators.some(op => isNoiseOperator(op.name));
+  }
+
+  hasNoiseSelected(): boolean {
+    return this.families.some(family =>
+      family.operators && family.operators.some(op => op.selected && isNoiseOperator(op.name))
     );
   }
 

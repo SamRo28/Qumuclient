@@ -557,3 +557,14 @@
         justify-content: center;
     }
 }
+
+.operator-code {
+    opacity: .6;
+    font-size: .8em;
+    margin-left: .5rem;
+}
+
+.family-card-wide {
+    grid-column: 1 / -1;
+    width: 100%;
+}

@@ -28,7 +28,8 @@
           OPERATOR
         </label>
         <input type="string" id="operator" name="operator" class="input"
-          [value]="selectedMutant?.operator?.name || selectedMutant?.mutationOperator" readonly>
+          [value]="(selectedMutant?.operator?.name || selectedMutant?.mutationOperator) | operatorLabel"
+          [title]="selectedMutant?.operator?.name || selectedMutant?.mutationOperator" readonly>
       </div>
 
       <div class="field-small">

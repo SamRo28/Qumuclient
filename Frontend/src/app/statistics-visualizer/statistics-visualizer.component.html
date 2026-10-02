@@ -145,7 +145,7 @@
                     <div class="custom-chart-container">
                         <div *ngIf="mostLethalOperators.length === 0" class="empty-text">No operator data available.</div>
                         <div class="chart-bar-row" *ngFor="let item of mostLethalOperators" [attr.title]="item.tooltip">
-                            <div class="bar-label" [title]="item.operator">{{ item.operator }}</div>
+                            <div class="bar-label" [title]="item.operator">{{ item.operator | operatorLabel }}</div>
                             <div class="bar-track">
                                 <div class="bar-fill lethal-fill" [style.width.%]="item.killRate * 100"></div>
                             </div>
@@ -171,7 +171,7 @@
                     <div class="custom-chart-container">
                         <div *ngIf="innocuousOperators.length === 0" class="empty-text">No operator data available.</div>
                         <div class="chart-bar-row" *ngFor="let item of innocuousOperators" [attr.title]="item.tooltip">
-                            <div class="bar-label" [title]="item.operator">{{ item.operator }}</div>
+                            <div class="bar-label" [title]="item.operator">{{ item.operator | operatorLabel }}</div>
                             <div class="innocuous-badge">Kill rate 0%</div>
                         </div>
                     </div>
@@ -286,7 +286,7 @@
                                     No zombie mutants detected in this execution.
                                 </div>
                                 <div class="chart-bar-row" *ngFor="let item of unstableOperators" [attr.title]="item.tooltip">
-                                    <div class="bar-label" [title]="item.operator">{{ item.operator }}</div>
+                                    <div class="bar-label" [title]="item.operator">{{ item.operator | operatorLabel }}</div>
                                     <div class="bar-track">
                                         <div class="bar-fill zombie-fill" [style.width.%]="item.zombieRate * 100"></div>
                                     </div>

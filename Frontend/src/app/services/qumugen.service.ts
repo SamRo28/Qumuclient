@@ -4,6 +4,7 @@ import { QProgram } from '../model/QProgram';
 import { ManagerService } from './manager.service';
 import { Mutant } from '../model/Mutant';
 import { Curl } from '../model/Curl';
+import { NoiseConfig } from '../model/NoiseConfig';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -22,14 +23,17 @@ export class QumugenService {
     return this.client.get(`${environment.api.mutation}/qumugen/getOperators/` + family)
   }
 
-  generateMutants(circuit: QProgram, selectedOperators: any[]) {
-    let info = {
+  generateMutants(circuit: QProgram, selectedOperators: any[], noiseConfig?: NoiseConfig) {
+    let info: any = {
       circuit: circuit.qCircuit.quirkCode,
       operatorNames: selectedOperators,
       mutableColumns: circuit.qCircuit.mutableColumns,
       mutableRows: circuit.qCircuit.mutableRows,
       inputQubits: this.manager.inputQubits,
       generateWithAllInputs: this.manager.generateWithAllInputs
+    };
+    if (noiseConfig) {
+      info.noiseConfig = noiseConfig;
     }
     return this.client.put<any>(`${environment.api.mutation}/qumugen/generateQuirkMutants`, info)
   }

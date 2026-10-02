@@ -200,8 +200,8 @@
                     <td class="operator-column">
                       <div class="operator-tooltip-container" (click)="goToMutant(row.mutant)"
                         (mouseenter)="showOperatorTooltip($event, row.mutant)" (mouseleave)="hideOperatorTooltip()">
-                        <span class="operator-text">
-                          {{ row.mutant.mutationOperator || '-' }}
+                        <span class="operator-text" [title]="row.mutant.mutationOperator">
+                          {{ (row.mutant.mutationOperator | operatorLabel) || '-' }}
                         </span>
                       </div>
                     </td>

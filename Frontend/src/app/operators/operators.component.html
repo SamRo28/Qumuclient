@@ -141,7 +141,7 @@
 
   <!-- Operator Families -->
   <div class="families-grid">
-    <div *ngFor="let family of families" class="glass-card family-card">
+    <div *ngFor="let family of families" class="glass-card family-card" [class.family-card-wide]="getEnabledOperators(family).length > 12">
       <div class="family-header">
         <h4 class="family-name">{{ family.name }}</h4>
         <div class="family-actions">
@@ -161,12 +161,8 @@
         </div>
       </div>
 
-      <div class="operators-list-horizontal">
-        <label *ngFor="let op of getEnabledOperators(family)" class="operator-label">
-          <input type="checkbox" [(ngModel)]="op.selected" class="glass-checkbox">
-          <span class="operator-name">{{ op.name }}</span>
-        </label>
-      </div>
+      <app-operator-grid [operators]="getEnabledOperators(family)"></app-operator-grid>
+      <app-noise-config *ngIf="isNoiseFamily(family)" [config]="noiseConfig"></app-noise-config>
     </div>
   </div>
 
@@ -211,7 +207,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="3" fill="currentColor" />
           </svg>
-          <strong>{{ op.name }}</strong>
+          <strong>{{ op.name | operatorLabel }}</strong> <code class="operator-code">{{ op.name }}</code>
         </div>
         <p>{{ op.description }}</p>
       </div>
