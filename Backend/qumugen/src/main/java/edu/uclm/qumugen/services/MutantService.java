@@ -118,7 +118,7 @@ public class MutantService {
 					for (int mIdx = 0; mIdx < subMutants.size(); mIdx++) {
 						Circuit subMutant = subMutants.get(mIdx);
 						Circuit mutantMain = new Circuit(circuit);
-						this.hoistNoiseGate(subMutant, mutantMain);
+						boolean hadNoise = this.hoistNoiseGate(subMutant);
 						
 						String oldId = cg.getId();
 						String oldName = cg.getName();
@@ -128,6 +128,9 @@ public class MutantService {
 						
 						CustomizedGate mutatedCG = new CustomizedGate(cg, subMutant, newId, newName);
 						mutantMain.getCustomizedGates().set(cgIdx, mutatedCG);
+						if (hadNoise) {
+							NoiseInsertion.ensureNoiseGate(mutantMain);
+						}
 						mutantMain.replaceGateName(oldId, newId);
 						
 						mutantMain.setMutationOperator(subMutant.getMutationOperator());
@@ -186,16 +189,17 @@ public class MutantService {
 		return result;
 	}
 
-	private void hoistNoiseGate(Circuit subMutant, Circuit mutantMain) {
+	private boolean hoistNoiseGate(Circuit subMutant) {
 		if (subMutant.getCustomizedGates() != null) {
 			boolean removed = subMutant.getCustomizedGates().removeIf(cg -> NoiseInsertion.NOISE_GATE_ID.equals(cg.getId()));
 			if (removed) {
 				if (subMutant.getCustomizedGates().isEmpty()) {
 					subMutant.setCustomizedGates(null);
 				}
-				NoiseInsertion.ensureNoiseGate(mutantMain);
+				return true;
 			}
 		}
+		return false;
 	}
 
 }
