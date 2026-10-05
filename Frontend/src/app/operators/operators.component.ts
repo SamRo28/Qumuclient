@@ -6,7 +6,7 @@ import { AppComponent } from '../app.component';
 import { ManagerService } from '../services/manager.service';
 import { LoadingService } from '../services/loading.service';
 import { Subscription } from 'rxjs';
-import { NoiseConfig, DEFAULT_NOISE_CONFIG, isValidNoiseConfig, isNoiseOperator } from '../model/NoiseConfig';
+import { NoiseConfig, DEFAULT_NOISE_CONFIG, areValidNoiseRotations, isNoiseOperator } from '../model/NoiseConfig';
 
 @Component({
   selector: 'app-operators',
@@ -20,7 +20,7 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   inputQubitsSelection: { [key: number]: boolean } = {};
   outputQubitsSelection: { [key: number]: boolean } = {};
   qubitsIndices: number[] = [];
-  public noiseConfig: NoiseConfig = { ...DEFAULT_NOISE_CONFIG };
+  public noiseRotations: NoiseConfig[] = [{ ...DEFAULT_NOISE_CONFIG }];
   private projectSubscription?: Subscription;
 
   constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) { }
@@ -175,8 +175,8 @@ export class OperatorsComponent implements OnInit, OnDestroy {
           selectedOperators.push(this.families[i].operators[j].name)
       }
     }
-    if (this.hasNoiseSelected() && !isValidNoiseConfig(this.noiseConfig)) {
-      this.manager.showNotification('Please enter a valid noise angle (0 < angle ≤ 2π radians).', 'error', 5000);
+    if (this.hasNoiseSelected() && !areValidNoiseRotations(this.noiseRotations)) {
+      this.manager.showNotification("Please fix the noise rotations: each angle must be in (0, 2π] and rotations cannot repeat (max 6).", "error", 5000);
       return;
     }
 
@@ -186,7 +186,7 @@ export class OperatorsComponent implements OnInit, OnDestroy {
       this.service.generateMutants(
         selectedCircuit.qProgram,
         selectedOperators,
-        this.hasNoiseSelected() ? this.noiseConfig : undefined
+        this.hasNoiseSelected() ? this.noiseRotations.map(r => ({ axis: r.axis, angle: Number(r.angle) })) : undefined
       ).subscribe(
         mutants => {
           this.manager.showSidebar = true
@@ -244,10 +244,22 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     return family.operators.some(op => isNoiseOperator(op.name));
   }
 
+  selectedNoiseCount(): number {
+    let count = 0;
+    for (const family of this.families) {
+      if (family.operators) {
+        for (const op of family.operators) {
+          if (op.selected && isNoiseOperator(op.name)) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
   hasNoiseSelected(): boolean {
-    return this.families.some(family =>
-      family.operators && family.operators.some(op => op.selected && isNoiseOperator(op.name))
-    );
+    return this.selectedNoiseCount() > 0;
   }
 
 }

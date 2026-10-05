@@ -223,7 +223,7 @@
 
     <!-- Operator Families Grid -->
     <div class="families-grid">
-      <div *ngFor="let family of families" class="glass-card family-card" [class.family-card-wide]="getEnabledOperators(family).length > 12">
+      <div *ngFor="let family of families" class="glass-card family-card" [class.family-card-wide]="getEnabledOperators(family).length > 12 || isNoiseFamily(family)">
         <div class="family-header">
           <h4 class="family-name">{{ family.name }}</h4>
           <div class="family-actions">
@@ -243,7 +243,7 @@
         </div>
 
         <app-operator-grid [operators]="getEnabledOperators(family)"></app-operator-grid>
-        <app-noise-config *ngIf="isNoiseFamily(family)" [config]="noiseConfig"></app-noise-config>
+        <app-noise-rotations *ngIf="isNoiseFamily(family)" [rotations]="noiseRotations" [positionsSelected]="selectedNoiseCount()"></app-noise-rotations>
       </div>
     </div>
 
@@ -334,9 +334,13 @@
         <div class="summary-item"><span class="summary-label">Shots:</span> <span>{{ shots }}</span></div>
         <div class="summary-item"><span class="summary-label">Tolerated Error:</span> <span>{{ toleratedError }}</span></div>
         <div class="summary-item"><span class="summary-label">Zombie Error:</span> <span>{{ zombieError }}</span></div>
-        <div *ngIf="hasNoiseSelected()" class="summary-item">
-          <span class="summary-label">Noise:</span>
-          <span>R{{ noiseConfig.axis | lowercase }}({{ noiseConfig.angle | number:'1.0-4' }} rad)</span>
+        <div *ngIf="hasNoiseSelected()" class="summary-item summary-item-vertical">
+          <span class="summary-label">Noise rotations ({{ noiseRotations.length }}):</span>
+          <div class="summary-tags-list">
+            <span *ngFor="let r of noiseRotations" class="summary-tag">
+              {{ rotationLabel(r) }}
+            </span>
+          </div>
         </div>
       </div>
 

@@ -21,7 +21,7 @@ export interface CreateExperimentRequest {
     zombieError: number;
     shots: number;
     email: string;
-    noiseConfig?: NoiseConfig;
+    noiseConfigs?: NoiseConfig[];
 }
 
 export type ExperimentStatus = 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';

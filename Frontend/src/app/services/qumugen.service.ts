@@ -23,7 +23,7 @@ export class QumugenService {
     return this.client.get(`${environment.api.mutation}/qumugen/getOperators/` + family)
   }
 
-  generateMutants(circuit: QProgram, selectedOperators: any[], noiseConfig?: NoiseConfig) {
+  generateMutants(circuit: QProgram, selectedOperators: any[], noiseConfigs?: NoiseConfig[]) {
     let info: any = {
       circuit: circuit.qCircuit.quirkCode,
       operatorNames: selectedOperators,
@@ -32,8 +32,8 @@ export class QumugenService {
       inputQubits: this.manager.inputQubits,
       generateWithAllInputs: this.manager.generateWithAllInputs
     };
-    if (noiseConfig) {
-      info.noiseConfig = noiseConfig;
+    if (noiseConfigs && noiseConfigs.length > 0) {
+      info.noiseConfigs = noiseConfigs;
     }
     return this.client.put<any>(`${environment.api.mutation}/qumugen/generateQuirkMutants`, info)
   }

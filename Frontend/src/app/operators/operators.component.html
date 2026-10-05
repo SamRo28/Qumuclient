@@ -141,7 +141,7 @@
 
   <!-- Operator Families -->
   <div class="families-grid">
-    <div *ngFor="let family of families" class="glass-card family-card" [class.family-card-wide]="getEnabledOperators(family).length > 12">
+    <div *ngFor="let family of families" class="glass-card family-card" [class.family-card-wide]="getEnabledOperators(family).length > 12 || isNoiseFamily(family)">
       <div class="family-header">
         <h4 class="family-name">{{ family.name }}</h4>
         <div class="family-actions">
@@ -162,7 +162,7 @@
       </div>
 
       <app-operator-grid [operators]="getEnabledOperators(family)"></app-operator-grid>
-      <app-noise-config *ngIf="isNoiseFamily(family)" [config]="noiseConfig"></app-noise-config>
+      <app-noise-rotations *ngIf="isNoiseFamily(family)" [rotations]="noiseRotations" [positionsSelected]="selectedNoiseCount()" [qubitsHint]="qubitCount"></app-noise-rotations>
     </div>
   </div>
 
