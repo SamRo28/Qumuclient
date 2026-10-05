@@ -30,7 +30,7 @@ import { ExperimentProgressTrackerComponent } from './experiment-progress-tracke
 import { OperatorLabelPipe, MutationDetailPipe } from './components/operator-label.pipe';
 import { OperatorGridComponent } from './components/operator-grid/operator-grid.component';
 import { OperatorInfoModalComponent } from './components/operator-info-modal/operator-info-modal.component';
-import { NoiseConfigComponent } from './components/noise-config/noise-config.component';
+import { NoiseRotationsComponent } from './components/noise-rotations/noise-rotations.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +39,7 @@ import { NoiseConfigComponent } from './components/noise-config/noise-config.com
     MutationDetailPipe,
     OperatorGridComponent,
     OperatorInfoModalComponent,
-    NoiseConfigComponent,
+    NoiseRotationsComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,
