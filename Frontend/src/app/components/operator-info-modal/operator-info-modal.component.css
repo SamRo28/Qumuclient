@@ -20,16 +20,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--border-glass-light, rgba(0, 0, 0, 0.05));
+  border-bottom: 1px solid var(--border-glass);
   cursor: move;
   user-select: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--accent-gradient);
 }
 
 .window-header h3 {
   margin: 0;
   font-size: 1.15rem;
-  color: var(--text-primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -37,14 +37,14 @@
 }
 
 .info-icon {
-  color: var(--accent-primary, #008000);
+  color: #ffffff;
   flex-shrink: 0;
 }
 
 .window-subtitle {
   font-size: .8rem;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.85);
   margin-left: .25rem;
 }
 
@@ -52,7 +52,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-secondary, #666);
+  color: #ffffff;
   padding: 0.4rem;
   border-radius: 8px;
   transition: all 0.2s;
@@ -62,8 +62,8 @@
 }
 
 .close-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
 .window-body {
@@ -103,15 +103,15 @@
 
 /* Kind colors */
 .kind-noise {
-  --kind-color: #f59e0b;
+  --kind-color: var(--accent-primary);
 }
 
 .kind-add {
-  --kind-color: #3b82f6;
+  --kind-color: var(--accent-primary);
 }
 
 .kind-swap {
-  --kind-color: #8b5cf6;
+  --kind-color: var(--accent-primary);
 }
 
 .kind-other {
@@ -119,7 +119,7 @@
 }
 
 .operator-kind-chip {
-  background: var(--kind-color);
+  background: var(--accent-gradient);
   color: #ffffff;
   border-radius: 999px;
   padding: 0.18rem 0.65rem;
