@@ -161,8 +161,8 @@
         </div>
       </div>
 
-      <app-operator-grid [operators]="getEnabledOperators(family)"></app-operator-grid>
-      <app-noise-rotations *ngIf="isNoiseFamily(family)" [rotations]="noiseRotations" [positionsSelected]="selectedNoiseCount()" [qubitsHint]="qubitCount"></app-noise-rotations>
+      <app-operator-grid *ngIf="!isNoiseFamily(family)" [operators]="getEnabledOperators(family)"></app-operator-grid>
+      <app-noise-rotations *ngIf="isNoiseFamily(family)" [positionOps]="getEnabledOperators(family)" [rotations]="noiseRotations" [qubitsHint]="qubitCount"></app-noise-rotations>
     </div>
   </div>
 

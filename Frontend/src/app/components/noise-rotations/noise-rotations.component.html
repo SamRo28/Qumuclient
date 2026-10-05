@@ -1,21 +1,70 @@
 <div class="noise-rotations-container">
-  <div class="rotations-header">
-    <div class="header-titles">
-      <div class="title-row">
-        <h4 class="rotations-title">Noise rotations</h4>
-        <span class="rotations-count-badge">{{ rotations.length }} / {{ max }}</span>
+  <!-- Step 1: Where to insert noise -->
+  <div class="step-header">
+    <div class="step-title-row">
+      <h4 class="step-title">
+        <span class="step-badge">1</span> Where should the noise be inserted?
+      </h4>
+      <div class="step-meta">
+        <span class="step-count">{{ positionsSelected }} / {{ positions.length }}</span>
+        <button type="button" class="select-all-link" (click)="toggleAllPositions()">
+          {{ positionsSelected === positions.length && positions.length > 0 ? 'None' : 'All positions' }}
+        </button>
       </div>
-      <p class="rotations-help">Each rotation is inserted separately, so it creates its own set of mutants.</p>
     </div>
   </div>
 
-  <div *ngIf="positionsSelected === 0" class="position-warning">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="12" y1="8" x2="12" y2="12"></line>
-      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-    </svg>
-    <span>Select where to insert the noise (start, end or random) above.</span>
+  <div class="position-options">
+    <button
+      type="button"
+      *ngFor="let p of positions"
+      class="position-option"
+      role="checkbox"
+      [attr.aria-checked]="p.op.selected"
+      [class.selected]="p.op.selected"
+      (click)="togglePosition(p.op)"
+    >
+      <div class="position-check" [class.checked]="p.op.selected">
+        <svg *ngIf="p.op.selected" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <!-- Mini circuit diagram -->
+      <svg class="circuit-diagram" viewBox="0 0 132 40" width="100%" height="40">
+        <!-- Wire -->
+        <line x1="4" y1="20" x2="128" y2="20" stroke="var(--text-muted)" stroke-width="1.5" />
+
+        <!-- Existing Gates at x=44 and x=76 -->
+        <rect x="44" y="12" width="16" height="16" rx="3" fill="var(--glass-bg-card)" stroke="var(--text-secondary)" stroke-width="1.5" />
+        <rect x="76" y="12" width="16" height="16" rx="3" fill="var(--glass-bg-card)" stroke="var(--text-secondary)" stroke-width="1.5" />
+
+        <!-- Noise Gate slot: 0 -> x=14, 1 -> x=60, 2 -> x=104 -->
+        <g [attr.opacity]="p.op.selected ? 1 : 0.35">
+          <!-- Random slot dashed outline indicator -->
+          <rect *ngIf="p.slot === 1" x="58" y="10" width="20" height="20" rx="4" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2 2" />
+          <rect [attr.x]="p.slot === 0 ? 14 : (p.slot === 1 ? 60 : 104)" y="12" width="16" height="16" rx="3" fill="#f59e0b" />
+          <text [attr.x]="p.slot === 0 ? 22 : (p.slot === 1 ? 68 : 112)" y="24" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="central">N</text>
+        </g>
+      </svg>
+
+      <strong class="position-title">{{ p.title }}</strong>
+      <small class="position-desc">{{ p.desc }}</small>
+    </button>
+  </div>
+
+  <!-- Step 2: Rotations -->
+  <div class="step-header step-2-header">
+    <div class="step-title-row">
+      <h4 class="step-title">
+        <span class="step-badge">2</span> Which rotations?
+      </h4>
+      <span class="rotations-count-badge">{{ rotations.length }} / {{ max }}</span>
+    </div>
+    <p class="rotations-help">Each rotation is inserted separately, so it creates its own set of mutants.</p>
+    <div *ngIf="positionsSelected === 0" class="step-inline-note">
+      Choose at least one position in step 1 so these rotations are used.
+    </div>
   </div>
 
   <div class="rotations-list" [class.dimmed]="positionsSelected === 0">
