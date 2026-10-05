@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,57 @@ public class NoiseConfigTest {
 				assertFalse(matrix.contains("e"), "La matriz contiene notación científica 'e': " + matrix);
 			}
 		}
+	}
+
+	@Test
+	public void listFromTests() {
+		List<NoiseConfig> def = NoiseConfig.listFrom(null, null);
+		assertEquals(1, def.size());
+		assertEquals(NoiseConfig.DEFAULT, def.get(0));
+
+		List<NoiseConfig> single = NoiseConfig.listFrom(null, Map.of("axis", "Y", "angle", 1));
+		assertEquals(1, single.size());
+		assertEquals(NoiseAxis.Y, single.get(0).getAxis());
+		assertEquals(1.0, single.get(0).getAngle());
+
+		List<NoiseConfig> emptyList = NoiseConfig.listFrom(List.of(), null);
+		assertEquals(1, emptyList.size());
+		assertEquals(NoiseConfig.DEFAULT, emptyList.get(0));
+
+		List<NoiseConfig> two = NoiseConfig.listFrom(List.of(Map.of("axis", "X", "angle", 0.1), Map.of("axis", "Z", "angle", 0.5)), null);
+		assertEquals(2, two.size());
+		assertEquals(NoiseAxis.X, two.get(0).getAxis());
+		assertEquals(0.1, two.get(0).getAngle());
+		assertEquals(NoiseAxis.Z, two.get(1).getAxis());
+		assertEquals(0.5, two.get(1).getAngle());
+
+		// 7 elementos distintos lanzan excepción
+		List<Map<String, Object>> seven = List.of(
+			Map.of("axis", "X", "angle", 0.1),
+			Map.of("axis", "X", "angle", 0.2),
+			Map.of("axis", "X", "angle", 0.3),
+			Map.of("axis", "X", "angle", 0.4),
+			Map.of("axis", "X", "angle", 0.5),
+			Map.of("axis", "X", "angle", 0.6),
+			Map.of("axis", "X", "angle", 0.7)
+		);
+		assertThrows(IllegalArgumentException.class, () -> NoiseConfig.listFrom(seven, null));
+
+		// Dos iguales lanzan excepción
+		List<Map<String, Object>> duplicates = List.of(
+			Map.of("axis", "X", "angle", 0.1),
+			Map.of("axis", "X", "angle", 0.1)
+		);
+		assertThrows(IllegalArgumentException.class, () -> NoiseConfig.listFrom(duplicates, null));
+
+		// rawList no es lista
+		assertThrows(IllegalArgumentException.class, () -> NoiseConfig.listFrom("texto", null));
+
+		// Un elemento con ángulo 0
+		List<Map<String, Object>> withZero = List.of(
+			Map.of("axis", "X", "angle", 0)
+		);
+		assertThrows(IllegalArgumentException.class, () -> NoiseConfig.listFrom(withZero, null));
 	}
 
 }

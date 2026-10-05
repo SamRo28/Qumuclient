@@ -3,6 +3,7 @@ package edu.uclm.qumugen.operators;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -499,6 +500,100 @@ public class ColumnInsertionOperatorsTest {
 							"Falta UnitaryGate en declaración para eje " + axis);
 				}
 			}
+		}
+	}
+
+	@Test
+	public void multipleRotationsGenerateOneSetEach() {
+		List<NoiseConfig> cfgs = List.of(
+			new NoiseConfig(NoiseAxis.X, 0.1),
+			new NoiseConfig(NoiseAxis.Y, Math.PI / 2),
+			new NoiseConfig(NoiseAxis.Z, 1.0)
+		);
+		List<Circuit> mutants = mutantService.generateQuirkMutants(
+			new JSONObject(C1_BELL).toMap(),
+			List.of("NoiseInsertionStart"),
+			"0,1",
+			"",
+			false,
+			"",
+			cfgs
+		);
+		assertEquals(6, mutants.size());
+
+		for (int i = 0; i < 6; i++) {
+			NoiseConfig expectedCfg = cfgs.get(i / 2);
+			Circuit m = mutants.get(i);
+			assertEquals(expectedCfg.label(), m.getMutationDetail());
+			JSONObject g0 = m.toQuirk().getJSONArray("gates").getJSONObject(0);
+			assertEquals(expectedCfg.toQuirkMatrix(), g0.getString("matrix"));
+		}
+	}
+
+	@Test
+	public void subCircuitMutantsKeepTheirOwnRotation() {
+		List<NoiseConfig> cfgs = List.of(
+			new NoiseConfig(NoiseAxis.X, 0.1),
+			new NoiseConfig(NoiseAxis.Y, Math.PI / 2),
+			new NoiseConfig(NoiseAxis.Z, 1.0)
+		);
+		List<Circuit> mutants = mutantService.generateQuirkMutants(
+			new JSONObject(C5_SUB).toMap(),
+			List.of("NoiseInsertionEnd"),
+			"0,1",
+			"",
+			false,
+			"",
+			cfgs
+		);
+		boolean foundSubMutant = false;
+		for (Circuit m : mutants) {
+			if (m.getOracleName() != null) {
+				foundSubMutant = true;
+				assertNotNull(m.getMutationDetail());
+				NoiseConfig matchedCfg = cfgs.stream()
+						.filter(c -> c.label().equals(m.getMutationDetail()))
+						.findFirst()
+						.orElse(null);
+				assertNotNull(matchedCfg, "No matching config found for detail: " + m.getMutationDetail());
+				JSONObject g0 = m.toQuirk().getJSONArray("gates").getJSONObject(0);
+				assertEquals(matchedCfg.toQuirkMatrix(), g0.getString("matrix"));
+			}
+		}
+		assertTrue(foundSubMutant, "No subcircuit mutants generated");
+	}
+
+	@Test
+	public void nonNoiseOperatorsHaveNoDetail() {
+		List<Circuit> mutants = mutantService.generateQuirkMutants(
+			new JSONObject(C1_BELL).toMap(),
+			List.of("AddGateStart_H"),
+			"0,1",
+			"",
+			false,
+			""
+		);
+		assertFalse(mutants.isEmpty());
+		for (Circuit m : mutants) {
+			assertNull(m.getMutationDetail());
+		}
+	}
+
+	@Test
+	public void allInputsKeepsMutationData() {
+		List<Circuit> mutants = mutantService.generateQuirkMutants(
+			new JSONObject(C1_BELL).toMap(),
+			List.of("NoiseInsertionStart"),
+			"0,1",
+			"",
+			true,
+			"0",
+			List.of(NoiseConfig.DEFAULT)
+		);
+		assertFalse(mutants.isEmpty());
+		for (Circuit m : mutants) {
+			assertEquals("NoiseInsertionStart", m.getMutationOperator());
+			assertEquals("Rx(0.1)", m.getMutationDetail());
 		}
 	}
 
