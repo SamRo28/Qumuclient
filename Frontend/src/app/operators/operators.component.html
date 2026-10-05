@@ -185,32 +185,4 @@
 </div>
 
 <!-- Modal -->
-<div *ngIf="isModalOpen" class="modal-overlay" (click)="closeModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h5 class="modal-title">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-        </svg>
-        {{ selectedFamily?.name }} Operators
-      </h5>
-      <button type="button" class="modal-close" (click)="closeModal()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-            stroke-linejoin="round" />
-        </svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div *ngFor="let op of getEnabledOperators(selectedFamily!)" class="operator-info">
-        <div class="operator-info-header">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="3" fill="currentColor" />
-          </svg>
-          <strong>{{ op.name | operatorLabel }}</strong> <code class="operator-code">{{ op.name }}</code>
-        </div>
-        <p>{{ op.description }}</p>
-      </div>
-    </div>
-  </div>
-</div>
+<app-operator-info-modal *ngIf="isModalOpen" [family]="selectedFamily" (closed)="closeModal()"></app-operator-info-modal>

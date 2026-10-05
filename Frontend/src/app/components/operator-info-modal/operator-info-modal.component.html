@@ -1,0 +1,34 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-icon-circle">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+      </div>
+      <div class="header-titles">
+        <h3 class="modal-title">{{ family?.name }}</h3>
+        <span class="modal-subtitle">{{ operators.length }} operators</span>
+      </div>
+      <button type="button" class="modal-close" (click)="close()" aria-label="Close modal">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <p *ngIf="intro" class="modal-intro">{{ intro }}</p>
+
+    <div class="modal-body">
+      <div *ngFor="let op of operators" class="operator-info" [ngClass]="accentFor(op)">
+        <div class="operator-info-header">
+          <span class="operator-kind-chip">{{ op.name | operatorLabel }}</span>
+        </div>
+        <p class="operator-desc">{{ op.description }}</p>
+      </div>
+    </div>
+  </div>
+</div>
