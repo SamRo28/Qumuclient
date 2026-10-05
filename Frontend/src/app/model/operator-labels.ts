@@ -92,3 +92,41 @@ export function operatorLabel(name?: string | null): string {
       return splitCamelCase(name);
   }
 }
+
+export function mutationDetailLabel(detail?: string | null): string {
+  if (!detail || !detail.trim()) {
+    return '';
+  }
+  const match = detail.match(/^R([xyz])\(([-0-9.]+)\)$/i);
+  if (match) {
+    const axis = match[1];
+    const angleRad = parseFloat(match[2]);
+    const deg = (angleRad * 180) / Math.PI;
+    const degStr = parseFloat(deg.toFixed(2)).toString();
+    return `R${axis}(${match[2]} rad) ≈ ${degStr}°`;
+  }
+  return detail;
+}
+
+export function gateParts(gate: string): { base: string; exp: string } {
+  if (!gate) return { base: '', exp: '' };
+  const caretIdx = gate.indexOf('^');
+  if (caretIdx === -1) {
+    return { base: gate, exp: '' };
+  }
+  return {
+    base: gate.substring(0, caretIdx),
+    exp: gate.substring(caretIdx + 1)
+  };
+}
+
+export const FAMILY_INTROS: Record<string, string> = {
+  'Initialization errors': 'Mutations that modify the initial state preparation of qubits.',
+  'Swap Gates': 'Replaces single-qubit gates with another gate from the same basis family.',
+  'Phase Gates': 'Modifies the phase rotations and angle parameters of phase gates.',
+  'Control Gates': 'Alters or removes controls on multi-qubit controlled gates.',
+  'Other operators': 'General structural mutations on circuit gates and positions.',
+  'Position errors': 'Moves gates up, down, or between adjacent lines.',
+  'Noise insertion': 'Adds a small rotation (axis and angle you choose) as a new column. Each rotation you configure produces its own mutants.',
+  'Gate addition': 'Adds a new single-qubit gate as a new column at the start, at the end or at a random position.'
+};

@@ -27,7 +27,7 @@ import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard
 import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
 import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
 import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
-import { OperatorLabelPipe } from './components/operator-label.pipe';
+import { OperatorLabelPipe, MutationDetailPipe } from './components/operator-label.pipe';
 import { OperatorGridComponent } from './components/operator-grid/operator-grid.component';
 import { NoiseConfigComponent } from './components/noise-config/noise-config.component';
 
@@ -35,6 +35,7 @@ import { NoiseConfigComponent } from './components/noise-config/noise-config.com
   declarations: [
     AppComponent,
     OperatorLabelPipe,
+    MutationDetailPipe,
     OperatorGridComponent,
     NoiseConfigComponent,
     OperatorsComponent,
