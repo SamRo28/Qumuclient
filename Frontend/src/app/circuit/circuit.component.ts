@@ -34,6 +34,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
   circuits: Project[] = []
   selectedTab: string = 'circuit';
   showCircuitImport: boolean = false;
+  representationMode: string = 'quirk';
 
   constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService, private userService: UserService, private router: Router) {
     this.url = '';

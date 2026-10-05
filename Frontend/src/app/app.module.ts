@@ -33,6 +33,7 @@ import { OperatorInfoModalComponent } from './components/operator-info-modal/ope
 import { NoiseRotationsComponent } from './components/noise-rotations/noise-rotations.component';
 import { ImportProjectsComponent } from './import-projects/import-projects.component';
 import { CircuitImportComponent } from './circuit-import/circuit-import.component';
+import { CircuitRepresentationComponent } from './circuit-representation/circuit-representation.component';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,7 @@ import { CircuitImportComponent } from './circuit-import/circuit-import.componen
     NoiseRotationsComponent,
     ImportProjectsComponent,
     CircuitImportComponent,
+    CircuitRepresentationComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,

@@ -1,0 +1,46 @@
+<div class="representation">
+  <div class="show-as-row">
+    <span class="show-as-label">Show as:</span>
+    <div class="show-as-options" role="radiogroup" aria-label="Circuit representation format">
+      <button type="button" class="show-as-chip" role="radio" [attr.aria-checked]="selected === 'quirk'"
+        [class.active]="selected === 'quirk'" (click)="select('quirk')">
+        Quirk (editable)
+      </button>
+      <button type="button" class="show-as-chip" role="radio" *ngFor="let f of formats"
+        [attr.aria-checked]="selected === f.id" [class.active]="selected === f.id" [disabled]="disabled"
+        (click)="select(f.id)">
+        {{ f.label }}
+      </button>
+    </div>
+  </div>
+  <div class="show-as-hint" *ngIf="!loggedIn">Log in to view in other formats</div>
+  <div class="show-as-hint" *ngIf="loggedIn && !hasValidQuirk">Write a valid Quirk circuit to view it in other formats</div>
+
+  <div class="representation-view" *ngIf="selected !== 'quirk'">
+    <div class="view-toolbar">
+      <span class="view-note"><i class="fas fa-lock"></i> Read-only view. Edit the circuit in Quirk.</span>
+      <div class="view-actions">
+        <button type="button" class="view-btn" (click)="copy()" [disabled]="!code || loading">
+          <i class="fas" [ngClass]="copied ? 'fa-check' : 'fa-copy'"></i> {{ copied ? 'Copied' : 'Copy' }}
+        </button>
+        <button type="button" class="view-btn" (click)="download()" [disabled]="!code || loading">
+          <i class="fas fa-download"></i> Download {{ extension }}
+        </button>
+      </div>
+    </div>
+
+    <div class="stale-banner" *ngIf="stale && !loading">
+      <span><i class="fas fa-exclamation-triangle"></i> Circuit changed</span>
+      <button type="button" class="view-btn" (click)="refresh()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+
+    <div class="view-loading" *ngIf="loading">
+      <i class="fas fa-spinner fa-spin"></i> Converting to {{ selectedLabel }}…
+    </div>
+    <div class="view-error" *ngIf="error && !loading">
+      <i class="fas fa-exclamation-circle"></i> {{ error }}
+    </div>
+    <textarea *ngIf="code && !loading" class="view-code" readonly [value]="code"
+      [attr.aria-label]="selectedLabel + ' representation'"></textarea>
+  </div>
+</div>

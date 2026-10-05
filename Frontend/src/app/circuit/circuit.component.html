@@ -54,7 +54,11 @@
       <div class="status-indicator" [class.valid]="quirkCode.trim() !== ''"></div>
     </div>
 
-    <div class="code-wrapper">
+    <!-- Show the circuit in another input format (read-only) -->
+    <app-circuit-representation [quirk]="selectedProject?.qProgram?.qCircuit?.quirkCode" [loggedIn]="isLoggedIn()"
+      [projectName]="circuitName" (modeChange)="representationMode = $event"></app-circuit-representation>
+
+    <div class="code-wrapper" *ngIf="representationMode === 'quirk'">
       <div class="code-container">
         <textarea id="quirkCode" name="quirkCode" [(ngModel)]="quirkCode" placeholder='{ "cols": [["H"], ["•", "X"]] }'
           class="glass-textarea" required></textarea>
