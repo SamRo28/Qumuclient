@@ -1055,3 +1055,9 @@
   text-decoration-style: dashed;
   text-underline-offset: 4px;
 }
+
+.operator-detail {
+  display: block;
+  opacity: .7;
+  font-size: .75rem;
+}

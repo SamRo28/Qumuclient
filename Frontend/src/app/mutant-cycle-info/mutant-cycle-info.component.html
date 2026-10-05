@@ -200,9 +200,10 @@
                     <td class="operator-column">
                       <div class="operator-tooltip-container" (click)="goToMutant(row.mutant)"
                         (mouseenter)="showOperatorTooltip($event, row.mutant)" (mouseleave)="hideOperatorTooltip()">
-                        <span class="operator-text" [title]="row.mutant.mutationOperator">
+                        <span class="operator-text">
                           {{ (row.mutant.mutationOperator | operatorLabel) || '-' }}
                         </span>
+                        <small class="operator-detail" *ngIf="row.mutant.mutationDetail">{{ row.mutant.mutationDetail }}</small>
                       </div>
                     </td>
                     <td *ngFor="let header of inputHeaders" class="result-cell">
@@ -328,6 +329,10 @@
     <div class="tooltip-row" *ngIf="activeTooltip.mutant.oracleName">
       <span class="tooltip-label">Oracle:</span>
       <span class="tooltip-value">{{ activeTooltip.mutant.oracleName }}</span>
+    </div>
+    <div class="tooltip-row" *ngIf="activeTooltip.mutant.mutationDetail">
+      <span class="tooltip-label">Rotation:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.mutationDetail | mutationDetail }}</span>
     </div>
   </div>
 </div>

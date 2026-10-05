@@ -440,6 +440,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
           newMutant.mutatedRow = m.mutatedRow;
           newMutant.mutationOperator = m.mutationOperator;
           newMutant.oracleName = m.oracleName;
+          newMutant.mutationDetail = m.mutationDetail;
 
           if (m.operator) {
             newMutant.operator = new Operator({

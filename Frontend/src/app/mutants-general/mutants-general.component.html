@@ -28,8 +28,7 @@
           OPERATOR
         </label>
         <input type="string" id="operator" name="operator" class="input"
-          [value]="(selectedMutant?.operator?.name || selectedMutant?.mutationOperator) | operatorLabel"
-          [title]="selectedMutant?.operator?.name || selectedMutant?.mutationOperator" readonly>
+          [value]="(selectedMutant?.operator?.name || selectedMutant?.mutationOperator) | operatorLabel" readonly>
       </div>
 
       <div class="field-small">
@@ -51,6 +50,21 @@
           ROW
         </label>
         <input type="number" id="row" name="row" min="1" class="input" [value]="selectedMutant?.mutatedRow" readonly>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" *ngIf="selectedMutant?.mutationDetail">
+    <div class="row">
+      <div class="field">
+        <label for="noiseRotation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M2 12c3-6 6-6 9 0s6 6 9 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          NOISE ROTATION
+        </label>
+        <input type="text" id="noiseRotation" name="noiseRotation" class="input"
+          [value]="selectedMutant?.mutationDetail | mutationDetail" readonly>
       </div>
     </div>
   </div>

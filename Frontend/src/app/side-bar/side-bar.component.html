@@ -99,7 +99,7 @@
                   <i class="fas fa-bug mutant-icon"></i>
                   <span *ngIf="menuAbierto" class="node-label">
                     Mutant {{ mutant.mutantIndex }}
-                    <small [title]="mutant.mutationOperator">({{ mutant.mutationOperator | operatorLabel }})</small>
+                    <small>({{ mutant.mutationOperator | operatorLabel }}<span *ngIf="mutant.mutationDetail"> · {{ mutant.mutationDetail }}</span>)</small>
                   </span>
                   <span *ngIf="!menuAbierto" class="tooltip">
                     Mutant {{ mutant.mutantIndex }}

@@ -365,13 +365,14 @@ export class ManagerService {
       let mutatedRow = mutants[i].mutatedRow;
       let mutationOperator = mutants[i].mutationOperator;
       let oracleName = mutants[i].oracleName;
+      let mutationDetail = mutants[i].mutationDetail;
       let circuit = new QProgram(crypto.randomUUID(), mutants[i].quirk);
       circuit.qubits = mutants[i].qubits;
       circuit.inputQubits = this.inputQubits;
       circuit.outputQubits = this.outputQubits;
       circuit.qCircuit.mutableColumns = this.selectedProject?.qProgram.qCircuit.mutableColumns || "";
       circuit.qCircuit.mutableRows = this.selectedProject?.qProgram.qCircuit.mutableRows || "";
-      let mutant = new Mutant(mutantIndex, mutatedColumn, mutatedRow, mutationOperator, circuit, oracleName);
+      let mutant = new Mutant(mutantIndex, mutatedColumn, mutatedRow, mutationOperator, circuit, oracleName, mutationDetail);
       this.mutants.push(mutant)
 
     }
@@ -547,6 +548,7 @@ export class ManagerService {
           mutant.mutatedColumn = mutantData.mutatedColumn;
           mutant.mutatedRow = mutantData.mutatedRow;
           mutant.oracleName = mutantData.oracleName;
+          mutant.mutationDetail = mutantData.mutationDetail;
           if (mutantData.operator) {
             mutant.operator.name = mutantData.operator.name;
             mutant.mutationOperator = mutantData.operator.name;
@@ -638,6 +640,7 @@ export class ManagerService {
           const mutant = new Mutant();
           mutant.mutantIndex = mutantData.mutantIndex;
           mutant.oracleName = mutantData.oracleName;
+          mutant.mutationDetail = mutantData.mutationDetail;
           if (mutantData.operator) {
             mutant.operator.name = mutantData.operator.name;
             mutant.mutationOperator = mutantData.operator.name;

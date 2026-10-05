@@ -209,6 +209,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
           newMutant.mutatedRow = m.mutatedRow;
           newMutant.mutationOperator = m.mutationOperator;
           newMutant.oracleName = m.oracleName;
+          newMutant.mutationDetail = m.mutationDetail;
 
           if (m.operator) {
             newMutant.operator = new Operator({
