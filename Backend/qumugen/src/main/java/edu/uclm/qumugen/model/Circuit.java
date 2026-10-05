@@ -28,6 +28,7 @@ public class Circuit {
 	private Map<String, Object> quirk;
 	private String qiskitCode;
 	private String oracleName;
+	private String mutationDetail;
 
 	public Circuit(JSONObject jso) {
 		if (jso != null && !jso.has("cols")) {
@@ -153,6 +154,10 @@ public class Circuit {
 			this.columns.add(new QColumn(circuit.columns.get(i)));
 		this.qubits = circuit.getQubits();
 		this.oracleName = circuit.oracleName;
+		this.mutationOperator = circuit.mutationOperator;
+		this.mutatedColumn = circuit.mutatedColumn;
+		this.mutatedRow = circuit.mutatedRow;
+		this.mutationDetail = circuit.mutationDetail;
 	}
 
 	public JSONObject toQuirk() {
@@ -272,6 +277,14 @@ public class Circuit {
 
 	public void setOracleName(String oracleName) {
 		this.oracleName = oracleName;
+	}
+
+	public String getMutationDetail() {
+		return this.mutationDetail;
+	}
+
+	public void setMutationDetail(String mutationDetail) {
+		this.mutationDetail = mutationDetail;
 	}
 
 	public void replaceGateName(Object oldName, Object newName) {
