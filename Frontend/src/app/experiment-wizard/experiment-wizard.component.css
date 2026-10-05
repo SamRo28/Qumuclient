@@ -649,7 +649,7 @@
 }
 
 .operator-name {
-  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
 }

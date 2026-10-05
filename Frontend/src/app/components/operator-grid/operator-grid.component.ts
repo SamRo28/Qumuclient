@@ -1,6 +1,16 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Operator } from '../../model/OperatorFamily';
-import { parseOperator } from '../../model/operator-labels';
+import { parseOperator, gateParts } from '../../model/operator-labels';
+
+export interface GateGroup {
+  name: string;
+  gates: { gate: string; parts: { base: string; exp: string } }[];
+}
+
+export interface SwapRow {
+  from: string;
+  targets: { to: string; op: Operator }[];
+}
 
 @Component({
   selector: 'app-operator-grid',
@@ -10,12 +20,19 @@ import { parseOperator } from '../../model/operator-labels';
 export class OperatorGridComponent implements OnChanges {
   @Input() operators: Operator[] = [];
 
-  public mode: 'list' | 'table' = 'list';
-  public tableType: 'addGate' | 'swap' = 'addGate';
-  public rowHeaderTitle: string = '';
-  public rows: string[] = [];
-  public columns: string[] = [];
-  private cellMap: Map<string, Operator> = new Map();
+  public mode: 'list' | 'addGate' | 'swap' = 'list';
+
+  // addGate mode state
+  public readonly positions = [
+    { key: 'Start', title: 'At the start' },
+    { key: 'End', title: 'At the end' },
+    { key: 'Random', title: 'At a random position' }
+  ];
+  public gateGroups: GateGroup[] = [];
+  private addGateMap: Map<string, Operator> = new Map();
+
+  // swap mode state
+  public swapRows: SwapRow[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['operators']) {
@@ -24,9 +41,9 @@ export class OperatorGridComponent implements OnChanges {
   }
 
   private recalculateGrid(): void {
-    this.cellMap.clear();
-    this.rows = [];
-    this.columns = [];
+    this.addGateMap.clear();
+    this.gateGroups = [];
+    this.swapRows = [];
 
     if (!this.operators || this.operators.length === 0) {
       this.mode = 'list';
@@ -42,67 +59,108 @@ export class OperatorGridComponent implements OnChanges {
     const allSwap = parsedList.every(item => item.parsed.kind === 'swap');
 
     if (allAddGate) {
-      this.mode = 'table';
-      this.tableType = 'addGate';
-      this.rowHeaderTitle = 'Gate';
-      this.columns = ['Start', 'End', 'Random'];
+      this.mode = 'addGate';
+      const groupsMap = new Map<string, { gate: string; parts: { base: string; exp: string } }[]>();
 
       for (const item of parsedList) {
-        const row = item.parsed.gate || '';
-        const col = item.parsed.position || '';
-        if (row && !this.rows.includes(row)) {
-          this.rows.push(row);
+        const gate = item.parsed.gate || '';
+        const pos = item.parsed.position || '';
+        this.addGateMap.set(`${pos}_${gate}`, item.op);
+
+        const parts = gateParts(gate);
+        const base = parts.base || 'Other';
+        if (!groupsMap.has(base)) {
+          groupsMap.set(base, []);
         }
-        this.cellMap.set(`${row}__${col}`, item.op);
+        const list = groupsMap.get(base)!;
+        if (!list.some(g => g.gate === gate)) {
+          list.push({ gate, parts });
+        }
       }
+
+      this.gateGroups = Array.from(groupsMap.entries()).map(([name, gates]) => ({
+        name,
+        gates
+      }));
     } else if (allSwap) {
-      this.mode = 'table';
-      this.tableType = 'swap';
-      this.rowHeaderTitle = 'Original gate';
+      this.mode = 'swap';
+      const rowsMap = new Map<string, { to: string; op: Operator }[]>();
 
       for (const item of parsedList) {
-        const row = item.parsed.from || '';
-        const col = item.parsed.to || '';
-        if (row && !this.rows.includes(row)) {
-          this.rows.push(row);
+        const from = item.parsed.from || '';
+        const to = item.parsed.to || '';
+        if (!rowsMap.has(from)) {
+          rowsMap.set(from, []);
         }
-        if (col && !this.columns.includes(col)) {
-          this.columns.push(col);
-        }
-        this.cellMap.set(`${row}__${col}`, item.op);
+        rowsMap.get(from)!.push({ to, op: item.op });
       }
+
+      this.swapRows = Array.from(rowsMap.entries()).map(([from, targets]) => ({
+        from,
+        targets
+      }));
     } else {
       this.mode = 'list';
     }
   }
 
-  public getCell(row: string, col: string): Operator | undefined {
-    return this.cellMap.get(`${row}__${col}`);
+  public cell(pos: string, gate: string): Operator | undefined {
+    return this.addGateMap.get(`${pos}_${gate}`);
   }
 
-  public toggleColumn(col: string): void {
-    const cells: Operator[] = [];
-    for (const row of this.rows) {
-      const cell = this.getCell(row, col);
-      if (cell) {
-        cells.push(cell);
-      }
+  public toggle(op: Operator): void {
+    if (op) {
+      op.selected = !op.selected;
     }
-    if (cells.length === 0) return;
-    const allSelected = cells.every(c => c.selected);
-    cells.forEach(c => c.selected = !allSelected);
   }
 
-  public toggleRow(row: string): void {
-    const cells: Operator[] = [];
-    for (const col of this.columns) {
-      const cell = this.getCell(row, col);
-      if (cell) {
-        cells.push(cell);
+  public setAll(ops: Operator[]): void {
+    if (!ops || ops.length === 0) return;
+    const allSelected = ops.every(o => o.selected);
+    ops.forEach(o => (o.selected = !allSelected));
+  }
+
+  public opsOfPosition(pos: string): Operator[] {
+    const list: Operator[] = [];
+    for (const group of this.gateGroups) {
+      for (const g of group.gates) {
+        const op = this.cell(pos, g.gate);
+        if (op) list.push(op);
       }
     }
-    if (cells.length === 0) return;
-    const allSelected = cells.every(c => c.selected);
-    cells.forEach(c => c.selected = !allSelected);
+    return list;
+  }
+
+  public opsOfGroupInPosition(pos: string, group: GateGroup): Operator[] {
+    const list: Operator[] = [];
+    for (const g of group.gates) {
+      const op = this.cell(pos, g.gate);
+      if (op) list.push(op);
+    }
+    return list;
+  }
+
+  public opsOfSwapRow(row: SwapRow): Operator[] {
+    return row.targets.map(t => t.op);
+  }
+
+  public getGateParts(gate: string): { base: string; exp: string } {
+    return gateParts(gate);
+  }
+
+  public get selectedCount(): number {
+    return this.operators ? this.operators.filter(o => o.selected).length : 0;
+  }
+
+  public get totalCount(): number {
+    return this.operators ? this.operators.length : 0;
+  }
+
+  public selectedInPos(pos: string): number {
+    return this.opsOfPosition(pos).filter(o => o.selected).length;
+  }
+
+  public isAllSelected(ops: Operator[]): boolean {
+    return ops.length > 0 && ops.every(o => o.selected);
   }
 }

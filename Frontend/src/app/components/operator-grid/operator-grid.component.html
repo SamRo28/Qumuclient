@@ -1,44 +1,110 @@
-<div *ngIf="mode === 'list'" class="operators-list-horizontal">
-  <label *ngFor="let op of operators" class="operator-label">
-    <input type="checkbox" [(ngModel)]="op.selected" class="glass-checkbox">
-    <span class="operator-name" [title]="op.name">{{ op.name | operatorLabel }}</span>
-  </label>
+<div class="grid-header-bar">
+  <span class="selection-count">{{ selectedCount }} / {{ totalCount }} selected</span>
 </div>
 
-<div *ngIf="mode === 'table'" class="table-container">
-  <table class="operator-table">
-    <thead>
-      <tr *ngIf="tableType === 'swap'" class="super-header-row">
-        <th></th>
-        <th [attr.colspan]="columns.length" class="super-header-title">Replaced by</th>
-      </tr>
-      <tr>
-        <th class="corner-header">{{ rowHeaderTitle }}</th>
-        <th *ngFor="let col of columns" class="col-header">
-          <button type="button" class="header-btn" (click)="toggleColumn(col)" [title]="'Toggle all ' + col">
-            {{ col }}
-          </button>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let row of rows">
-        <th class="row-header">
-          <button type="button" class="header-btn" (click)="toggleRow(row)" [title]="'Toggle all ' + row">
-            {{ row }}
-          </button>
-        </th>
-        <td *ngFor="let col of columns" class="cell">
-          <ng-container *ngIf="getCell(row, col) as cell; else emptyCell">
-            <label class="cell-label" [title]="(cell.name | operatorLabel) + ' (' + cell.name + ')'">
-              <input type="checkbox" [(ngModel)]="cell.selected" class="glass-checkbox">
-            </label>
+<!-- List mode (default and noise) -->
+<div *ngIf="mode === 'list'" class="operators-chips-list">
+  <button
+    type="button"
+    *ngFor="let op of operators"
+    class="op-chip"
+    [class.selected]="op.selected"
+    [attr.aria-pressed]="op.selected"
+    (click)="toggle(op)"
+  >
+    <svg *ngIf="op.selected" class="check-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span class="operator-name">{{ op.name | operatorLabel }}</span>
+  </button>
+</div>
+
+<!-- AddGate mode -->
+<div *ngIf="mode === 'addGate'" class="position-columns">
+  <div *ngFor="let pos of positions" class="position-card">
+    <div class="card-header">
+      <div class="header-left">
+        <span class="position-title">{{ pos.title }}</span>
+        <span class="position-count">
+          {{ selectedInPos(pos.key) }} / {{ opsOfPosition(pos.key).length }}
+        </span>
+      </div>
+      <button
+        type="button"
+        class="select-all-link"
+        (click)="setAll(opsOfPosition(pos.key))"
+      >
+        {{ isAllSelected(opsOfPosition(pos.key)) ? 'None' : 'All' }}
+      </button>
+    </div>
+
+    <div class="card-body">
+      <div *ngFor="let group of gateGroups" class="gate-group">
+        <button
+          type="button"
+          class="group-btn"
+          (click)="setAll(opsOfGroupInPosition(pos.key, group))"
+          [title]="'Toggle all ' + group.name + ' gates here'"
+        >
+          {{ group.name }}
+        </button>
+
+        <div class="group-chips">
+          <ng-container *ngFor="let g of group.gates">
+            <button
+              *ngIf="cell(pos.key, g.gate) as cellOp"
+              type="button"
+              class="op-chip"
+              [class.selected]="cellOp.selected"
+              [attr.aria-pressed]="cellOp.selected"
+              (click)="toggle(cellOp)"
+              [title]="cellOp.name | operatorLabel"
+            >
+              <svg *ngIf="cellOp.selected" class="check-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>{{ g.parts.base }}<sup *ngIf="g.parts.exp">{{ g.parts.exp }}</sup></span>
+            </button>
           </ng-container>
-          <ng-template #emptyCell>
-            <span class="empty-dash">—</span>
-          </ng-template>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Swap mode -->
+<div *ngIf="mode === 'swap'" class="swap-container">
+  <p class="swap-help-text">Pick which gate replacements to generate. Each chip creates one operator.</p>
+
+  <div class="swap-rows">
+    <div *ngFor="let row of swapRows" class="swap-row">
+      <span class="op-chip origin-chip">{{ row.from }}</span>
+      <span class="replace-with-text">replace with</span>
+
+      <div class="swap-targets">
+        <button
+          *ngFor="let target of row.targets"
+          type="button"
+          class="op-chip"
+          [class.selected]="target.op.selected"
+          [attr.aria-pressed]="target.op.selected"
+          (click)="toggle(target.op)"
+          [title]="target.op.name | operatorLabel"
+        >
+          <svg *ngIf="target.op.selected" class="check-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span>{{ getGateParts(target.to).base }}<sup *ngIf="getGateParts(target.to).exp">{{ getGateParts(target.to).exp }}</sup></span>
+        </button>
+      </div>
+
+      <button
+        type="button"
+        class="select-all-link"
+        (click)="setAll(opsOfSwapRow(row))"
+      >
+        {{ isAllSelected(opsOfSwapRow(row)) ? 'None' : 'All' }}
+      </button>
+    </div>
+  </div>
 </div>
