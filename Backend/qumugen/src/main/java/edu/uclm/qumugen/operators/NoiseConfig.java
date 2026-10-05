@@ -2,6 +2,8 @@ package edu.uclm.qumugen.operators;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -9,6 +11,7 @@ import java.util.Map;
  */
 public class NoiseConfig {
 
+	public static final int MAX_CONFIGS = 6;
 	private final NoiseAxis axis;
 	private final double angle;
 
@@ -63,6 +66,37 @@ public class NoiseConfig {
 		}
 
 		return new NoiseConfig(axis, angle);
+	}
+
+	public boolean sameAs(NoiseConfig o) {
+		return o != null && this.axis == o.axis && Math.abs(this.angle - o.angle) < 1e-9;
+	}
+
+	public static List<NoiseConfig> listFrom(Object rawList, Object rawSingle) {
+		if (rawList != null) {
+			if (!(rawList instanceof List)) {
+				throw new IllegalArgumentException("La lista de rotaciones de ruido debe ser una lista");
+			}
+			List<?> list = (List<?>) rawList;
+			if (list.isEmpty()) {
+				return List.of(DEFAULT);
+			}
+			if (list.size() > MAX_CONFIGS) {
+				throw new IllegalArgumentException("Se admiten como máximo 6 rotaciones de ruido");
+			}
+			List<NoiseConfig> result = new ArrayList<>();
+			for (Object item : list) {
+				NoiseConfig cfg = from(item);
+				for (NoiseConfig existing : result) {
+					if (existing.sameAs(cfg)) {
+						throw new IllegalArgumentException("Rotación de ruido duplicada: " + cfg.label());
+					}
+				}
+				result.add(cfg);
+			}
+			return List.copyOf(result);
+		}
+		return List.of(from(rawSingle));
 	}
 
 	public String toQuirkMatrix() {

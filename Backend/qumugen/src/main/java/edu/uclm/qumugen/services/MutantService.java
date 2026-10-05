@@ -36,8 +36,14 @@ public class MutantService {
 
 	public List<Circuit> generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
 			String mutableColumns, boolean generateWithAllInputs, String sInputQubits, NoiseConfig noiseConfig) {
-		if (noiseConfig == null) {
-			noiseConfig = NoiseConfig.DEFAULT;
+		return generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns, generateWithAllInputs, sInputQubits,
+				List.of(noiseConfig == null ? NoiseConfig.DEFAULT : noiseConfig));
+	}
+
+	public List<Circuit> generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
+			String mutableColumns, boolean generateWithAllInputs, String sInputQubits, List<NoiseConfig> noiseConfigs) {
+		if (noiseConfigs == null || noiseConfigs.isEmpty()) {
+			noiseConfigs = List.of(NoiseConfig.DEFAULT);
 		}
 		JSONObject jsoQuirk = new JSONObject(quirk);
 		Circuit circuit = new Circuit(jsoQuirk);
@@ -87,18 +93,25 @@ public class MutantService {
 		for (String operatorName : operatorNames) {
 			Operator operator = this.operatorsService.find(operatorName);
 			if (operator instanceof NoiseInsertion) {
-				operator = ((NoiseInsertion) operator).withConfig(noiseConfig);
+				for (NoiseConfig cfg : noiseConfigs) {
+					List<Circuit> auxi = new ArrayList<>();
+					((NoiseInsertion) operator).withConfig(cfg).apply(circuit, auxi, rows, columns);
+					for (Circuit m : auxi) {
+						m.setMutationDetail(cfg.label());
+					}
+					if (numberOfInputQubits != -1) {
+						auxi = this.insertColumns(auxi, numberOfInputQubits);
+					}
+					mutants.addAll(auxi);
+				}
+			} else {
+				List<Circuit> auxi = new ArrayList<>();
+				operator.apply(circuit, auxi, rows, columns);
+				if (numberOfInputQubits != -1) {
+					auxi = this.insertColumns(auxi, numberOfInputQubits);
+				}
+				mutants.addAll(auxi);
 			}
-			List<Circuit> auxi = new ArrayList<>();
-			operator.apply(circuit, auxi, rows, columns);
-			if (numberOfInputQubits != -1) {
-				auxi = this.insertColumns(auxi, numberOfInputQubits);
-			}
-
-			// Aqui se agrega que por cada costumizedGate se llama al aply y luego se
-			// agregan al circuito general cambiandole el id
-
-			mutants.addAll(auxi);
 		}
 
 		if (circuit.getCustomizedGates() != null) {
@@ -126,13 +139,13 @@ public class MutantService {
 						subMutableColumns, 
 						false, 
 						"",
-						noiseConfig
+						noiseConfigs
 					);
 					
 					for (int mIdx = 0; mIdx < subMutants.size(); mIdx++) {
 						Circuit subMutant = subMutants.get(mIdx);
 						Circuit mutantMain = new Circuit(circuit);
-						boolean hadNoise = this.hoistNoiseGate(subMutant);
+						CustomizedGate noiseGate = this.hoistNoiseGate(subMutant);
 						
 						String oldId = cg.getId();
 						String oldName = cg.getName();
@@ -142,14 +155,15 @@ public class MutantService {
 						
 						CustomizedGate mutatedCG = new CustomizedGate(cg, subMutant, newId, newName);
 						mutantMain.getCustomizedGates().set(cgIdx, mutatedCG);
-						if (hadNoise) {
-							NoiseInsertion.ensureNoiseGate(mutantMain, noiseConfig);
+						if (noiseGate != null) {
+							NoiseInsertion.ensureNoiseGate(mutantMain, noiseGate);
 						}
 						mutantMain.replaceGateName(oldId, newId);
 						
 						mutantMain.setMutationOperator(subMutant.getMutationOperator());
 						mutantMain.setMutatedColumn(subMutant.getMutatedColumn());
 						mutantMain.setMutatedRow(subMutant.getMutatedRow());
+						mutantMain.setMutationDetail(subMutant.getMutationDetail());
 						mutantMain.setOracleName(oldName);
 						
 						List<Circuit> auxi = new ArrayList<>();
@@ -203,17 +217,20 @@ public class MutantService {
 		return result;
 	}
 
-	private boolean hoistNoiseGate(Circuit subMutant) {
+	private CustomizedGate hoistNoiseGate(Circuit subMutant) {
 		if (subMutant.getCustomizedGates() != null) {
-			boolean removed = subMutant.getCustomizedGates().removeIf(cg -> NoiseInsertion.NOISE_GATE_ID.equals(cg.getId()));
-			if (removed) {
-				if (subMutant.getCustomizedGates().isEmpty()) {
-					subMutant.setCustomizedGates(null);
+			for (int i = 0; i < subMutant.getCustomizedGates().size(); i++) {
+				CustomizedGate cg = subMutant.getCustomizedGates().get(i);
+				if (NoiseInsertion.NOISE_GATE_ID.equals(cg.getId())) {
+					subMutant.getCustomizedGates().remove(i);
+					if (subMutant.getCustomizedGates().isEmpty()) {
+						subMutant.setCustomizedGates(null);
+					}
+					return cg;
 				}
-				return true;
 			}
 		}
-		return false;
+		return null;
 	}
 
 }

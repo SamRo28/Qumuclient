@@ -54,15 +54,15 @@ public class GenController {
 		boolean generateWithAllInputs = (boolean) info.get("generateWithAllInputs");
 		String sInputQubits = info.get("inputQubits").toString();
 
-		NoiseConfig noiseConfig;
+		List<NoiseConfig> noiseConfigs;
 		try {
-			noiseConfig = NoiseConfig.from(info.get("noiseConfig"));
+			noiseConfigs = NoiseConfig.listFrom(info.get("noiseConfigs"), info.get("noiseConfig"));
 		} catch (IllegalArgumentException e) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
 
 		List<Circuit> result = this.mutantService.generateQuirkMutants(quirk, operatorNames, mutableRows,
-				mutableColumns, generateWithAllInputs, sInputQubits, noiseConfig);
+				mutableColumns, generateWithAllInputs, sInputQubits, noiseConfigs);
 
 		return result;
 	}

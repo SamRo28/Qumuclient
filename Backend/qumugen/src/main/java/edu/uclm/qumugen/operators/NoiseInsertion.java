@@ -47,6 +47,22 @@ public class NoiseInsertion extends ColumnInsertion {
 		ensureNoiseGate(c, NoiseConfig.DEFAULT);
 	}
 
+	public static void ensureNoiseGate(Circuit c, CustomizedGate noiseGate) {
+		if (c.getCustomizedGates() == null) {
+			c.setCustomizedGates(new ArrayList<>());
+		}
+		boolean exists = false;
+		for (CustomizedGate cg : c.getCustomizedGates()) {
+			if (NOISE_GATE_ID.equals(cg.getId())) {
+				exists = true;
+				break;
+			}
+		}
+		if (!exists && noiseGate != null) {
+			c.getCustomizedGates().add(0, new CustomizedGate(noiseGate));
+		}
+	}
+
 	public static void ensureNoiseGate(Circuit c, NoiseConfig config) {
 		if (c.getCustomizedGates() == null) {
 			c.setCustomizedGates(new ArrayList<>());
