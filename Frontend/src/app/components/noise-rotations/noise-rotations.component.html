@@ -42,8 +42,8 @@
         <!-- Noise Gate slot: 0 -> x=14, 1 -> x=60, 2 -> x=104 -->
         <g [attr.opacity]="p.op.selected ? 1 : 0.35">
           <!-- Random slot dashed outline indicator -->
-          <rect *ngIf="p.slot === 1" x="58" y="10" width="20" height="20" rx="4" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2 2" />
-          <rect [attr.x]="p.slot === 0 ? 14 : (p.slot === 1 ? 60 : 104)" y="12" width="16" height="16" rx="3" fill="#f59e0b" />
+          <rect *ngIf="p.slot === 1" x="58" y="10" width="20" height="20" rx="4" fill="none" stroke="var(--accent-primary)" stroke-width="1" stroke-dasharray="2 2" />
+          <rect [attr.x]="p.slot === 0 ? 14 : (p.slot === 1 ? 60 : 104)" y="12" width="16" height="16" rx="3" fill="var(--accent-primary)" />
           <text [attr.x]="p.slot === 0 ? 22 : (p.slot === 1 ? 68 : 112)" y="24" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="central">N</text>
         </g>
       </svg>
