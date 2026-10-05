@@ -7,6 +7,7 @@ import { ManagerService } from '../services/manager.service';
 import { LoadingService } from '../services/loading.service';
 import { Subscription } from 'rxjs';
 import { NoiseConfig, DEFAULT_NOISE_CONFIG, areValidNoiseRotations, isNoiseOperator } from '../model/NoiseConfig';
+import { splitFamiliesForLayout } from '../model/family-layout';
 
 @Component({
   selector: 'app-operators',
@@ -15,6 +16,8 @@ import { NoiseConfig, DEFAULT_NOISE_CONFIG, areValidNoiseRotations, isNoiseOpera
 })
 export class OperatorsComponent implements OnInit, OnDestroy {
   families: OperatorFamily[] = []
+  compactFamilies: OperatorFamily[] = []
+  wideFamilies: OperatorFamily[] = []
   error: string = ""
   qubitCount: number = -1;
   inputQubitsSelection: { [key: number]: boolean } = {};
@@ -44,6 +47,9 @@ export class OperatorsComponent implements OnInit, OnDestroy {
           let family = new OperatorFamily(familyData.name, familyData.operators)
           this.families.push(family)
         }
+        const layout = splitFamiliesForLayout(this.families);
+        this.compactFamilies = layout.compact;
+        this.wideFamilies = layout.wide;
       },
       error => {
         this.error = error

@@ -140,8 +140,19 @@
   </div>
 
   <!-- Operator Families -->
-  <div class="families-grid">
-    <div *ngFor="let family of families" class="glass-card family-card" [class.family-card-wide]="getEnabledOperators(family).length > 12 || isNoiseFamily(family)">
+  <div class="families-grid" *ngIf="compactFamilies.length">
+    <ng-container *ngFor="let family of compactFamilies">
+      <ng-container *ngTemplateOutlet="familyCard; context: { $implicit: family }"></ng-container>
+    </ng-container>
+  </div>
+  <div class="families-wide" *ngIf="wideFamilies.length">
+    <ng-container *ngFor="let family of wideFamilies">
+      <ng-container *ngTemplateOutlet="familyCard; context: { $implicit: family }"></ng-container>
+    </ng-container>
+  </div>
+
+  <ng-template #familyCard let-family>
+    <div class="glass-card family-card">
       <div class="family-header">
         <h4 class="family-name">{{ family.name }}</h4>
         <div class="family-actions">
@@ -164,7 +175,7 @@
       <app-operator-grid *ngIf="!isNoiseFamily(family)" [operators]="getEnabledOperators(family)"></app-operator-grid>
       <app-noise-rotations *ngIf="isNoiseFamily(family)" [positionOps]="getEnabledOperators(family)" [rotations]="noiseRotations" [qubitsHint]="qubitCount"></app-noise-rotations>
     </div>
-  </div>
+  </ng-template>
 
   <!-- Actions -->
   <div class="actions-bar">
