@@ -10,6 +10,7 @@ import { QasmService } from '../services/qasm.service';
 import { Output, EventEmitter } from '@angular/core';
 import { Project } from '../model/Project';
 import { UserService } from '../services/user.service';
+import { ConvertedCircuit } from '../model/ImportModels';
 
 @Component({
   selector: 'app-circuit',
@@ -32,6 +33,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
 
   circuits: Project[] = []
   selectedTab: string = 'circuit';
+  showCircuitImport: boolean = false;
 
   constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService, private userService: UserService, private router: Router) {
     this.url = '';
@@ -193,6 +195,34 @@ export class CircuitComponent implements OnInit, OnDestroy {
 
   isLoggedIn(): boolean {
     return this.userService.isAuthenticated$.value;
+  }
+
+  onCircuitImported(circuit: ConvertedCircuit): void {
+    if (this.quirkCode.trim() === '') {
+      this.applyImported(circuit);
+      return;
+    }
+    this.manager.openConfirmationModal({
+      title: 'Replace circuit',
+      message: 'The current circuit will be replaced by the imported one (' + circuit.qubits + ' qubits). Continue?',
+      confirmText: 'Replace',
+      cancelText: 'Cancel',
+      type: 'warning',
+      onConfirm: () => this.applyImported(circuit)
+    });
+  }
+
+  private applyImported(circuit: ConvertedCircuit): void {
+    // El setter actualiza textQuirkCode y quirkCode del proyecto y lo marca modificado
+    this.quirkCode = JSON.stringify(circuit.quirk, null, 2);
+    if (this.selectedProject) {
+      const qCircuit = this.selectedProject.qProgram.qCircuit;
+      qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
+      qCircuit.mutableRows = qCircuit.calculateMutableRows();
+    }
+    this.manager.markProjectAsModified();
+    this.showCircuitImport = false;
+    this.manager.showNotification('Circuit imported', 'success', 4000);
   }
 
   onDeleteCircuit(): void {

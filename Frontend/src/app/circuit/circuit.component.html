@@ -76,6 +76,16 @@
             stroke-linejoin="round" />
         </svg>
       </button>
+
+      <!-- Import a circuit written in another language -->
+      <button type="button" class="glass-import-btn" *ngIf="isLoggedIn()" (click)="showCircuitImport = !showCircuitImport"
+        [class.active]="showCircuitImport">
+        <i class="fas fa-file-import"></i>
+        <span>Import circuit</span>
+      </button>
+
+      <app-circuit-import *ngIf="showCircuitImport && isLoggedIn()" (imported)="onCircuitImported($event)"
+        (cancelled)="showCircuitImport = false"></app-circuit-import>
     </div>
   </div>
 

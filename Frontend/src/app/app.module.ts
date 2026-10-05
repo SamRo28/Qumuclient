@@ -32,6 +32,7 @@ import { OperatorGridComponent } from './components/operator-grid/operator-grid.
 import { OperatorInfoModalComponent } from './components/operator-info-modal/operator-info-modal.component';
 import { NoiseRotationsComponent } from './components/noise-rotations/noise-rotations.component';
 import { ImportProjectsComponent } from './import-projects/import-projects.component';
+import { CircuitImportComponent } from './circuit-import/circuit-import.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { ImportProjectsComponent } from './import-projects/import-projects.compo
     OperatorInfoModalComponent,
     NoiseRotationsComponent,
     ImportProjectsComponent,
+    CircuitImportComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,

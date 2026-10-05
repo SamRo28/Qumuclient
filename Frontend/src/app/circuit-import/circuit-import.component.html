@@ -1,0 +1,49 @@
+<div class="circuit-import-panel">
+  <div class="panel-header">
+    <span class="panel-title"><i class="fas fa-file-import"></i> Import circuit</span>
+    <button type="button" class="panel-close" (click)="cancel()" aria-label="Close import panel">&times;</button>
+  </div>
+
+  <div class="panel-row">
+    <label for="ciFormat" class="panel-label">Language</label>
+    <select id="ciFormat" name="ciFormat" class="panel-select" [(ngModel)]="selectedFormatId"
+      (ngModelChange)="onFormatChange()" [disabled]="loadingFormats || converting">
+      <option value="" disabled>{{ loadingFormats ? 'Loading formats…' : 'Choose the language first' }}</option>
+      <option *ngFor="let f of formats" [value]="f.id">{{ f.label }} ({{ f.extensions.join(', ') }})</option>
+    </select>
+  </div>
+
+  <ng-container *ngIf="selectedFormat">
+    <div class="mode-tabs">
+      <button type="button" class="mode-tab" [class.active]="mode === 'file'" (click)="setMode('file')">
+        <i class="fas fa-upload"></i> From file
+      </button>
+      <button type="button" class="mode-tab" [class.active]="mode === 'paste'" (click)="setMode('paste')">
+        <i class="fas fa-code"></i> Paste code
+      </button>
+    </div>
+
+    <div class="panel-row" *ngIf="mode === 'file'">
+      <input type="file" name="ciFile" class="panel-file" [accept]="acceptAttr" (change)="onFileChange($event)"
+        [disabled]="converting">
+      <span class="panel-hint">Allowed: {{ selectedFormat.extensions.join(', ') }} · max 512 KB</span>
+    </div>
+
+    <div class="panel-row" *ngIf="mode === 'paste'">
+      <textarea name="ciCode" class="panel-code" rows="8" [(ngModel)]="pastedCode"
+        [placeholder]="'Paste your ' + selectedFormat.label + ' code here…'" [disabled]="converting"></textarea>
+    </div>
+  </ng-container>
+
+  <div class="panel-error" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i> {{ error }}
+  </div>
+
+  <div class="panel-actions">
+    <button type="button" class="panel-btn secondary" (click)="cancel()" [disabled]="converting">Cancel</button>
+    <button type="button" class="panel-btn primary" (click)="convert()" [disabled]="!canConvert">
+      <i class="fas" [ngClass]="converting ? 'fa-spinner fa-spin' : 'fa-exchange-alt'"></i>
+      {{ converting ? 'Checking and converting…' : 'Convert to Quirk' }}
+    </button>
+  </div>
+</div>
