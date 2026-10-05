@@ -31,6 +31,7 @@ import { OperatorLabelPipe, MutationDetailPipe } from './components/operator-lab
 import { OperatorGridComponent } from './components/operator-grid/operator-grid.component';
 import { OperatorInfoModalComponent } from './components/operator-info-modal/operator-info-modal.component';
 import { NoiseRotationsComponent } from './components/noise-rotations/noise-rotations.component';
+import { ImportProjectsComponent } from './import-projects/import-projects.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import { NoiseRotationsComponent } from './components/noise-rotations/noise-rota
     OperatorGridComponent,
     OperatorInfoModalComponent,
     NoiseRotationsComponent,
+    ImportProjectsComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,

@@ -8,6 +8,7 @@ import { StatisticsVisualizerComponent } from './statistics-visualizer/statistic
 import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
 import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard.component';
 import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
+import { ImportProjectsComponent } from './import-projects/import-projects.component';
 
 const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -19,6 +20,7 @@ const routes: Routes = [
     { path: 'project/:projectId/cycle/:cycleId', component: MutantCycleInfoComponent },
     { path: 'project/:projectId/cycle/:cycleId/mutant/:mutantId', component: MutantsInfoComponent },
     { path: 'statistics', component: StatisticsVisualizerComponent },
+    { path: 'import', component: ImportProjectsComponent },
     { path: '**', redirectTo: '' }
 ];
 

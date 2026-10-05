@@ -1,0 +1,289 @@
+<div class="wizard-page-container">
+  <!-- Not Logged In State -->
+  <div class="glass-card login-card" *ngIf="!isLoggedIn()">
+    <div class="login-prompt">
+      <i class="fas fa-lock login-icon"></i>
+      <h3>Log in to import projects</h3>
+      <p class="text-secondary">Authentication is required to import and save quantum circuit projects.</p>
+      <button type="button" class="btn btn-primary" (click)="loginRedirect()">
+        <i class="fas fa-sign-in-alt"></i> Log In
+      </button>
+    </div>
+  </div>
+
+  <ng-container *ngIf="isLoggedIn()">
+    <!-- Header -->
+    <div class="wizard-header-card">
+      <div class="header-main">
+        <div class="header-title">
+          <i class="fas fa-file-import header-icon"></i>
+          <div>
+            <h2>Import projects</h2>
+            <p class="text-secondary">Import quantum circuits as projects from files or raw code</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help & Limits Banner -->
+    <div class="glass-card help-banner">
+      <div class="help-grid">
+        <div class="help-item">
+          <i class="fas fa-info-circle help-icon"></i>
+          <div>
+            <strong>Limits:</strong> Up to {{ limits.maxFiles }} files, max {{ limits.maxFileBytes / 1024 }} KB per file, max {{ limits.maxTotalBytes / (1024 * 1024) }} MB total, max {{ limits.maxQubits }} qubits.
+          </div>
+        </div>
+        <div class="help-item" *ngIf="antivirusEnabled">
+          <i class="fas fa-shield-alt help-icon"></i>
+          <div><strong>Antivirus protection:</strong> Files are scanned with ClamAV antivirus upon upload.</div>
+        </div>
+        <div class="help-item">
+          <i class="fas fa-user-shield help-icon"></i>
+          <div><strong>Privacy:</strong> Only the file contents are sent, never the file itself.</div>
+        </div>
+        <div class="help-item warning">
+          <i class="fas fa-exclamation-triangle help-icon"></i>
+          <div><strong>Note:</strong> Python code (Qiskit, Cirq, Q#…) cannot be imported. Only supported circuit interchange formats are accepted.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Error -->
+    <div class="alert-error" *ngIf="globalError">
+      <span><i class="fas fa-exclamation-circle"></i> {{ globalError }}</span>
+      <button class="btn-close" (click)="globalError = null">&times;</button>
+    </div>
+
+    <!-- Results Card -->
+    <div class="glass-card results-card" *ngIf="importResult">
+      <div class="results-header">
+        <div>
+          <h3>Import Results</h3>
+          <p>
+            <span class="success-count">✔ {{ importResult.successCount }} successful</span>
+            <span class="failure-count" *ngIf="importResult.failureCount > 0">✖ {{ importResult.failureCount }} failed</span>
+          </p>
+        </div>
+        <div class="results-actions">
+          <button class="btn btn-outline" *ngIf="importResult.failureCount > 0" (click)="retryFailed()">
+            <i class="fas fa-redo"></i> Retry failed
+          </button>
+          <button class="btn btn-primary" (click)="clearEntries()">
+            <i class="fas fa-plus"></i> Import more
+          </button>
+        </div>
+      </div>
+
+      <div class="results-list">
+        <div class="result-row" *ngFor="let item of importResult.items" [class.success]="item.success" [class.failure]="!item.success">
+          <div class="result-status-icon">
+            <i class="fas" [ngClass]="item.success ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'"></i>
+          </div>
+          <div class="result-info">
+            <div class="result-title">
+              <strong>{{ item.projectName }}</strong>
+              <span class="badge badge-format">{{ item.format }}</span>
+              <span class="badge badge-qubits" *ngIf="item.qubits">{{ item.qubits }} qubits</span>
+            </div>
+            <div class="result-error" *ngIf="!item.success">
+              {{ item.error || item.errorCode }}
+            </div>
+          </div>
+          <div class="result-actions-col" *ngIf="item.success && item.projectId">
+            <button type="button" class="btn btn-outline btn-sm" (click)="openProject(item.projectId)">
+              <i class="fas fa-folder-open"></i> Open
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workflow -->
+    <div class="workflow-container" *ngIf="!importResult">
+      <!-- Step 1: Language selection -->
+      <div class="glass-card step-card">
+        <div class="step-header">
+          <div class="step-badge">1</div>
+          <div>
+            <h3>Choose the language</h3>
+            <p class="text-secondary">Select the source format of the circuits you want to add</p>
+          </div>
+        </div>
+
+        <div class="formats-grid" *ngIf="!loadingFormats">
+          <button
+            type="button"
+            class="format-btn"
+            *ngFor="let fmt of formats"
+            [class.active]="selectedFormat?.id === fmt.id"
+            (click)="selectFormat(fmt)"
+          >
+            <span class="format-label">{{ fmt.label }}</span>
+            <span class="format-ext">{{ fmt.extensions.join(', ') }}</span>
+          </button>
+        </div>
+        <div class="loading-spinner" *ngIf="loadingFormats">
+          <i class="fas fa-spinner fa-spin"></i> Loading supported formats…
+        </div>
+      </div>
+
+      <!-- Step 2: Add circuits -->
+      <div class="glass-card step-card" [class.disabled-step]="!selectedFormat">
+        <div class="step-header">
+          <div class="step-badge">2</div>
+          <div>
+            <h3>Add circuits</h3>
+            <p class="text-secondary" *ngIf="selectedFormat">
+              Selected language: <strong>{{ selectedFormat.label }}</strong> (accepts {{ selectedFormat.extensions.join(', ') }})
+            </p>
+            <p class="text-muted" *ngIf="!selectedFormat">
+              Choose a language first to unlock adding circuits
+            </p>
+          </div>
+        </div>
+
+        <div class="tabs-bar" *ngIf="selectedFormat">
+          <button
+            type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'upload'"
+            (click)="activeTab = 'upload'"
+          >
+            <i class="fas fa-cloud-upload-alt"></i> Upload files
+          </button>
+          <button
+            type="button"
+            class="tab-btn"
+            [class.active]="activeTab === 'paste'"
+            (click)="activeTab = 'paste'"
+          >
+            <i class="fas fa-code"></i> Paste code
+          </button>
+        </div>
+
+        <!-- Upload Tab -->
+        <div class="tab-content" *ngIf="selectedFormat && activeTab === 'upload'">
+          <div
+            class="drop-zone"
+            [class.dragging]="isDragging"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="fileInput.click()"
+          >
+            <input
+              #fileInput
+              type="file"
+              multiple
+              [accept]="acceptAttr"
+              (change)="onFileInputChange($event)"
+              style="display: none;"
+            />
+            <div class="drop-icon"><i class="fas fa-folder-open"></i></div>
+            <div class="drop-text">
+              <strong>Drop {{ selectedFormat.label }} files here</strong> or <span class="browse-link">browse</span>
+            </div>
+            <div class="drop-hint">
+              Allowed extensions: {{ selectedFormat.extensions.join(', ') }} · Up to {{ limits.maxFiles }} files
+            </div>
+          </div>
+        </div>
+
+        <!-- Paste Tab -->
+        <div class="tab-content" *ngIf="selectedFormat && activeTab === 'paste'">
+          <div class="paste-form">
+            <div class="form-group">
+              <label for="pNameInput">Project name <span class="required">*</span></label>
+              <input
+                id="pNameInput"
+                type="text"
+                class="form-control"
+                placeholder="e.g. Bell state experiment"
+                [(ngModel)]="pastedProjectName"
+              />
+            </div>
+            <div class="form-group">
+              <label for="pCodeTextarea">Circuit code ({{ selectedFormat.label }}) <span class="required">*</span></label>
+              <textarea
+                id="pCodeTextarea"
+                class="form-control code-editor"
+                rows="7"
+                placeholder="Paste code here..."
+                [(ngModel)]="pastedCode"
+              ></textarea>
+            </div>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="!pastedProjectName.trim() || !pastedCode.trim()"
+              (click)="addPastedCode()"
+            >
+              <i class="fas fa-plus"></i> Add circuit
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Entries List -->
+      <div class="glass-card step-card" *ngIf="entries.length > 0">
+        <div class="entries-header">
+          <div>
+            <h3>Circuits to import ({{ entries.length }})</h3>
+            <p class="text-secondary">Review, edit project names, and remove invalid entries</p>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" (click)="clearEntries()">
+            <i class="fas fa-trash"></i> Clear all
+          </button>
+        </div>
+
+        <div class="entries-table">
+          <div class="entry-row" *ngFor="let entry of entries; let i = index" [class.has-error]="!!entry.error">
+            <div class="entry-format">
+              <span class="badge badge-format">{{ entry.item?.format || 'unknown' }}</span>
+            </div>
+            <div class="entry-main">
+              <div class="entry-file-info">
+                <span class="file-name">{{ entry.item?.fileName || 'Pasted code' }}</span>
+                <span class="file-size" *ngIf="entry.sizeKb !== undefined">({{ entry.sizeKb }} KB)</span>
+              </div>
+              <div class="entry-project-name" *ngIf="entry.item">
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
+                  [(ngModel)]="entry.item.projectName"
+                  placeholder="Project name"
+                />
+              </div>
+              <div class="entry-error-msg" *ngIf="entry.error">
+                <i class="fas fa-exclamation-circle"></i> {{ entry.error }}
+              </div>
+              <div class="entry-last-error-msg" *ngIf="entry.lastError && !entry.error">
+                <i class="fas fa-redo"></i> Previous attempt failed: {{ entry.lastError }}
+              </div>
+            </div>
+            <div class="entry-action">
+              <button type="button" class="btn-remove" (click)="removeEntry(i)" title="Remove">&times;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="import-actions-bar">
+          <div class="validation-message" *ngIf="batchValidationError">
+            <i class="fas fa-exclamation-triangle"></i> {{ batchValidationError }}
+          </div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="importing || !!batchValidationError"
+            (click)="importAll()"
+          >
+            <span *ngIf="!importing"><i class="fas fa-file-import"></i> Import {{ validItems.length }} project(s)</span>
+            <span *ngIf="importing"><i class="fas fa-spinner fa-spin"></i> Checking, scanning and converting…</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>
