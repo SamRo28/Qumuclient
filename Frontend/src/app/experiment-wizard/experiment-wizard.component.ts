@@ -7,6 +7,7 @@ import { ManagerService } from '../services/manager.service';
 import { CircuitConfig, CreateExperimentRequest } from '../model/Experiment';
 import { OperatorFamily } from '../model/OperatorFamily';
 import { NoiseConfig, DEFAULT_NOISE_CONFIG, areValidNoiseRotations, isNoiseOperator, rotationLabel } from '../model/NoiseConfig';
+import { splitFamiliesForLayout } from '../model/family-layout';
 
 @Component({
   selector: 'app-experiment-wizard',
@@ -30,6 +31,8 @@ export class ExperimentWizardComponent implements OnInit {
 
   // Step 3: Operators (identical to OperatorsComponent)
   public families: OperatorFamily[] = [];
+  public compactFamilies: OperatorFamily[] = [];
+  public wideFamilies: OperatorFamily[] = [];
   public selectedFamily: OperatorFamily | null = null;
   public isModalOpen: boolean = false;
   public noiseRotations: NoiseConfig[] = [{ ...DEFAULT_NOISE_CONFIG }];
@@ -99,6 +102,9 @@ export class ExperimentWizardComponent implements OnInit {
               });
             }
           });
+          const layout = splitFamiliesForLayout(this.families);
+          this.compactFamilies = layout.compact;
+          this.wideFamilies = layout.wide;
         }
       },
       error: (err) => {
