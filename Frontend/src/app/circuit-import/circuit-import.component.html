@@ -26,7 +26,7 @@
     <div class="panel-row" *ngIf="mode === 'file'">
       <input type="file" name="ciFile" class="panel-file" [accept]="acceptAttr" (change)="onFileChange($event)"
         [disabled]="converting">
-      <span class="panel-hint">Allowed: {{ selectedFormat.extensions.join(', ') }} · max 512 KB</span>
+      <span class="panel-hint">Allowed: {{ selectedFormat.extensions.join(', ') }} · max {{ maxSizeText }}</span>
     </div>
 
     <div class="panel-row" *ngIf="mode === 'paste'">

@@ -20,31 +20,8 @@
           <div>
             <h2>Import projects</h2>
             <p class="text-secondary">Import quantum circuits as projects from files or raw code</p>
+            <p class="limits-text">{{ limitsText }}</p>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Help & Limits Banner -->
-    <div class="glass-card help-banner">
-      <div class="help-grid">
-        <div class="help-item">
-          <i class="fas fa-info-circle help-icon"></i>
-          <div>
-            <strong>Limits:</strong> Up to {{ limits.maxFiles }} files, max {{ limits.maxFileBytes / 1024 }} KB per file, max {{ limits.maxTotalBytes / (1024 * 1024) }} MB total, max {{ limits.maxQubits }} qubits.
-          </div>
-        </div>
-        <div class="help-item" *ngIf="antivirusEnabled">
-          <i class="fas fa-shield-alt help-icon"></i>
-          <div><strong>Antivirus protection:</strong> Files are scanned with ClamAV antivirus upon upload.</div>
-        </div>
-        <div class="help-item">
-          <i class="fas fa-user-shield help-icon"></i>
-          <div><strong>Privacy:</strong> Only the file contents are sent, never the file itself.</div>
-        </div>
-        <div class="help-item warning">
-          <i class="fas fa-exclamation-triangle help-icon"></i>
-          <div><strong>Note:</strong> Python code (Qiskit, Cirq, Q#…) cannot be imported. Only supported circuit interchange formats are accepted.</div>
         </div>
       </div>
     </div>
@@ -83,7 +60,7 @@
           <div class="result-info">
             <div class="result-title">
               <strong>{{ item.projectName }}</strong>
-              <span class="badge badge-format">{{ item.format }}</span>
+              <span class="badge badge-format">{{ formatLabel(item.format) }}</span>
               <span class="badge badge-qubits" *ngIf="item.qubits">{{ item.qubits }} qubits</span>
             </div>
             <div class="result-error" *ngIf="!item.success">
@@ -111,20 +88,13 @@
           </div>
         </div>
 
-        <div class="formats-grid" *ngIf="!loadingFormats">
-          <button
-            type="button"
-            class="format-btn"
-            *ngFor="let fmt of formats"
-            [class.active]="selectedFormat?.id === fmt.id"
-            (click)="selectFormat(fmt)"
-          >
-            <span class="format-label">{{ fmt.label }}</span>
-            <span class="format-ext">{{ fmt.extensions.join(', ') }}</span>
-          </button>
-        </div>
-        <div class="loading-spinner" *ngIf="loadingFormats">
-          <i class="fas fa-spinner fa-spin"></i> Loading supported formats…
+        <div class="form-group">
+          <label for="import-format">Circuit language</label>
+          <select id="import-format" class="form-control" [(ngModel)]="selectedFormatId" [disabled]="loadingFormats">
+            <option value="" disabled>{{ loadingFormats ? 'Loading formats…' : 'Select a language' }}</option>
+            <option *ngFor="let fmt of formats" [value]="fmt.id">{{ fmt.label }} ({{ fmt.extensions.join(', ') }})</option>
+          </select>
+          <span class="format-hint" *ngIf="selectedFormat">Accepted files: {{ selectedFormat.extensions.join(', ') }}</span>
         </div>
       </div>
 
@@ -240,7 +210,7 @@
         <div class="entries-table">
           <div class="entry-row" *ngFor="let entry of entries; let i = index" [class.has-error]="!!entry.error">
             <div class="entry-format">
-              <span class="badge badge-format">{{ entry.item?.format || 'unknown' }}</span>
+              <span class="badge badge-format">{{ formatLabel(entry.item?.format) }}</span>
             </div>
             <div class="entry-main">
               <div class="entry-file-info">
@@ -280,7 +250,7 @@
             (click)="importAll()"
           >
             <span *ngIf="!importing"><i class="fas fa-file-import"></i> Import {{ validItems.length }} project(s)</span>
-            <span *ngIf="importing"><i class="fas fa-spinner fa-spin"></i> Checking, scanning and converting…</span>
+            <span *ngIf="importing"><i class="fas fa-spinner fa-spin"></i> Checking and converting…</span>
           </button>
         </div>
       </div>

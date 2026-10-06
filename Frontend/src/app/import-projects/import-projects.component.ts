@@ -14,6 +14,7 @@ import { UserService } from '../services/user.service';
 import {
   acceptAttrFor,
   checkBatch,
+  formatBytes,
   readCircuitFile
 } from '../utils/import-file.utils';
 
@@ -35,14 +36,16 @@ export class ImportProjectsComponent implements OnInit {
   formats: ImportFormat[] = [];
   limits: ImportLimits = {
     maxFiles: 20,
-    maxFileBytes: 524288,
-    maxTotalBytes: 5242880,
+    maxFileBytes: 2097152,
+    maxTotalBytes: 20971520,
     maxQubits: 16
   };
-  antivirusEnabled: boolean = true;
   loadingFormats: boolean = true;
 
-  selectedFormat: ImportFormat | null = null;
+  selectedFormatId: string = '';
+  get selectedFormat(): ImportFormat | null {
+    return this.formats.find(f => f.id === this.selectedFormatId) || null;
+  }
   activeTab: 'upload' | 'paste' = 'upload';
   isDragging: boolean = false;
 
@@ -89,7 +92,6 @@ export class ImportProjectsComponent implements OnInit {
         if (resp.limits) {
           this.limits = resp.limits;
         }
-        this.antivirusEnabled = resp.antivirusEnabled;
         this.loadingFormats = false;
       },
       error: (err: any) => {
@@ -99,8 +101,14 @@ export class ImportProjectsComponent implements OnInit {
     });
   }
 
-  selectFormat(fmt: ImportFormat): void {
-    this.selectedFormat = fmt;
+  formatLabel(id: string | null | undefined): string {
+    if (!id) return '';
+    const fmt = this.formats.find(f => f.id === id);
+    return fmt ? fmt.label : id;
+  }
+
+  get limitsText(): string {
+    return `Up to ${this.limits.maxFiles} files · ${formatBytes(this.limits.maxFileBytes)} per file · ${formatBytes(this.limits.maxTotalBytes)} in total · ${this.limits.maxQubits} qubits max`;
   }
 
   get acceptAttr(): string {

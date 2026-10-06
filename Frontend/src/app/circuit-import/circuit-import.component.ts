@@ -1,7 +1,7 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { ConvertedCircuit, ImportFormat, ImportLimits } from '../model/ImportModels';
 import { ProjectImportService } from '../services/project-import.service';
-import { acceptAttrFor, readCircuitFile } from '../utils/import-file.utils';
+import { acceptAttrFor, formatBytes, readCircuitFile } from '../utils/import-file.utils';
 
 /**
  * Panel del editor para importar un circuito escrito en otro lenguaje.
@@ -18,7 +18,7 @@ export class CircuitImportComponent implements OnInit {
   @Output() cancelled = new EventEmitter<void>();
 
   formats: ImportFormat[] = [];
-  limits: ImportLimits = { maxFiles: 20, maxFileBytes: 524288, maxTotalBytes: 5242880, maxQubits: 16 };
+  limits: ImportLimits = { maxFiles: 20, maxFileBytes: 2097152, maxTotalBytes: 20971520, maxQubits: 16 };
   selectedFormatId: string = '';
   mode: 'file' | 'paste' = 'file';
 
@@ -53,6 +53,10 @@ export class CircuitImportComponent implements OnInit {
 
   get acceptAttr(): string {
     return this.selectedFormat ? acceptAttrFor(this.selectedFormat) : '';
+  }
+
+  get maxSizeText(): string {
+    return formatBytes(this.limits.maxFileBytes);
   }
 
   get canConvert(): boolean {
@@ -99,7 +103,7 @@ export class CircuitImportComponent implements OnInit {
     } else {
       code = this.pastedCode;
       if (new TextEncoder().encode(code).length > this.limits.maxFileBytes) {
-        this.error = 'Code exceeds 512 KB';
+        this.error = `Code exceeds ${formatBytes(this.limits.maxFileBytes)}`;
         return;
       }
     }
