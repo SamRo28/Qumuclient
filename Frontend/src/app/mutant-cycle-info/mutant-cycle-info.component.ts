@@ -448,7 +448,16 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       message: '¿Estás seguro de que deseas duplicar este ciclo? Se creará uno nuevo idéntico pero con todos los resultados en pendiente.',
       confirmText: 'Duplicate',
       type: 'info',
-      onConfirm: () => {
+      onConfirm: async () => {
+        this.manager.showNotification('Loading mutant circuits…', 'loading');
+        try {
+          await this.manager.ensureCycleCircuits(this.mutantCycle!);
+        } catch (err) {
+          console.error('Error loading circuits for duplicate', err);
+          this.manager.showNotification('Error loading mutant circuits', 'error', 5000);
+          return;
+        }
+
         // Deep clone mutants array
         const clonedMutants: Mutant[] = this.mutantCycle!.mutants.map(m => {
           const newMutant = new Mutant();

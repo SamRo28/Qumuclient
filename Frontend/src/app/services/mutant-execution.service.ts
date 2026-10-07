@@ -60,8 +60,33 @@ export class MutantExecutionService {
         }
     }
 
-    public startExecution(mutantCycle: MutantCycle, project: Project) {
+    public async startExecution(mutantCycle: MutantCycle, project: Project) {
         const cycleId = mutantCycle.id as number;
+
+        if (this.activeExecutions.has(cycleId)) {
+            console.warn(`Execution for cycle ${cycleId} is already running.`);
+            return;
+        }
+
+        this.updateStatus(cycleId, {
+            isRunning: true,
+            progress: 0,
+            total: mutantCycle.mutants?.length || mutantCycle.mutantsCount || 0,
+            message: 'Loading mutant circuits…'
+        });
+
+        try {
+            await this.manager.ensureCycleCircuits(mutantCycle, (done, total) => {
+                this.updateStatus(cycleId, {
+                    message: `Loading mutant circuits… ${done}/${total}`
+                });
+            });
+        } catch (err) {
+            console.error('Error loading mutant circuits', err);
+            this.updateStatus(cycleId, { isRunning: false, message: 'Error loading mutant circuits.' });
+            this.manager.showNotification('Error loading mutant circuits.', 'error', 5000);
+            return;
+        }
 
         // Calculate start index based on existing results
         let startIndex = 0;
@@ -74,22 +99,18 @@ export class MutantExecutionService {
                 }
                 // If we reached the end and all have results
                 if (i === mutantCycle.mutants.length - 1 && mutant.mutantResults && mutant.mutantResults.length > 0) {
+                    this.updateStatus(cycleId, { isRunning: false, message: 'Completed.' });
                     this.manager.showNotification("Todas las ejecuciones ya se han completado para este ciclo.", "success", 5000);
                     return;
                 }
             }
         }
 
-        if (this.activeExecutions.has(cycleId)) {
-            console.warn(`Execution for cycle ${cycleId} is already running.`);
-            return;
-        }
-
         // Initialize Status
         const totalMutants = mutantCycle.mutants.length;
         this.updateStatus(cycleId, {
             isRunning: true,
-            progress: 0,
+            progress: startIndex,
             total: totalMutants,
             message: 'Starting execution...'
         });

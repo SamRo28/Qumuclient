@@ -199,7 +199,16 @@ export class SideBarComponent implements OnInit, OnDestroy {
       message: 'Are you sure you want to duplicate this mutant cycle? An identical cycle with pending results will be created.',
       confirmText: 'Duplicate',
       type: 'info',
-      onConfirm: () => {
+      onConfirm: async () => {
+        this.manager.showNotification('Loading mutant circuits…', 'loading');
+        try {
+          await this.manager.ensureCycleCircuits(cycle);
+        } catch (err) {
+          console.error('Error loading circuits for duplicate', err);
+          this.manager.showNotification('Error loading mutant circuits', 'error', 5000);
+          return;
+        }
+
         // Deep clone mutants array
         const clonedMutants: Mutant[] = cycle.mutants.map(m => {
           const newMutant = new Mutant();
