@@ -1,20 +1,22 @@
 <div class="representation">
   <div class="show-as-row">
     <span class="show-as-label">Show as:</span>
-    <div class="show-as-options" role="radiogroup" aria-label="Circuit representation format">
-      <button type="button" class="show-as-chip" role="radio" [attr.aria-checked]="selected === 'quirk'"
-        [class.active]="selected === 'quirk'" (click)="select('quirk')">
-        Quirk (editable)
-      </button>
-      <button type="button" class="show-as-chip" role="radio" *ngFor="let f of formats"
-        [attr.aria-checked]="selected === f.id" [class.active]="selected === f.id" [disabled]="disabled"
-        (click)="select(f.id)">
-        {{ f.label }}
-      </button>
+    <div class="show-as-select-wrapper">
+      <select class="show-as-select" [ngModel]="selected" (ngModelChange)="select($event)"
+        aria-label="Circuit representation format">
+        <option value="quirk">Quirk (editable)</option>
+        <option *ngFor="let f of formats" [value]="f.id" [disabled]="disabled">
+          {{ f.label }}
+        </option>
+      </select>
+      <svg class="select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
     </div>
+    <span class="show-as-hint" *ngIf="!loggedIn">Log in to view in other formats</span>
+    <span class="show-as-hint" *ngIf="loggedIn && !hasValidQuirk">Write a valid Quirk circuit to view it in other formats</span>
   </div>
-  <div class="show-as-hint" *ngIf="!loggedIn">Log in to view in other formats</div>
-  <div class="show-as-hint" *ngIf="loggedIn && !hasValidQuirk">Write a valid Quirk circuit to view it in other formats</div>
 
   <div class="representation-view" *ngIf="selected !== 'quirk'">
     <div class="view-toolbar">

@@ -18,42 +18,63 @@
     color: var(--text-secondary);
 }
 
-.show-as-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+.show-as-select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
 }
 
-.show-as-chip {
-    padding: 0.35rem 0.8rem;
-    border-radius: 999px;
-    border: 1px solid var(--border-glass-light);
-    background: var(--glass-bg);
+.show-as-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0.45rem 2.2rem 0.45rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-glass);
+    background: var(--glass-bg-card);
     color: var(--text-primary);
-    font: inherit;
-    font-size: 0.8rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 150ms ease;
+    transition: all 200ms ease;
+    outline: none;
+    box-shadow: 0 2px 8px var(--shadow-glass);
 }
 
-.show-as-chip:hover:not(:disabled) {
+.show-as-select:hover:not(:disabled) {
     border-color: var(--accent-primary);
+    background: var(--glass-bg-hover);
 }
 
-.show-as-chip.active {
-    background: var(--accent-gradient);
+.show-as-select:focus-visible {
     border-color: var(--accent-primary);
-    color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
-.show-as-chip:disabled {
-    opacity: 0.5;
+.show-as-select:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-.show-as-chip:focus-visible {
-    outline: 2px solid var(--accent-primary);
-    outline-offset: 2px;
+.show-as-select option {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.show-as-select option:disabled {
+    color: var(--text-muted);
+}
+
+.select-chevron {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    color: var(--text-secondary);
+    transition: transform 150ms ease;
+}
+
+.show-as-select-wrapper:hover .select-chevron {
+    color: var(--accent-primary);
 }
 
 .show-as-hint {
