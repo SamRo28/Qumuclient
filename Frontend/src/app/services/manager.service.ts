@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject, Observable, of, tap, switchMap } from 'rxjs';
+import { Subject, BehaviorSubject, Observable, of, tap, switchMap, firstValueFrom } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { Project } from '../model/Project';
 import { Mutant } from '../model/Mutant';
@@ -13,6 +13,7 @@ import { Deterministic } from '../model/Deterministic';
 import { Stochastic } from '../model/Stochastic';
 import { ReperService } from './reper.service';
 import * as localforage from 'localforage';
+import { projectFromLight, applyCycleMatrix, programFromDto, mergeSidebarMutants } from '../utils/lazy-project.utils';
 
 
 @Injectable({
@@ -52,6 +53,8 @@ export class ManagerService {
 
   public selectedProject$ = this._selectedProject.asObservable();
   public selectedMutantCycle$ = this._selectedMutantCycle.asObservable();
+  public cycleLoading$ = new BehaviorSubject<boolean>(false);
+  private pendingCycleMatrixRequests = new Map<string, Promise<MutantCycle>>();
 
   showHome: boolean = true
   showCircuit: boolean = false
@@ -137,6 +140,11 @@ export class ManagerService {
       this.selectedProject.markAsSaved();
       this._projectSavedState.next(true);
       this.showSaveButton = false;
+      if (this.selectedProject.id) {
+        localforage.removeItem(`qumu_project_${this.selectedProject.id}`).catch(e => {
+          console.warn("Could not remove project cache on save", e);
+        });
+      }
     }
   }
 
@@ -162,7 +170,7 @@ export class ManagerService {
 
   public cacheProjectLocally(project: Project): void {
     if (project && project.id) {
-      localforage.setItem(`qumu_project_${project.id}`, project).catch(e => {
+      localforage.setItem(`qumu_project_${project.id}`, { ...project, _unsaved: true }).catch(e => {
         console.warn("Could not cache project to localForage", e);
       });
     }
@@ -183,51 +191,51 @@ export class ManagerService {
       try {
         const cachedItem = await localforage.getItem<any>(`qumu_project_${circuit.id}`);
         if (cachedItem) {
-          const fullyLoadedCircuitArr = this.processProjectData([cachedItem]);
-          if (fullyLoadedCircuitArr.length > 0) {
-            const loadedProject = fullyLoadedCircuitArr[0];
-            loadedProject.saved = circuit.saved; // Restablecer estado visual anterior
-
-            // Sustituir en la lista de projects de manera transparente
-            const index = this.projects.findIndex(p => p.id === loadedProject.id);
-            if (index !== -1) {
-              this.projects[index] = loadedProject;
-              this._projects.next(this.projects);
-            }
-            this._finalizeSetSelectedProject(loadedProject);
-            this.isProjectLoading = false;
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn("Failed to reconstruct cached project from localForage", e);
-      }
-
-      // Si no está en caché local, hay que descargarlo entero del servidor.
-      const email = sessionStorage.getItem('email');
-      if (email) {
-        this.reperService.getProject(email, circuit.id!).subscribe({
-          next: (fullCircuitData) => {
-            // fullCircuitData is raw JSON from backend
-            const fullyLoadedCircuitArr = this.processProjectData([fullCircuitData]);
+          if (cachedItem._unsaved || cachedItem.unsaved) {
+            const projectData = cachedItem.project || cachedItem;
+            const fullyLoadedCircuitArr = this.processProjectData([projectData]);
             if (fullyLoadedCircuitArr.length > 0) {
               const loadedProject = fullyLoadedCircuitArr[0];
+              loadedProject.saved = false; // Restablecer estado no guardado
 
-              // Guardar en la caché local
-              this.cacheProjectLocally(loadedProject);
-
-              // Sustituir en la vista
+              // Sustituir en la lista de projects de manera transparente
               const index = this.projects.findIndex(p => p.id === loadedProject.id);
               if (index !== -1) {
                 this.projects[index] = loadedProject;
                 this._projects.next(this.projects);
               }
               this._finalizeSetSelectedProject(loadedProject);
+              this.isProjectLoading = false;
+              return;
             }
+          } else {
+            // Ignorar y borrar elementos cacheados sin cambios sin guardar
+            await localforage.removeItem(`qumu_project_${circuit.id}`);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to reconstruct cached project from localForage", e);
+      }
+
+      // Si no hay cambios sin guardar en caché, pedir proyecto ligero al backend
+      const email = sessionStorage.getItem('email');
+      if (email && circuit.id) {
+        this.reperService.getProjectLight(email, circuit.id).subscribe({
+          next: (dto) => {
+            const loadedProject = projectFromLight(dto);
+            const index = this.projects.findIndex(p => p.id === loadedProject.id);
+            const sidebarProject = index !== -1 ? this.projects[index] : undefined;
+            mergeSidebarMutants(loadedProject, sidebarProject);
+
+            if (index !== -1) {
+              this.projects[index] = loadedProject;
+              this._projects.next(this.projects);
+            }
+            this._finalizeSetSelectedProject(loadedProject);
             this.isProjectLoading = false;
           },
           error: (err) => {
-            console.error("Failed to lazy load project from backend", err);
+            console.error("Failed to lazy load light project from backend", err);
             // Failsafe: fall back on what we have even if incomplete
             this._finalizeSetSelectedProject(circuit);
             this.isProjectLoading = false;
@@ -240,6 +248,137 @@ export class ManagerService {
 
     // Si estaba completo (e.g. uno que acabamos de crear con setNewselectedProject o ya estaba parseado completo)
     this._finalizeSetSelectedProject(circuit);
+  }
+
+  loadCycleMatrix(cycle: MutantCycle): Promise<MutantCycle> {
+    if (cycle.matrixLoaded || cycle.newlyGenerated) {
+      return Promise.resolve(cycle);
+    }
+    const projectId = this.selectedProject?.id;
+    if (!projectId) {
+      return Promise.resolve(cycle);
+    }
+    const email = sessionStorage.getItem('email') || '';
+    const key = `${projectId}:${cycle.id}`;
+
+    if (this.pendingCycleMatrixRequests.has(key)) {
+      return this.pendingCycleMatrixRequests.get(key)!;
+    }
+
+    this.cycleLoading$.next(true);
+    const promise = new Promise<MutantCycle>((resolve, reject) => {
+      this.reperService.getCycleMatrix(email, projectId, cycle.id).subscribe({
+        next: (dto) => {
+          applyCycleMatrix(cycle, dto);
+          this.pendingCycleMatrixRequests.delete(key);
+          this.cycleLoading$.next(false);
+          resolve(cycle);
+        },
+        error: (err) => {
+          this.pendingCycleMatrixRequests.delete(key);
+          this.cycleLoading$.next(false);
+          reject(err);
+        }
+      });
+    });
+
+    this.pendingCycleMatrixRequests.set(key, promise);
+    return promise;
+  }
+
+  async loadMutant(cycle: MutantCycle, mutantIndex: number): Promise<Mutant | undefined> {
+    await this.loadCycleMatrix(cycle);
+    const mutant = cycle.mutants.find(m => m.mutantIndex === mutantIndex);
+    if (!mutant) {
+      return undefined;
+    }
+    if (mutant.circuit?.qCircuit?.quirkCode) {
+      this.setSelectedMutant(mutant);
+      return mutant;
+    }
+
+    const projectId = this.selectedProject?.id;
+    const email = sessionStorage.getItem('email') || '';
+    if (!projectId) {
+      return mutant;
+    }
+
+    return new Promise<Mutant | undefined>((resolve, reject) => {
+      this.reperService.getMutant(email, projectId, cycle.id, mutantIndex).subscribe({
+        next: (dto) => {
+          if (dto) {
+            mutant.circuit = programFromDto(dto.circuit);
+            if (dto.mutantResults) {
+              mutant.mutantResults = dto.mutantResults;
+            }
+          }
+          this.setSelectedMutant(mutant);
+          resolve(mutant);
+        },
+        error: (err) => {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  async ensureCycleCircuits(cycle: MutantCycle, onProgress?: (done: number, total: number) => void): Promise<void> {
+    await this.loadCycleMatrix(cycle);
+    if (!cycle.mutants || cycle.mutants.length === 0) {
+      return;
+    }
+    const allHaveCircuit = cycle.mutants.every(m => !!m.circuit?.qCircuit?.quirkCode);
+    if (allHaveCircuit) {
+      return;
+    }
+
+    const projectId = this.selectedProject?.id;
+    const email = sessionStorage.getItem('email') || '';
+    if (!projectId) {
+      return;
+    }
+
+    const total = cycle.mutants.length;
+    let done = cycle.mutants.filter(m => !!m.circuit?.qCircuit?.quirkCode).length;
+    let fromIndex = 0;
+
+    const mutantsByIndex = new Map<number, Mutant>();
+    for (const m of cycle.mutants) {
+      if (m.mutantIndex !== undefined) {
+        mutantsByIndex.set(m.mutantIndex, m);
+      }
+    }
+
+    while (true) {
+      const page: any[] = await firstValueFrom(
+        this.reperService.getMutantCircuits(email, projectId, cycle.id, fromIndex, 200)
+      );
+
+      if (!page || page.length === 0) {
+        break;
+      }
+
+      let maxIndexInPage = fromIndex;
+      for (const item of page) {
+        const targetMutant = mutantsByIndex.get(item.mutantIndex);
+        if (targetMutant) {
+          targetMutant.circuit = programFromDto(item.circuit);
+        }
+        if (item.mutantIndex > maxIndexInPage) {
+          maxIndexInPage = item.mutantIndex;
+        }
+      }
+
+      done = cycle.mutants.filter(m => !!m.circuit?.qCircuit?.quirkCode).length;
+      if (onProgress) {
+        onProgress(done, total);
+      }
+
+      if (page.length < 200) {
+        break;
+      }
+      fromIndex = maxIndexInPage + 1;
+    }
   }
 
   private _finalizeSetSelectedProject(circuit: Project) {
@@ -380,6 +519,8 @@ export class ManagerService {
     let mutantPrj = new MutantCycle(this.mutants, nextId);
     mutantPrj.name = 'Mutant Cycle ' + mutantPrj.id;
     mutantPrj.newlyGenerated = true;
+    mutantPrj.matrixLoaded = true;
+    mutantPrj.mutantsCount = this.mutants.length;
     this.selectedProject?.mutantCycles.push(mutantPrj);
 
     // Marcar como modificado al agregar mutantes
