@@ -39,6 +39,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   pageSize: number | 'All' | 'Custom' = 50;
   customPageSize: number = 100;
   totalPages: number = 0;
+  loadingMatrix: boolean = false;
 
   paginatedMutants: Mutant[] = [];
 
@@ -181,12 +182,22 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
                 // cycleId from URL is string, cycle.id might be number. Check loose equality or conversion.
                 const cycle = project.mutantCycles.find(c => c.id == Number(cycleId));
                 if (cycle) {
-                  this.manager.setSelectedMutantCycle(cycle);
-                  this.mutantCycle = cycle;
-
-                  // Initialization logic that was in ngOnChanges
-                  this.initializeCycleView();
-                  this.checkAndSubscribeToExecution();
+                  if (this.mutantCycle === cycle && cycle.matrixLoaded) {
+                    return;
+                  }
+                  this.loadingMatrix = true;
+                  this.manager.loadCycleMatrix(cycle).then(c => {
+                    this.manager.setSelectedMutantCycle(c);
+                    this.mutantCycle = c;
+                    this.initializeCycleView();
+                    this.checkAndSubscribeToExecution();
+                  }).catch(err => {
+                    console.error(err);
+                    this.manager.showNotification('Error loading the killing matrix', 'error', 5000);
+                  }).finally(() => {
+                    this.loadingMatrix = false;
+                    this.cdr.detectChanges();
+                  });
                 }
               }
             })
@@ -316,18 +327,25 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['mutantCycle'] && this.mutantCycle?.mutants) {
-      this.initializeCycleView();
-
-      // Re-subscribe to status for new cycle
-      // Note: checkAndSubscribeToExecution handles this but we need to unsubscribe previous status sub if strict?
-      // Since 'subscriptions' collects all, they are cleared on Destroy. 
-      // Ideally we should track the specific status subscription and unsubscribe it when cycle changes.
-      // For now, it's okay as OnDestroy cleans up, but if user switches cycles rapidly without destroying component 
-      // (e.g. parent input change), we might stack subscriptions. 
-      // Since this component seems to be routed (based on ngOnInit route param logic), OnDestroy is likely called on nav.
-      // If used as child component, we might want to be more careful. 
-      this.checkAndSubscribeToExecution();
+    if (changes['mutantCycle'] && this.mutantCycle) {
+      if (!this.mutantCycle.matrixLoaded && !this.mutantCycle.newlyGenerated) {
+        this.loadingMatrix = true;
+        this.manager.loadCycleMatrix(this.mutantCycle).then(c => {
+          this.manager.setSelectedMutantCycle(c);
+          this.mutantCycle = c;
+          this.initializeCycleView();
+          this.checkAndSubscribeToExecution();
+        }).catch(err => {
+          console.error(err);
+          this.manager.showNotification('Error loading the killing matrix', 'error', 5000);
+        }).finally(() => {
+          this.loadingMatrix = false;
+          this.cdr.detectChanges();
+        });
+      } else if (this.mutantCycle.mutants) {
+        this.initializeCycleView();
+        this.checkAndSubscribeToExecution();
+      }
     }
   }
 

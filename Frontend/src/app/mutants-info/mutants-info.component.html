@@ -28,46 +28,53 @@
   Mutant {{ manager.selectedMutant?.mutantIndex}}
 </h2>
 
-<div class="tabs">
-  <button class="tab" [class.active]="selectedTab === 'info'" (click)="selectTab('info')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-      <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-    </svg>
-    INFO
-  </button>
-  <button class="tab" [class.active]="selectedTab === 'code'" (click)="selectTab('code')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-        stroke-linejoin="round" />
-    </svg>
-    CODE
-  </button>
-  <button class="tab" [class.active]="selectedTab === 'visualization'" (click)="selectTab('visualization')">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-        stroke-linejoin="round" />
-      <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-        stroke-linejoin="round" />
-    </svg>
-    VISUALIZATION
-  </button>
+<div *ngIf="loadingMutant" class="loading-state">
+  <div class="spinner-lg"></div>
+  <p>Loading mutant…</p>
 </div>
 
-<div *ngIf="selectedTab === 'info'">
-  <div class="info-content">
-    <app-mutants-general></app-mutants-general>
+<div *ngIf="!loadingMutant">
+  <div class="tabs">
+    <button class="tab" [class.active]="selectedTab === 'info'" (click)="selectTab('info')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+      INFO
+    </button>
+    <button class="tab" [class.active]="selectedTab === 'code'" (click)="selectTab('code')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+      CODE
+    </button>
+    <button class="tab" [class.active]="selectedTab === 'visualization'" (click)="selectTab('visualization')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+      VISUALIZATION
+    </button>
   </div>
-</div>
 
-<div *ngIf="selectedTab === 'code'">
-  <div class="code-content">
-    <app-mutants-code></app-mutants-code>
+  <div *ngIf="selectedTab === 'info'">
+    <div class="info-content">
+      <app-mutants-general></app-mutants-general>
+    </div>
   </div>
-</div>
 
-<div *ngIf="selectedTab === 'visualization'">
-  <div class="visualization-content">
-    <app-mutants-visual></app-mutants-visual>
+  <div *ngIf="selectedTab === 'code'">
+    <div class="code-content">
+      <app-mutants-code></app-mutants-code>
+    </div>
+  </div>
+
+  <div *ngIf="selectedTab === 'visualization'">
+    <div class="visualization-content">
+      <app-mutants-visual></app-mutants-visual>
+    </div>
   </div>
 </div>
