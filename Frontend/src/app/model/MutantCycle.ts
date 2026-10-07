@@ -10,6 +10,8 @@ export class MutantCycle {
 
 
     newlyGenerated: boolean = false;
+    matrixLoaded: boolean = false;
+    mutantsCount?: number;
 
     constructor(mutants?: Mutant[], id?: number, execConfiguration?: ExecConfiguration, name?: string) {
         if (mutants) {

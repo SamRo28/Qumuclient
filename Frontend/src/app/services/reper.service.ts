@@ -25,6 +25,22 @@ export class ReperService {
     return this.client.post<any>(`${environment.api.core}/projects/getProject`, { email, projectId }, { withCredentials: true })
   }
 
+  getProjectLight(email: string, projectId: string) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getProjectLight`, { email, projectId }, { withCredentials: true })
+  }
+
+  getCycleMatrix(email: string, projectId: string, cycleId: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getCycleMatrix`, { email, projectId, cycleId }, { withCredentials: true })
+  }
+
+  getMutant(email: string, projectId: string, cycleId: number, mutantIndex: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getMutant`, { email, projectId, cycleId, mutantIndex }, { withCredentials: true })
+  }
+
+  getMutantCircuits(email: string, projectId: string, cycleId: number, fromIndex: number, limit: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getMutantCircuits`, { email, projectId, cycleId, fromIndex, limit }, { withCredentials: true })
+  }
+
   save(circuit: Project) {
     // Crear una copia del circuito para no modificar el original
     const circuitToSend: any = { ...circuit };
