@@ -6,10 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletResponse;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.StreamWriteFeature;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,12 +28,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import edu.uclm.qumugen.model.Circuit;
 import edu.uclm.qumugen.model.Gate;
 import edu.uclm.qumugen.model.QColumn;
 import edu.uclm.qumugen.operators.NoiseConfig;
 import edu.uclm.qumugen.operators.Operator;
 import edu.uclm.qumugen.services.MutantService;
+import edu.uclm.qumugen.services.OperatorsService;
 import edu.uclm.qumugen.services.QiskitService;
 import edu.uclm.qumugen.services.UnexService;
 
@@ -34,6 +41,14 @@ import edu.uclm.qumugen.services.UnexService;
 @RequestMapping(value = "qumugen", produces = { "application/json" })
 @CrossOrigin(origins = "*")
 public class GenController {
+
+	private static final Logger log = LoggerFactory.getLogger(GenController.class);
+
+	@Autowired
+	private tools.jackson.databind.json.JsonMapper jsonMapper;
+
+	@Autowired
+	private OperatorsService operatorsService;
 
 	@Autowired
 	private MutantService mutantService;
@@ -46,7 +61,8 @@ public class GenController {
 
 	@SuppressWarnings("unchecked")
 	@PutMapping("/generateQuirkMutants")
-	public List<Circuit> generateQuirkMutants(@RequestBody Map<String, Object> info) {
+	public void generateQuirkMutants(@RequestBody Map<String, Object> info, HttpServletResponse response)
+			throws IOException {
 		Map<String, Object> quirk = this.get("circuit", info);
 		List<String> operatorNames = (List<String>) info.get("operatorNames");
 		String mutableColumns = info.get("mutableColumns").toString();
@@ -61,10 +77,37 @@ public class GenController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
 		}
 
-		List<Circuit> result = this.mutantService.generateQuirkMutants(quirk, operatorNames, mutableRows,
-				mutableColumns, generateWithAllInputs, sInputQubits, noiseConfigs);
+		// Un operador desconocido debe dar su 404 de siempre antes de escribir nada
+		for (String name : operatorNames)
+			this.operatorsService.find(name);
 
-		return result;
+		// Escritura sincrona y perezosa del array: nginx recibe bytes desde el primer mutante y cualquier error
+		// anterior al primer mutante sigue produciendo la respuesta de error normal de Spring.
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		JsonGenerator gen = this.jsonMapper.writer().without(StreamWriteFeature.AUTO_CLOSE_TARGET)
+				.without(StreamWriteFeature.AUTO_CLOSE_CONTENT)
+				.createGenerator(response.getOutputStream());
+		boolean[] started = { false };
+		try {
+			this.mutantService.generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns,
+					generateWithAllInputs, sInputQubits, noiseConfigs, mutant -> {
+						if (!started[0]) {
+							gen.writeStartArray();
+							started[0] = true;
+						}
+						gen.writePOJO(mutant);
+					});
+			if (!started[0])
+				gen.writeStartArray();
+			gen.writeEndArray();
+			gen.flush();
+		} catch (RuntimeException e) {
+			if (response.isCommitted())
+				log.error("Error generando mutantes en streaming", e);
+			throw e;
+		} finally {
+			gen.close();
+		}
 	}
 
 	@PutMapping("/getQiskitCode")
