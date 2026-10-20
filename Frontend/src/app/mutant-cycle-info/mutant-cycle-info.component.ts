@@ -802,7 +802,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
       error: (err: any) => {
         console.error('Error calculating statistics', err);
         this.isLoadingStats = false;
-        this.manager.showNotification('Error calculating statistics', 'error', 5000);
+        const detail = err?.error?.error || err?.error?.message || err?.message;
+        this.manager.showNotification(detail ? 'Error calculating statistics: ' + detail : 'Error calculating statistics', 'error', 10000);
       }
     });
   }
