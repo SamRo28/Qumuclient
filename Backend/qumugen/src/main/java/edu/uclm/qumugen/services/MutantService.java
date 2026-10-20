@@ -2,7 +2,9 @@ package edu.uclm.qumugen.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -42,12 +44,21 @@ public class MutantService {
 
 	public List<Circuit> generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
 			String mutableColumns, boolean generateWithAllInputs, String sInputQubits, List<NoiseConfig> noiseConfigs) {
+		List<Circuit> result = new ArrayList<>();
+		this.generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns, generateWithAllInputs,
+				sInputQubits, noiseConfigs, result::add);
+		return result;
+	}
+
+	public void generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
+			String mutableColumns, boolean generateWithAllInputs, String sInputQubits, List<NoiseConfig> noiseConfigs,
+			Consumer<Circuit> emitter) {
 		if (noiseConfigs == null || noiseConfigs.isEmpty()) {
 			noiseConfigs = List.of(NoiseConfig.DEFAULT);
 		}
 		JSONObject jsoQuirk = new JSONObject(quirk);
 		Circuit circuit = new Circuit(jsoQuirk);
-		List<Circuit> mutants = new ArrayList<>();
+		int[] nextIndex = { 0 };
 		List<Integer> columns = new ArrayList<>();
 		if (mutableColumns != null && !mutableColumns.trim().isEmpty()) {
 			String[] sTokens = mutableColumns.split(",");
@@ -94,23 +105,12 @@ public class MutantService {
 			Operator operator = this.operatorsService.find(operatorName);
 			if (operator instanceof NoiseInsertion) {
 				for (NoiseConfig cfg : noiseConfigs) {
-					List<Circuit> auxi = new ArrayList<>();
+					List<Circuit> auxi = new MutantSink(emitter, numberOfInputQubits, cfg.label(), nextIndex);
 					((NoiseInsertion) operator).withConfig(cfg).apply(circuit, auxi, rows, columns);
-					for (Circuit m : auxi) {
-						m.setMutationDetail(cfg.label());
-					}
-					if (numberOfInputQubits != -1) {
-						auxi = this.insertColumns(auxi, numberOfInputQubits);
-					}
-					mutants.addAll(auxi);
 				}
 			} else {
-				List<Circuit> auxi = new ArrayList<>();
+				List<Circuit> auxi = new MutantSink(emitter, numberOfInputQubits, null, nextIndex);
 				operator.apply(circuit, auxi, rows, columns);
-				if (numberOfInputQubits != -1) {
-					auxi = this.insertColumns(auxi, numberOfInputQubits);
-				}
-				mutants.addAll(auxi);
 			}
 		}
 
@@ -166,24 +166,56 @@ public class MutantService {
 						mutantMain.setMutationDetail(subMutant.getMutationDetail());
 						mutantMain.setOracleName(oldName);
 						
-						List<Circuit> auxi = new ArrayList<>();
-						auxi.add(mutantMain);
-						if (numberOfInputQubits != -1) {
-							auxi = this.insertColumns(auxi, numberOfInputQubits);
-						}
-						mutants.addAll(auxi);
+						new MutantSink(emitter, numberOfInputQubits, null, nextIndex).add(mutantMain);
 					}
 				}
 			}
 		}
 
-		Circuit mutant;
-		for (int i = 0; i < mutants.size(); i++) {
-			mutant = mutants.get(i);
-			mutant.setMutantIndex(i);
-			mutant.toQuirk();
+	}
+
+	/**
+	 * Recibe los mutantes de un operador y los emite en cuanto estan terminados, para no acumular miles de circuitos
+	 * completos en memoria.
+	 */
+	private class MutantSink extends ArrayList<Circuit> {
+		private static final long serialVersionUID = 1L;
+
+		private final transient Consumer<Circuit> emitter;
+		private final int numberOfInputQubits;
+		private final String mutationDetail;
+		private final int[] nextIndex;
+
+		MutantSink(Consumer<Circuit> emitter, int numberOfInputQubits, String mutationDetail, int[] nextIndex) {
+			this.emitter = emitter;
+			this.numberOfInputQubits = numberOfInputQubits;
+			this.mutationDetail = mutationDetail;
+			this.nextIndex = nextIndex;
 		}
-		return mutants;
+
+		@Override
+		public boolean add(Circuit mutant) {
+			if (this.mutationDetail != null) {
+				mutant.setMutationDetail(this.mutationDetail);
+			}
+			List<Circuit> expanded = this.numberOfInputQubits != -1
+					? insertColumns(List.of(mutant), this.numberOfInputQubits)
+					: List.of(mutant);
+			for (Circuit m : expanded) {
+				m.setMutantIndex(this.nextIndex[0]++);
+				m.toQuirk();
+				this.emitter.accept(m);
+			}
+			return true;
+		}
+
+		@Override
+		public boolean addAll(Collection<? extends Circuit> c) {
+			for (Circuit m : c) {
+				this.add(m);
+			}
+			return !c.isEmpty();
+		}
 	}
 
 	private List<Circuit> insertColumns(List<Circuit> auxi, int inputQubits) {
