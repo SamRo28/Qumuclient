@@ -29,7 +29,9 @@ public class CustomizedGate {
 			this.matrix = customizedGate.matrix;
 		else
 			this.circuit = new Circuit(customizedGate.circuit);
-		this.originalQuirk = new JSONObject(customizedGate.originalQuirk.toString());
+		this.originalQuirk = new JSONObject();
+		for (String key : customizedGate.originalQuirk.keySet())
+			this.originalQuirk.put(key, customizedGate.originalQuirk.get(key));
 	}
 
 	public CustomizedGate(CustomizedGate original, Circuit mutatedCircuit, String newId, String newName) {
