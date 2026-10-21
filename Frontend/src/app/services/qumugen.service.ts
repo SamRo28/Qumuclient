@@ -6,6 +6,7 @@ import { Mutant } from '../model/Mutant';
 import { Curl } from '../model/Curl';
 import { NoiseConfig } from '../model/NoiseConfig';
 import { environment } from 'src/environments/environment';
+import { QuirkInterner } from '../utils/quirk-interner';
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +24,10 @@ export class QumugenService {
     return this.client.get(`${environment.api.mutation}/qumugen/getOperators/` + family)
   }
 
-  generateMutants(circuit: QProgram, selectedOperators: any[], noiseConfigs?: NoiseConfig[]) {
+  // Se usa fetch en streaming (NDJSON) porque HttpClient lee toda la respuesta en un unico string y, con decenas de
+  // miles de mutantes, supera el limite del navegador (llega null).
+  async generateMutants(circuit: QProgram, selectedOperators: any[], noiseConfigs?: NoiseConfig[],
+    onProgress?: (received: number) => void): Promise<any[]> {
     let info: any = {
       circuit: circuit.qCircuit.quirkCode,
       operatorNames: selectedOperators,
@@ -35,7 +39,80 @@ export class QumugenService {
     if (noiseConfigs && noiseConfigs.length > 0) {
       info.noiseConfigs = noiseConfigs;
     }
-    return this.client.put<any>(`${environment.api.mutation}/qumugen/generateQuirkMutants`, info)
+    const response = await fetch(`${environment.api.mutation}/qumugen/generateQuirkMutants?format=ndjson`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(info)
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      let parsed: any = null;
+      try { parsed = JSON.parse(text); } catch (e) { }
+      throw { status: response.status, error: parsed ?? text };
+    }
+
+    const mutants: any[] = [];
+    const interner = new QuirkInterner();
+    // Solo se guarda lo que usa setMutants; el quirk comparte columnas/puertas identicas entre mutantes
+    const slim = (o: any) => ({
+      mutantIndex: o.mutantIndex,
+      mutatedColumn: o.mutatedColumn,
+      mutatedRow: o.mutatedRow,
+      mutationOperator: o.mutationOperator,
+      oracleName: o.oracleName,
+      mutationDetail: o.mutationDetail,
+      qubits: o.qubits,
+      quirk: interner.intern(o.quirk)
+    });
+    const processLine = (line: string) => {
+      if (!line.trim())
+        return;
+      let parsed: any;
+      try {
+        parsed = JSON.parse(line);
+      } catch (e) {
+        throw { status: 0, error: { message: 'Respuesta de qumugen incompleta o corrupta (' + mutants.length + ' mutantes leídos)' } };
+      }
+      if (Array.isArray(parsed)) {
+        for (const o of parsed)
+          mutants.push(slim(o));
+      } else
+        mutants.push(slim(parsed));
+    };
+    // Procesa las lineas completas y devuelve el resto; un unico substring final evita copias cuadraticas
+    const processBuffer = (buffer: string): string => {
+      let start = 0;
+      let pos: number;
+      while ((pos = buffer.indexOf('\n', start)) !== -1) {
+        processLine(buffer.substring(start, pos));
+        start = pos + 1;
+      }
+      return start === 0 ? buffer : buffer.substring(start);
+    };
+
+    try {
+      if (!response.body) {
+        const text = await response.text();
+        processLine(processBuffer(text));
+        return mutants;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done)
+          break;
+        buffer = processBuffer(buffer + decoder.decode(value, { stream: true }));
+        if (onProgress)
+          onProgress(mutants.length);
+      }
+      buffer += decoder.decode();
+      processLine(processBuffer(buffer));
+      return mutants;
+    } finally {
+      interner.clear();
+    }
   }
 
   async getQiskitCode(circuit: QProgram) {

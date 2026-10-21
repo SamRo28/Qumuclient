@@ -236,7 +236,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
             newProgram.inputQubits = m.circuit.inputQubits;
             newProgram.outputQubits = m.circuit.outputQubits;
             if (m.circuit.qCircuit) {
-              newProgram.qCircuit = new QCircuit(undefined, m.circuit.qCircuit.quirkCode);
+              newProgram.qCircuit = new QCircuit(undefined, m.circuit.qCircuit.quirkCode, false);
             }
             newMutant.circuit = newProgram;
           }

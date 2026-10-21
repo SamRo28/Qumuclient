@@ -8,8 +8,9 @@ import { ProjectNote } from '../model/ProjectNote';
 import { TestSuite } from '../model/TestSuite';
 import { Deterministic } from '../model/Deterministic';
 import { Stochastic } from '../model/Stochastic';
+import { QuirkInterner } from './quirk-interner';
 
-export function programFromDto(p: any): QProgram {
+export function programFromDto(p: any, opts?: { interner?: QuirkInterner; withText?: boolean }): QProgram {
   if (!p) return new QProgram();
   const qProgram = new QProgram();
   Object.assign(qProgram, p);
@@ -23,7 +24,10 @@ export function programFromDto(p: any): QProgram {
         // conservar como string si falla el parseo
       }
     }
-    const qCircuit = new QCircuit(p.qCircuit.id, quirkCode);
+    if (opts?.interner && quirkCode && typeof quirkCode === 'object') {
+      quirkCode = opts.interner.intern(quirkCode);
+    }
+    const qCircuit = new QCircuit(p.qCircuit.id, quirkCode, opts?.withText ?? true);
     if (p.qCircuit.mutableColumns !== undefined && p.qCircuit.mutableColumns !== null) {
       qCircuit.mutableColumns = p.qCircuit.mutableColumns;
     }

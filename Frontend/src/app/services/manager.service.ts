@@ -12,6 +12,7 @@ import { TestSuite } from '../model/TestSuite';
 import { Deterministic } from '../model/Deterministic';
 import { Stochastic } from '../model/Stochastic';
 import { ReperService } from './reper.service';
+import { QuirkInterner } from '../utils/quirk-interner';
 import * as localforage from 'localforage';
 import { projectFromLight, applyCycleMatrix, programFromDto, mergeSidebarMutants } from '../utils/lazy-project.utils';
 
@@ -349,6 +350,8 @@ export class ManagerService {
       }
     }
 
+    const interner = new QuirkInterner();
+    try {
     while (true) {
       const page: any[] = await firstValueFrom(
         this.reperService.getMutantCircuits(email, projectId, cycle.id, fromIndex, 200)
@@ -362,7 +365,7 @@ export class ManagerService {
       for (const item of page) {
         const targetMutant = mutantsByIndex.get(item.mutantIndex);
         if (targetMutant) {
-          targetMutant.circuit = programFromDto(item.circuit);
+          targetMutant.circuit = programFromDto(item.circuit, { interner, withText: false });
         }
         if (item.mutantIndex > maxIndexInPage) {
           maxIndexInPage = item.mutantIndex;
@@ -378,6 +381,9 @@ export class ManagerService {
         break;
       }
       fromIndex = maxIndexInPage + 1;
+    }
+    } finally {
+      interner.clear();
     }
   }
 
@@ -497,7 +503,7 @@ export class ManagerService {
 
   setMutants(mutants: any) {
     this.mutants = []
-    console.log("Mutants received: ", mutants);
+    console.log("Mutants received: ", mutants?.length);
     for (let i = 0; i < mutants.length; i++) {
       let mutantIndex = mutants[i].mutantIndex;
       let mutatedColumn = mutants[i].mutatedColumn;
@@ -505,7 +511,7 @@ export class ManagerService {
       let mutationOperator = mutants[i].mutationOperator;
       let oracleName = mutants[i].oracleName;
       let mutationDetail = mutants[i].mutationDetail;
-      let circuit = new QProgram(crypto.randomUUID(), mutants[i].quirk);
+      let circuit = new QProgram(crypto.randomUUID(), mutants[i].quirk, false);
       circuit.qubits = mutants[i].qubits;
       circuit.inputQubits = this.inputQubits;
       circuit.outputQubits = this.outputQubits;

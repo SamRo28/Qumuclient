@@ -189,25 +189,30 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     if (selectedOperators.length > 0) {
       this.loading.show()
       this.manager.showNotification("Generating mutants...", "loading", 0);
+      let lastProgress = 0
       this.service.generateMutants(
         selectedCircuit.qProgram,
         selectedOperators,
-        this.hasNoiseSelected() ? this.noiseRotations.map(r => ({ axis: r.axis, angle: Number(r.angle) })) : undefined
-      ).subscribe(
-        mutants => {
-          this.manager.showSidebar = true
-          this.manager.setMutants(mutants)
-          this.loading.hide()
-          this.manager.showNotification("Mutants generated successfully!", "success", 5000);
-        },
-        error => {
-          let errorMsg = error.error ? error.error.message : error.error
-          if (!errorMsg)
-            errorMsg = "Se ha producido un error, probablemente un 500. Intenta generar menos mutantes seleccionando menos operadores, menos columnas o filas. Si has marcado lo de \"Generate with all inputs\", puedes desmarcarlo o disminuir el número de Input qubits"
-          this.loading.hide()
-          this.manager.showNotification(errorMsg, "error", 10000);
+        this.hasNoiseSelected() ? this.noiseRotations.map(r => ({ axis: r.axis, angle: Number(r.angle) })) : undefined,
+        received => {
+          const now = Date.now()
+          if (now - lastProgress >= 500) {
+            lastProgress = now
+            this.manager.showNotification("Receiving mutants... " + received, "loading", 0);
+          }
         }
-      )
+      ).then(mutants => {
+        this.manager.showSidebar = true
+        this.manager.setMutants(mutants)
+        this.loading.hide()
+        this.manager.showNotification("Mutants generated successfully!", "success", 5000);
+      }).catch(error => {
+        let errorMsg = error?.error ? error.error.message : error?.error
+        if (!errorMsg)
+          errorMsg = "Se ha producido un error, probablemente un 500. Intenta generar menos mutantes seleccionando menos operadores, menos columnas o filas. Si has marcado lo de \"Generate with all inputs\", puedes desmarcarlo o disminuir el número de Input qubits"
+        this.loading.hide()
+        this.manager.showNotification(errorMsg, "error", 10000);
+      })
     } else {
       this.manager.showNotification("Please, select one operator at least", "error", 5000);
     }

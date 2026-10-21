@@ -48,10 +48,12 @@ export class MutantsVisualComponent implements OnInit, OnDestroy {
     this.updateOriginalCircuitUrl();
 
     // Update mutant circuit URL
-    if (this.selectedMutant?.circuit?.qCircuit.textQuirkCode) {
-      const url = AppComponent.quirkUrl + "#circuit=" + this.selectedMutant.circuit.qCircuit.textQuirkCode;
+    const qc = this.selectedMutant?.circuit?.qCircuit;
+    const text = qc?.textQuirkCode || (qc?.quirkCode ? (typeof qc.quirkCode === 'string' ? qc.quirkCode : JSON.stringify(qc.quirkCode)) : '');
+    if (text) {
+      const url = AppComponent.quirkUrl + "#circuit=" + text;
       this.mutantCircuitUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-      this.mutantCircuitQuirk = this.selectedMutant.circuit.qCircuit.quirkCode || null;
+      this.mutantCircuitQuirk = this.selectedMutant!.circuit!.qCircuit.quirkCode || null;
     } else {
       this.mutantCircuitUrl = null;
       this.mutantCircuitQuirk = null;

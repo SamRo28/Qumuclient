@@ -107,7 +107,7 @@ export class SaveButtonComponent {
 
     this.manager.showNotification(`Saving mutants: ${progress} / ${mutants.length} ...`, 'loading', 0);
 
-    this.reperService.saveMutantsBatch(projectId, cycleId, chunk).subscribe({
+    this.reperService.saveMutantsBatch(projectId, cycleId, chunk.map(m => this.withQuirkText(m))).subscribe({
       next: () => {
         this.sendMutantChunks(projectId, cycleId, mutants, startIndex + chunkSize, chunkSize, onComplete);
       },
@@ -116,6 +116,21 @@ export class SaveButtonComponent {
         this.manager.showNotification(`Error saving mutants at ${progress}. Please try again.`, 'error', 5000);
       }
     });
+  }
+
+  // Los circuitos de mutante no guardan textQuirkCode en memoria: se rellena en una copia solo mientras dura el envio
+  private withQuirkText(m: any): any {
+    const qc = m?.circuit?.qCircuit;
+    if (qc && !qc.textQuirkCode && qc.quirkCode) {
+      return {
+        ...m,
+        circuit: {
+          ...m.circuit,
+          qCircuit: { ...qc, textQuirkCode: typeof qc.quirkCode === 'string' ? qc.quirkCode : JSON.stringify(qc.quirkCode) }
+        }
+      };
+    }
+    return m;
   }
 
   private finalizeSave() {

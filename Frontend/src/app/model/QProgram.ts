@@ -14,10 +14,10 @@ export class QProgram {
 
 
 
-    constructor(id?: String, quirkCode?: any) {
+    constructor(id?: String, quirkCode?: any, withText: boolean = true) {
         if (id)
             this.id = id
-        this.qCircuit = new QCircuit(crypto.randomUUID(), quirkCode);
+        this.qCircuit = new QCircuit(crypto.randomUUID(), quirkCode, withText);
         this.qCodes = [];
         //this.qubits = this.getQubits();
     }

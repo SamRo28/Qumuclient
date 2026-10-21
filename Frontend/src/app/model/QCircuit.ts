@@ -8,13 +8,15 @@ export class QCircuit {
     mutableRows: string = "";
 
 
-    constructor(id?: string, quirkCode?: any) {
+    constructor(id?: string, quirkCode?: any, withText: boolean = true) {
         if (id) {
             this.id = id;
         }
         if (quirkCode) {
             this.quirkCode = quirkCode;
-            this.textQuirkCode = JSON.stringify(quirkCode);
+            if (withText) {
+                this.textQuirkCode = JSON.stringify(quirkCode);
+            }
 
             if (quirkCode.cols && Array.isArray(quirkCode.cols)) {
                 for (let i = 0; i < quirkCode.cols.length; i++) {
