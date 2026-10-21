@@ -2,10 +2,12 @@
 package edu.uclm.qumugen.http;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.StreamWriteFeature;
@@ -61,8 +63,11 @@ public class GenController {
 
 	@SuppressWarnings("unchecked")
 	@PutMapping("/generateQuirkMutants")
-	public void generateQuirkMutants(@RequestBody Map<String, Object> info, HttpServletResponse response)
-			throws IOException {
+	public void generateQuirkMutants(
+			@RequestBody Map<String, Object> info,
+			@RequestParam(required = false) String format,
+			HttpServletRequest request,
+			HttpServletResponse response) throws IOException {
 		Map<String, Object> quirk = this.get("circuit", info);
 		List<String> operatorNames = (List<String>) info.get("operatorNames");
 		String mutableColumns = info.get("mutableColumns").toString();
@@ -81,32 +86,68 @@ public class GenController {
 		for (String name : operatorNames)
 			this.operatorsService.find(name);
 
-		// Escritura sincrona y perezosa del array: nginx recibe bytes desde el primer mutante y cualquier error
-		// anterior al primer mutante sigue produciendo la respuesta de error normal de Spring.
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-		JsonGenerator gen = this.jsonMapper.writer().without(StreamWriteFeature.AUTO_CLOSE_TARGET)
-				.without(StreamWriteFeature.AUTO_CLOSE_CONTENT)
-				.createGenerator(response.getOutputStream());
+		boolean gzip = LazyGzipOutputStream.acceptsGzip(request.getHeader("Accept-Encoding"));
+		OutputStream out = gzip ? new LazyGzipOutputStream(response) : response.getOutputStream();
+		CountingOutputStream counted = new CountingOutputStream(out);
+		boolean ndjson = "ndjson".equalsIgnoreCase(format);
+		response.setContentType(ndjson ? "application/x-ndjson" : MediaType.APPLICATION_JSON_VALUE);
+
+		log.info("PUT /generateQuirkMutants: starting generation with {} operators (mutableRows='{}', mutableCols='{}', noiseConfigs={}, gzip={}, format={})",
+				operatorNames != null ? operatorNames.size() : 0, mutableRows, mutableColumns,
+				noiseConfigs != null ? noiseConfigs.size() : 0, gzip, ndjson ? "ndjson" : "json");
+
+		JsonGenerator gen = null;
+		if (!ndjson) {
+			gen = this.jsonMapper.writer().without(StreamWriteFeature.AUTO_CLOSE_TARGET)
+					.without(StreamWriteFeature.AUTO_CLOSE_CONTENT)
+					.createGenerator(counted);
+		}
+		final JsonGenerator finalGen = gen;
 		boolean[] started = { false };
+		int[] emittedCount = { 0 };
+		long start = System.currentTimeMillis();
 		try {
 			this.mutantService.generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns,
 					generateWithAllInputs, sInputQubits, noiseConfigs, mutant -> {
-						if (!started[0]) {
-							gen.writeStartArray();
-							started[0] = true;
+						try {
+							if (ndjson) {
+								counted.write(this.jsonMapper.writeValueAsBytes(mutant));
+								counted.write('\n');
+							} else {
+								if (!started[0]) {
+									finalGen.writeStartArray();
+									started[0] = true;
+								}
+								finalGen.writePOJO(mutant);
+							}
+							emittedCount[0]++;
+						} catch (IOException e) {
+							throw new RuntimeException(e);
 						}
-						gen.writePOJO(mutant);
 					});
-			if (!started[0])
-				gen.writeStartArray();
-			gen.writeEndArray();
-			gen.flush();
+			if (!ndjson) {
+				if (!started[0])
+					finalGen.writeStartArray();
+				finalGen.writeEndArray();
+				finalGen.flush();
+			} else {
+				counted.flush();
+			}
+			long rawBytesMb = counted.getCount() / (1024 * 1024);
+			log.info("PUT /generateQuirkMutants: successfully streamed {} mutants ({} MB sin comprimir) in {} ms (gzip={}, format={})",
+					emittedCount[0], rawBytesMb, System.currentTimeMillis() - start, gzip, ndjson ? "ndjson" : "json");
 		} catch (RuntimeException e) {
 			if (response.isCommitted())
-				log.error("Error generando mutantes en streaming", e);
+				log.error("Error generando mutantes en streaming tras emitir {} mutantes: {}",
+						emittedCount[0], e.getMessage(), e);
 			throw e;
 		} finally {
-			gen.close();
+			if (finalGen != null) {
+				finalGen.close();
+			}
+			if (gzip) {
+				counted.close();
+			}
 		}
 	}
 
@@ -218,4 +259,5 @@ public class GenController {
 		JSONObject jso = new JSONObject(info);
 		this.unexService.sendtoUnex(jso);
 	}
+
 }

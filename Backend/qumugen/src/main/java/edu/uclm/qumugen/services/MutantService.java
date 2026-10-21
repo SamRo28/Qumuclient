@@ -38,7 +38,8 @@ public class MutantService {
 
 	public List<Circuit> generateQuirkMutants(Map<String, Object> quirk, List<String> operatorNames, String mutableRows,
 			String mutableColumns, boolean generateWithAllInputs, String sInputQubits, NoiseConfig noiseConfig) {
-		return generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns, generateWithAllInputs, sInputQubits,
+		return generateQuirkMutants(quirk, operatorNames, mutableRows, mutableColumns, generateWithAllInputs,
+				sInputQubits,
 				List.of(noiseConfig == null ? NoiseConfig.DEFAULT : noiseConfig));
 	}
 
@@ -119,53 +120,52 @@ public class MutantService {
 				CustomizedGate cg = circuit.getCustomizedGates().get(cgIdx);
 				if (cg.getCircuit() != null) {
 					Circuit subCircuit = cg.getCircuit();
-					
+
 					List<String> subColsList = new ArrayList<>();
 					for (int i = 0; i < subCircuit.getColumns().size(); i++) {
 						subColsList.add(String.valueOf(i));
 					}
 					String subMutableColumns = String.join(",", subColsList);
-					
+
 					List<String> subRowsList = new ArrayList<>();
 					for (int i = 0; i < subCircuit.getQubits(); i++) {
 						subRowsList.add(String.valueOf(i));
 					}
 					String subMutableRows = String.join(",", subRowsList);
-					
+
 					List<Circuit> subMutants = generateQuirkMutants(
-						subCircuit.toQuirk().toMap(), 
-						operatorNames, 
-						subMutableRows, 
-						subMutableColumns, 
-						false, 
-						"",
-						noiseConfigs
-					);
-					
+							subCircuit.toQuirk().toMap(),
+							operatorNames,
+							subMutableRows,
+							subMutableColumns,
+							false,
+							"",
+							noiseConfigs);
+
 					for (int mIdx = 0; mIdx < subMutants.size(); mIdx++) {
 						Circuit subMutant = subMutants.get(mIdx);
 						Circuit mutantMain = new Circuit(circuit);
 						CustomizedGate noiseGate = this.hoistNoiseGate(subMutant);
-						
+
 						String oldId = cg.getId();
 						String oldName = cg.getName();
-						
+
 						String newId = oldId + "_mut_" + cgIdx + "_" + mIdx;
 						String newName = oldName + " (" + subMutant.getMutationOperator() + ")";
-						
+
 						CustomizedGate mutatedCG = new CustomizedGate(cg, subMutant, newId, newName);
 						mutantMain.getCustomizedGates().set(cgIdx, mutatedCG);
 						if (noiseGate != null) {
 							NoiseInsertion.ensureNoiseGate(mutantMain, noiseGate);
 						}
 						mutantMain.replaceGateName(oldId, newId);
-						
+
 						mutantMain.setMutationOperator(subMutant.getMutationOperator());
 						mutantMain.setMutatedColumn(subMutant.getMutatedColumn());
 						mutantMain.setMutatedRow(subMutant.getMutatedRow());
 						mutantMain.setMutationDetail(subMutant.getMutationDetail());
 						mutantMain.setOracleName(oldName);
-						
+
 						new MutantSink(emitter, numberOfInputQubits, null, nextIndex).add(mutantMain);
 					}
 				}
@@ -175,7 +175,8 @@ public class MutantService {
 	}
 
 	/**
-	 * Recibe los mutantes de un operador y los emite en cuanto estan terminados, para no acumular miles de circuitos
+	 * Recibe los mutantes de un operador y los emite en cuanto estan terminados,
+	 * para no acumular miles de circuitos
 	 * completos en memoria.
 	 */
 	private class MutantSink extends ArrayList<Circuit> {

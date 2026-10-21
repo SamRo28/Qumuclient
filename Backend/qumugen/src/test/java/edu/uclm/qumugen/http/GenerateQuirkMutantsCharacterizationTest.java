@@ -1,6 +1,7 @@
 package edu.uclm.qumugen.http;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
 import java.nio.charset.StandardCharsets;
@@ -130,6 +131,20 @@ public class GenerateQuirkMutantsCharacterizationTest {
 		return result.getContentAsString(StandardCharsets.UTF_8);
 	}
 
+	private org.springframework.mock.web.MockHttpServletResponse callGzip(String content, int expectedStatus)
+			throws Exception {
+		var result = this.mockMvc.perform(put("/qumugen/generateQuirkMutants").contentType(MediaType.APPLICATION_JSON)
+				.header("Accept-Encoding", "gzip, deflate, br").content(content)).andReturn().getResponse();
+		assertEquals(expectedStatus, result.getStatus());
+		return (org.springframework.mock.web.MockHttpServletResponse) result;
+	}
+
+	private String gunzip(org.springframework.mock.web.MockHttpServletResponse r) throws Exception {
+		assertEquals("gzip", r.getHeader("Content-Encoding"));
+		return new String(new java.util.zip.GZIPInputStream(new java.io.ByteArrayInputStream(r.getContentAsByteArray()))
+				.readAllBytes(), StandardCharsets.UTF_8);
+	}
+
 	private int size(String json) throws Exception {
 		return ((List<?>) MAPPER.readValue(json, Object.class)).size();
 	}
@@ -163,5 +178,95 @@ public class GenerateQuirkMutantsCharacterizationTest {
 		String body = body(circuit(4, 4, false), List.of("NoiseInsertionStart"), "0,1,2,3", "0,1,2,3", false, "",
 				List.of(Map.of("axis", "X", "angle", 0)));
 		call(body, 400);
+	}
+
+	private String mediumBody() {
+		return body(circuit(8, 20, false), all(), "0,1,2,3,4,5,6,7",
+				"0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19", false, "", null);
+	}
+
+	@Test
+	public void mediumCircuitGzipSameResult() throws Exception {
+		String json = gunzip(callGzip(mediumBody(), 200));
+		assertEquals(1620, size(json));
+		assertEquals("030c8c51d2904e025cb5fe8f3a2c4e3cc39d1983ce61991a9e919a9e52be0e57", canonicalHash(json));
+	}
+
+	@Test
+	public void smallCircuitGzipSameResult() throws Exception {
+		String body = body(circuit(6, 12, true), all(), "0,1,2,3,4,5", "0,1,2,3,4,5,6,7,8,9,10,11,12", true, "0,1",
+				List.of(Map.of("axis", "X", "angle", 0.1), Map.of("axis", "Z", "angle", 0.5)));
+		String json = gunzip(callGzip(body, 200));
+		assertEquals(3736, size(json));
+		assertEquals("bf1b6574ad42101bee982d7ac64c8574770eb1c58920154504cf15a598801928", canonicalHash(json));
+	}
+
+	@Test
+	public void unknownOperatorWithGzipIsPlainError() throws Exception {
+		String body = body(circuit(4, 4, false), List.of("NoExiste"), "0,1,2,3", "0,1,2,3", false, "", null);
+		assertNull(callGzip(body, 404).getHeader("Content-Encoding"));
+	}
+
+	@Test
+	public void invalidNoiseWithGzipIsPlainError() throws Exception {
+		String body = body(circuit(4, 4, false), List.of("NoiseInsertionStart"), "0,1,2,3", "0,1,2,3", false, "",
+				List.of(Map.of("axis", "X", "angle", 0)));
+		assertNull(callGzip(body, 400).getHeader("Content-Encoding"));
+	}
+
+	@Test
+	public void withoutAcceptEncodingIsPlain() throws Exception {
+		var r = this.mockMvc.perform(put("/qumugen/generateQuirkMutants").contentType(MediaType.APPLICATION_JSON)
+				.content(mediumBody())).andReturn().getResponse();
+		assertEquals(200, r.getStatus());
+		assertNull(r.getHeader("Content-Encoding"));
+	}
+
+	private org.springframework.mock.web.MockHttpServletResponse callNdjson(String content, boolean gzip,
+			int expectedStatus) throws Exception {
+		var req = put("/qumugen/generateQuirkMutants").param("format", "ndjson").contentType(MediaType.APPLICATION_JSON)
+				.content(content);
+		if (gzip)
+			req = req.header("Accept-Encoding", "gzip");
+		var result = this.mockMvc.perform(req).andReturn().getResponse();
+		assertEquals(expectedStatus, result.getStatus());
+		return (org.springframework.mock.web.MockHttpServletResponse) result;
+	}
+
+	private String ndjsonToArray(String ndjson, int expectedLines) {
+		List<String> lines = ndjson.lines().filter(l -> !l.isBlank()).toList();
+		assertEquals(expectedLines, lines.size());
+		for (String l : lines)
+			assertEquals('{', l.charAt(0));
+		return "[" + String.join(",", lines) + "]";
+	}
+
+	@Test
+	public void mediumCircuitNdjsonSameResult() throws Exception {
+		var r = callNdjson(mediumBody(), false, 200);
+		assertEquals(true, r.getContentType().startsWith("application/x-ndjson"));
+		String array = ndjsonToArray(r.getContentAsString(StandardCharsets.UTF_8), 1620);
+		assertEquals("030c8c51d2904e025cb5fe8f3a2c4e3cc39d1983ce61991a9e919a9e52be0e57", canonicalHash(array));
+	}
+
+	@Test
+	public void smallCircuitNdjsonGzipSameResult() throws Exception {
+		String body = body(circuit(6, 12, true), all(), "0,1,2,3,4,5", "0,1,2,3,4,5,6,7,8,9,10,11,12", true, "0,1",
+				List.of(Map.of("axis", "X", "angle", 0.1), Map.of("axis", "Z", "angle", 0.5)));
+		String array = ndjsonToArray(gunzip(callNdjson(body, true, 200)), 3736);
+		assertEquals("bf1b6574ad42101bee982d7ac64c8574770eb1c58920154504cf15a598801928", canonicalHash(array));
+	}
+
+	@Test
+	public void unknownOperatorNdjsonIsPlainError() throws Exception {
+		String body = body(circuit(4, 4, false), List.of("NoExiste"), "0,1,2,3", "0,1,2,3", false, "", null);
+		assertNull(callNdjson(body, true, 404).getHeader("Content-Encoding"));
+	}
+
+	@Test
+	public void invalidNoiseNdjsonIsPlainError() throws Exception {
+		String body = body(circuit(4, 4, false), List.of("NoiseInsertionStart"), "0,1,2,3", "0,1,2,3", false, "",
+				List.of(Map.of("axis", "X", "angle", 0)));
+		assertNull(callNdjson(body, true, 400).getHeader("Content-Encoding"));
 	}
 }
