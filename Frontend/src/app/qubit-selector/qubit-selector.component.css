@@ -53,6 +53,10 @@
   width: 5px;
   height: 9px;
   border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
+  position: absolute;
+}
 
 .qubit-group {
   display: flex;
