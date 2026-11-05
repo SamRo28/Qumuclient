@@ -171,7 +171,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
       onConfirm: () => {
         this.loading = true;
         this.reperService.deleteMutantCycle(project.id!, cycle.id!).subscribe({
-          next: () => {
+          next: (resp) => {
+            this.watchDeletion(resp?.jobId, 'Mutant cycle');
             // Remove the cycle locally
             project.mutantCycles = project.mutantCycles.filter(c => c.id !== cycle.id);
             // Save removed cycle to local cache
@@ -187,6 +188,18 @@ export class SideBarComponent implements OnInit, OnDestroy {
             this.loading = false;
           }
         });
+      }
+    });
+  }
+
+  /** El borrado sigue en segundo plano en reper: se avisa al terminar o si falla. */
+  private watchDeletion(jobId: string | undefined, what: string): void {
+    if (!jobId) return;
+    this.reperService.watchJob(jobId).subscribe({
+      next: () => this.manager.showNotification(`${what} deleted`, 'success', 4000),
+      error: (err) => {
+        console.error('Background deletion failed:', err);
+        this.manager.showNotification(`Error deleting ${what.toLowerCase()}: ${err?.message || err?.error?.error || 'unknown error'}`, 'error', 10000);
       }
     });
   }

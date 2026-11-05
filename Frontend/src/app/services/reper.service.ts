@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { JobStatus, pollJobDone } from './job-polling';
 import { tap } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { Project } from '../model/Project';
@@ -85,7 +86,16 @@ export class ReperService {
   }
 
   deleteMutantCycle(projectId: string, cycleId: number) {
-    return this.client.post<any>(`${environment.api.core}/qumureper/deleteMutantCycle`, { projectId, cycleId }, { withCredentials: true })
+    return this.client.post<any>(`${environment.api.core}/qumureper/deleteMutantCycle`, { projectId, cycleId, email: sessionStorage.getItem('email')! }, { withCredentials: true })
+  }
+
+  getJobStatus(jobId: string) {
+    return this.client.post<JobStatus>(`${environment.api.core}/jobs/status`, { email: sessionStorage.getItem('email')!, jobId }, { withCredentials: true })
+  }
+
+  /** Sondea un trabajo de borrado hasta que termina; falla con el mensaje de reper si acaba en FAILED. */
+  watchJob(jobId: string, intervalMs: number = 3000) {
+    return pollJobDone(() => this.getJobStatus(jobId), intervalMs);
   }
 
   getUser() {

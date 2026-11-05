@@ -239,7 +239,16 @@ export class CircuitComponent implements OnInit, OnDestroy {
       type: 'danger',
       onConfirm: () => {
         this.reper.delete(this.selectedProject!.id!).subscribe({
-          next: () => {
+          next: (resp) => {
+            if (resp?.jobId) {
+              this.reper.watchJob(resp.jobId).subscribe({
+                next: () => this.manager.showNotification('Project deleted', 'success', 4000),
+                error: (err) => {
+                  console.error('Background deletion failed:', err);
+                  this.manager.showNotification('Error deleting project: ' + (err?.message || 'unknown error'), 'error', 10000);
+                }
+              });
+            }
             this.manager.notifyProjectDeleted(this.selectedProject!.id!);
             this.router.navigate(['/']); // Navigate to home
           },
