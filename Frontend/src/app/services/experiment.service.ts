@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, interval, of, switchMap, catchError, filter } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { CreateExperimentRequest, ExperimentProgress, ExperimentListItem, ExperimentDetail } from '../model/Experiment';
+import { CreateExperimentRequest, ExperimentProgress, ExperimentListItem, ExperimentDetail, ResumePreview, ResumeCycleQubits, MergePreview } from '../model/Experiment';
 
 @Injectable({
   providedIn: 'root'
@@ -81,5 +81,25 @@ export class ExperimentService {
     ).subscribe(list => {
       this.activeExperimentsSubject.next(list);
     });
+  }
+
+  public getResumePreview(experimentId: string): Observable<ResumePreview> {
+    return this.http.post<ResumePreview>(`${environment.api.core}/experiments/resume-preview`,
+      { email: this.getUserEmail(), experimentId }, { withCredentials: true });
+  }
+
+  public resumeExperiment(experimentId: string, cycles?: ResumeCycleQubits[]): Observable<any> {
+    return this.http.post<any>(`${environment.api.core}/experiments/resume`,
+      { email: this.getUserEmail(), experimentId, cycles: cycles ?? [] }, { withCredentials: true });
+  }
+
+  public getMergePreview(experimentIds: [string, string]): Observable<MergePreview> {
+    return this.http.post<MergePreview>(`${environment.api.core}/experiments/merge-preview`,
+      { email: this.getUserEmail(), experimentIds }, { withCredentials: true });
+  }
+
+  public mergeExperiments(experimentIds: [string, string]): Observable<any> {
+    return this.http.post<any>(`${environment.api.core}/experiments/merge`,
+      { email: this.getUserEmail(), experimentIds }, { withCredentials: true });
   }
 }
