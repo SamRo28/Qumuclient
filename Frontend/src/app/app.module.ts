@@ -26,6 +26,7 @@ import { CircuitViewerComponent } from './circuit-viewer/circuit-viewer.componen
 import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard.component';
 import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
 import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
+import { QubitSelectorComponent } from './qubit-selector/qubit-selector.component';
 import { ExperimentResumeModalComponent } from './experiment-resume-modal/experiment-resume-modal.component';
 import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
 import { OperatorLabelPipe, MutationDetailPipe } from './components/operator-label.pipe';
@@ -69,6 +70,7 @@ import { CircuitRepresentationComponent } from './circuit-representation/circuit
     ExperimentsDashboardComponent,
     ExperimentDetailComponent,
     ExperimentResumeModalComponent,
+    QubitSelectorComponent,
     ExperimentProgressTrackerComponent
   ],
   imports: [

@@ -1,0 +1,108 @@
+.select-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 200ms ease;
+  font-family: inherit;
+}
+
+.select-all-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.select-all-btn svg {
+  color: var(--accent-primary);
+}
+
+
+.glass-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-glass-light);
+  border-radius: 5px;
+  background: var(--glass-bg);
+  cursor: pointer;
+  position: relative;
+  transition: all 150ms ease;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glass-checkbox:checked {
+  background: var(--accent-gradient);
+  border-color: var(--accent-primary);
+}
+
+.glass-checkbox:checked::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+
+.qubit-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.qubit-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qubit-group-header .config-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0;
+}
+
+.qubits-checkboxes-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: var(--glass-bg-card);
+  border: 1px solid var(--border-glass-light);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+}
+
+.qubit-checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--glass-bg-hover);
+  border: 1px solid var(--border-glass-light);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.qubit-checkbox-item:hover {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--border-glass);
+}
