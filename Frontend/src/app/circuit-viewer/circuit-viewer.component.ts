@@ -1,6 +1,7 @@
 import { Component, OnInit, OnChanges, Input, SimpleChanges } from '@angular/core';
 import { Mutant } from '../model/Mutant';
 import { QCircuit } from '../model/QCircuit';
+import { ColumnLayout, computeColumnLayout, displayLabel, maxCharsForWidth } from './gate-label';
 
 export interface VisualCell {
   gate: any;
@@ -43,6 +44,7 @@ export class CircuitViewerComponent implements OnInit, OnChanges {
   readonly paddingY = 90;
   readonly headerBand = 16;
   readonly gateSize = 38;
+  readonly maxGateWidth = 160;
 
   // SVG dimensions
   svgWidth = 800;
@@ -54,6 +56,7 @@ export class CircuitViewerComponent implements OnInit, OnChanges {
   oracleBoxes: OracleBox[] = [];
   gatesMap = new Map<string, any>();
   wireInits: any[] = [];
+  layout: ColumnLayout = { colWidths: [], gateWidths: [], colStart: [], colX: [], totalColsWidth: 0 };
 
   // Interactive Zoom/Pan State
   zoomScale = 1.0;
@@ -143,8 +146,19 @@ export class CircuitViewerComponent implements OnInit, OnChanges {
     }
 
     // 4. Update SVG Dimensions
-    const totalCols = this.visualCols.length;
-    this.svgWidth = this.paddingX * 2 + Math.max(1, totalCols) * this.colWidth;
+    this.layout = computeColumnLayout(
+      this.visualCols.map(col => col.filter(cell => cell.type === 'gate').map(cell => cell.label)),
+      {
+        colWidth: this.colWidth,
+        gateSize: this.gateSize,
+        maxGateWidth: this.maxGateWidth,
+        textPadding: 16,
+        colMargin: 16,
+        paddingX: this.paddingX
+      }
+    );
+    const colsWidth = this.visualCols.length > 0 ? this.layout.totalColsWidth : this.colWidth;
+    this.svgWidth = this.paddingX * 2 + colsWidth;
     this.svgHeight = this.paddingY * 2 + Math.max(1, this.numWires) * this.wireSpacing;
   }
 
@@ -423,7 +437,37 @@ export class CircuitViewerComponent implements OnInit, OnChanges {
       }
       return cell;
     }
+    if (typeof cell === 'object' && typeof cell.id === 'string') {
+      return cell.arg !== undefined && cell.arg !== null ? `${cell.id}(${cell.arg})` : cell.id;
+    }
     return JSON.stringify(cell);
+  }
+
+  /** Etiqueta de la puerta recortada para que quepa en la caja de su columna. */
+  gateText(cell: VisualCell, c: number): string {
+    const width = this.layout.gateWidths[c] ?? this.gateSize;
+    return displayLabel(cell.label, maxCharsForWidth(width - 16));
+  }
+
+  /** Ancho total (suma de columnas) entre dos columnas, ambas incluidas. */
+  spanWidth(startCol: number, endCol: number): number {
+    let w = 0;
+    for (let i = startCol; i <= endCol; i++) {
+      w += this.layout.colWidths[i] ?? this.colWidth;
+    }
+    return w;
+  }
+
+  /** Ancho de la pastilla del título de un oráculo, limitado al ancho de su caja. */
+  oraclePillWidth(box: OracleBox): number {
+    return Math.min(this.oracleTitle(box).length * 6.5 + 12, Math.max(12, this.spanWidth(box.startCol, box.endCol) - 24));
+  }
+
+  /** Título del oráculo recortado para que quepa en su pastilla. */
+  oracleTitle(box: OracleBox): string {
+    const maxWidth = Math.max(12, this.spanWidth(box.startCol, box.endCol) - 24);
+    const maxChars = Math.max(1, Math.floor((maxWidth - 12) / 6.5));
+    return displayLabel(box.name, maxChars);
   }
 
   private checkIfMutated(colIdx: number, rowIdx: number, oraclePath: string[]): boolean {

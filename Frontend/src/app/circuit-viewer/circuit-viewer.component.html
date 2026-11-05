@@ -69,9 +69,9 @@
                slot) so the title sits inside the dashed box, above the first-wire gates.
                Deeper oracles sharing the top edge get their own stacked band. -->
           <rect
-            [attr.x]="paddingX + box.startCol * colWidth - colWidth / 2 + 4"
+            [attr.x]="layout.colStart[box.startCol] + 4"
             [attr.y]="paddingY + box.startRow * wireSpacing - wireSpacing / 2 - (box.headerSlot + 1) * headerBand"
-            [attr.width]="(box.endCol - box.startCol + 1) * colWidth - 8"
+            [attr.width]="spanWidth(box.startCol, box.endCol) - 8"
             [attr.height]="(box.endRow - box.startRow + 1) * wireSpacing + (box.headerSlot + 1) * headerBand"
             rx="8"
             ry="8"
@@ -79,20 +79,20 @@
           />
           <!-- Title pill sits inside this box's own header band. -->
           <rect
-            [attr.x]="paddingX + box.startCol * colWidth - colWidth / 2 + 12"
+            [attr.x]="layout.colStart[box.startCol] + 12"
             [attr.y]="paddingY + box.startRow * wireSpacing - wireSpacing / 2 - (box.headerSlot + 1) * headerBand + 2"
-            [attr.width]="box.name.length * 6.5 + 12"
+            [attr.width]="oraclePillWidth(box)"
             height="12"
             rx="4"
             ry="4"
             class="oracle-box-tag-rect"
           />
           <text
-            [attr.x]="paddingX + box.startCol * colWidth - colWidth / 2 + 18"
+            [attr.x]="layout.colStart[box.startCol] + 18"
             [attr.y]="paddingY + box.startRow * wireSpacing - wireSpacing / 2 - (box.headerSlot + 1) * headerBand + 11"
             class="oracle-box-title"
           >
-            {{ box.name }}
+            {{ oracleTitle(box) }}
           </text>
         </g>
 
@@ -131,9 +131,9 @@
           <ng-container *ngFor="let col of visualCols; let c = index">
             <line
               *ngFor="let coords of getVerticalLineCoords(c)"
-              [attr.x1]="paddingX + c * colWidth"
+              [attr.x1]="layout.colX[c]"
               [attr.y1]="coords.y1"
-              [attr.x2]="paddingX + c * colWidth"
+              [attr.x2]="layout.colX[c]"
               [attr.y2]="coords.y2"
               class="column-line"
             />
@@ -148,7 +148,7 @@
               <!-- Control Dot (•) -->
               <circle 
                 *ngIf="cell.type === 'control'"
-                [attr.cx]="paddingX + c * colWidth"
+                [attr.cx]="layout.colX[c]"
                 [attr.cy]="paddingY + w * wireSpacing"
                 r="6"
                 class="gate-control"
@@ -160,7 +160,7 @@
               <!-- Anti-control Dot (◦) -->
               <circle 
                 *ngIf="cell.type === 'anti-control'"
-                [attr.cx]="paddingX + c * colWidth"
+                [attr.cx]="layout.colX[c]"
                 [attr.cy]="paddingY + w * wireSpacing"
                 r="6"
                 class="gate-anti-control"
@@ -172,7 +172,7 @@
               <!-- Target Crosshair (⊕) -->
               <g 
                 *ngIf="cell.type === 'target'"
-                [attr.transform]="'translate(' + (paddingX + c * colWidth) + ', ' + (paddingY + w * wireSpacing) + ')'"
+                [attr.transform]="'translate(' + (layout.colX[c]) + ', ' + (paddingY + w * wireSpacing) + ')'"
                 class="gate-target-group"
                 [class.mutated]="cell.isMutated"
                 (mouseenter)="showTooltip($event, cell)"
@@ -186,7 +186,7 @@
               <!-- Swap cross (x) -->
               <g 
                 *ngIf="cell.type === 'swap'"
-                [attr.transform]="'translate(' + (paddingX + c * colWidth) + ', ' + (paddingY + w * wireSpacing) + ')'"
+                [attr.transform]="'translate(' + (layout.colX[c]) + ', ' + (paddingY + w * wireSpacing) + ')'"
                 class="gate-swap-group"
                 [class.mutated]="cell.isMutated"
                 (mouseenter)="showTooltip($event, cell)"
@@ -199,7 +199,7 @@
               <!-- Measurement Meter -->
               <g 
                 *ngIf="cell.type === 'measure'"
-                [attr.transform]="'translate(' + (paddingX + c * colWidth - gateSize / 2) + ', ' + (paddingY + w * wireSpacing - gateSize / 2) + ')'"
+                [attr.transform]="'translate(' + (layout.colX[c] - gateSize / 2) + ', ' + (paddingY + w * wireSpacing - gateSize / 2) + ')'"
                 class="gate-measure-group"
                 [class.mutated]="cell.isMutated"
                 (mouseenter)="showTooltip($event, cell)"
@@ -221,21 +221,21 @@
               >
                 <!-- Box covers wire height if spanning multiple qubits -->
                 <rect 
-                  [attr.x]="paddingX + c * colWidth - gateSize / 2"
+                  [attr.x]="layout.colX[c] - layout.gateWidths[c] / 2"
                   [attr.y]="paddingY + w * wireSpacing - gateSize / 2"
-                  [attr.width]="gateSize"
+                  [attr.width]="layout.gateWidths[c]"
                   [attr.height]="gateSize + (cell.gateHeight - 1) * wireSpacing"
                   rx="6" 
                   ry="6"
                   class="gate-box"
                 />
                 <text 
-                  [attr.x]="paddingX + c * colWidth"
+                  [attr.x]="layout.colX[c]"
                   [attr.y]="paddingY + w * wireSpacing + (cell.gateHeight - 1) * wireSpacing / 2 + 5"
                   class="gate-text"
                   text-anchor="middle"
                 >
-                  {{ cell.label }}
+                  {{ gateText(cell, c) }}
                 </text>
               </g>
 
