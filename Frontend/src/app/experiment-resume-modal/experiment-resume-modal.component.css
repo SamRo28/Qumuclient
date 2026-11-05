@@ -86,18 +86,7 @@
   border-color: rgba(245, 158, 11, 0.5);
 }
 
-.qubits-form { margin-top: 0.6rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-.qubits-form .hint { grid-column: 1 / -1; }
-.qubits-form label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8rem; color: var(--text-secondary); }
-.qubits-form input {
-  padding: 0.5rem 0.65rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-glass-light);
-  background: var(--glass-bg);
-  color: var(--text-primary);
-  font-family: 'JetBrains Mono', monospace;
-}
-.qubits-form input.invalid { border-color: #ef4444; }
+.qubits-form { margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.6rem; }
 
 .state-box { text-align: center; padding: 1rem; color: var(--text-secondary); }
 .error-banner {
@@ -135,3 +124,9 @@
 .btn-primary { background: var(--accent-gradient); color: #fff; border: 1px solid var(--border-glass); }
 .btn-outline { background: var(--glass-bg); border: 1px solid var(--border-glass-light); color: var(--text-primary); }
 .btn-outline:hover:not(:disabled) { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+.qubit-selectors-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+@media (max-width: 768px) { .qubit-selectors-grid { grid-template-columns: 1fr; } }
+.hint.suggested { color: var(--accent-primary); }
+.hint.warn-text { color: #f59e0b; }
+.hint.error-text { color: #ef4444; }

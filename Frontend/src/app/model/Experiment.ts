@@ -84,6 +84,10 @@ export interface ResumePendingCycle {
     inputQubits?: string | null;
     outputQubits?: string | null;
     needsQubits: boolean;
+    qubits: number;
+    suggestedInputQubits?: string | null;
+    suggestedOutputQubits?: string | null;
+    suggestedFromResults: boolean;
 }
 
 export interface ResumeSkippedCycle {

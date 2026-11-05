@@ -33,14 +33,18 @@
                   <span class="pill">{{ c.pendingMutants }} mutants pending</span>
                 </div>
                 <div class="qubits-form" *ngIf="c.needsQubits">
-                  <p class="hint">This cycle was created before input/output qubits were stored. Enter them to continue (comma-separated qubit indices, e.g. <code>0,1,2</code>).</p>
-                  <label>Input qubits
-                    <input type="text" [(ngModel)]="qubits[key(c)].input" [class.invalid]="qubits[key(c)].input && !isValid(qubits[key(c)].input)" placeholder="0,1,2" />
-                  </label>
-                  <label>Output qubits
-                    <input type="text" [(ngModel)]="qubits[key(c)].output" [class.invalid]="qubits[key(c)].output && !isValid(qubits[key(c)].output)" placeholder="0,1,2" />
-                  </label>
+                  <p class="hint">This cycle was created before input/output qubits were stored. Select them as when creating an experiment.</p>
+                  <p class="hint suggested" *ngIf="c.suggestedFromResults"><i class="fas fa-lightbulb"></i> Suggested from already executed results — check it</p>
+                  <div class="qubit-selectors-grid">
+                    <app-qubit-selector label="Input Qubits" icon="fas fa-arrow-right-to-bracket"
+                      [qubits]="c.qubits" [(value)]="qubits[key(c)].input"></app-qubit-selector>
+                    <app-qubit-selector label="Output Qubits" icon="fas fa-arrow-right-from-bracket"
+                      [qubits]="c.qubits" [(value)]="qubits[key(c)].output"></app-qubit-selector>
+                  </div>
+                  <p class="hint warn-text" *ngIf="qubits[key(c)].input === ''"><i class="fas fa-info-circle"></i> No input qubits: the cycle runs with all inputs set to 0</p>
+                  <p class="hint error-text" *ngIf="qubits[key(c)].output === ''"><i class="fas fa-exclamation-triangle"></i> Select at least one output qubit</p>
                 </div>
+                <div class="hint" *ngIf="!c.needsQubits">{{ savedSummary(c) }}</div>
               </li>
             </ul>
           </div>

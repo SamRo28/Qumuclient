@@ -3,8 +3,6 @@ import { ExperimentService } from '../services/experiment.service';
 import { ManagerService } from '../services/manager.service';
 import { ResumeCycleQubits, ResumePendingCycle, ResumePreview } from '../model/Experiment';
 
-const QUBITS_PATTERN = /^\s*\d+(\s*,\s*\d+)*\s*$/;
-
 @Component({
   selector: 'app-experiment-resume-modal',
   templateUrl: './experiment-resume-modal.component.html',
@@ -32,7 +30,7 @@ export class ExperimentResumeModalComponent implements OnInit {
         this.preview = p;
         for (const c of p.pendingCycles) {
           if (c.needsQubits) {
-            this.qubits[this.key(c)] = { input: c.inputQubits ?? '', output: c.outputQubits ?? '' };
+            this.qubits[this.key(c)] = { input: c.suggestedInputQubits ?? '', output: c.suggestedOutputQubits ?? '' };
           }
         }
         this.loading = false;
@@ -44,6 +42,12 @@ export class ExperimentResumeModalComponent implements OnInit {
     });
   }
 
+  /** Resumen de solo lectura: In: [0,1] | Out: [0,1,2] */
+  savedSummary(c: ResumePendingCycle): string {
+    const fmt = (v?: string | null) => (v ? v : 'None');
+    return 'In: [' + fmt(c.inputQubits) + '] | Out: [' + fmt(c.outputQubits) + ']';
+  }
+
   key(c: { projectId: string; cycleId: number }): string {
     return c.projectId + '|' + c.cycleId;
   }
@@ -52,15 +56,11 @@ export class ExperimentResumeModalComponent implements OnInit {
     return this.preview ? this.preview.pendingCycles.filter(c => c.needsQubits) : [];
   }
 
-  isValid(value: string | undefined): boolean {
-    return !!value && QUBITS_PATTERN.test(value);
-  }
-
   get canConfirm(): boolean {
     if (!this.preview || !this.preview.resumable || this.submitting) return false;
     return this.cyclesNeedingQubits.every(c => {
       const q = this.qubits[this.key(c)];
-      return q && this.isValid(q.input) && this.isValid(q.output);
+      return !!q && q.output !== '';
     });
   }
 
@@ -69,8 +69,8 @@ export class ExperimentResumeModalComponent implements OnInit {
     const cycles: ResumeCycleQubits[] = this.cyclesNeedingQubits.map(c => ({
       projectId: c.projectId,
       cycleId: c.cycleId,
-      inputQubits: this.qubits[this.key(c)].input.replace(/\s+/g, ''),
-      outputQubits: this.qubits[this.key(c)].output.replace(/\s+/g, '')
+      inputQubits: this.qubits[this.key(c)].input,
+      outputQubits: this.qubits[this.key(c)].output
     }));
     this.submitting = true;
     this.error = null;
