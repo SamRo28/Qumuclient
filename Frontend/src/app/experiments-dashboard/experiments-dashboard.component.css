@@ -438,3 +438,87 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Resume / Merge actions */
+.btn-action {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  color: var(--text-primary);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-action:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.failures-tag {
+  margin-left: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  vertical-align: middle;
+}
+
+.modal-content.merge-modal-content {
+  background: var(--glass-bg-card);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 560px;
+  box-shadow: 0 16px 48px var(--shadow-glass-strong);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.merge-select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass-light);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font-family: inherit;
+  margin-bottom: 0.75rem;
+}
+
+.merge-hint, .merge-state {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0.75rem 0;
+}
+
+.merge-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+}
+
+.merge-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.merge-row.keep i { color: var(--accent-primary); }
+.merge-row.drop i { color: #ef4444; }
+.merge-dups { margin: 0.3rem 0 0 1rem; padding: 0; }

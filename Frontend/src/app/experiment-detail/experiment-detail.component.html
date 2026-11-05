@@ -29,6 +29,9 @@
         </div>
 
         <div class="header-actions">
+          <button class="btn btn-primary" *ngIf="experiment.resumable" (click)="openResume()" title="Resume this experiment">
+            <i class="fas fa-play"></i> Resume
+          </button>
           <button class="btn btn-outline" (click)="load()" title="Refresh details">
             <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> Refresh
           </button>
@@ -47,6 +50,14 @@
           <span class="stat-label">Machine:</span>
           <strong class="stat-value">{{ experiment.machine }}</strong>
         </div>
+        <div class="stat-pill" *ngIf="experiment.resumeCount">
+          <span class="stat-label">Resumed:</span>
+          <strong class="stat-value">{{ experiment.resumeCount }} time(s)</strong>
+        </div>
+        <div class="stat-pill" *ngIf="experiment.mergedFrom">
+          <span class="stat-label">Merged from:</span>
+          <strong class="stat-value">{{ experiment.mergedFrom }}</strong>
+        </div>
         <div class="stat-pill" *ngIf="experiment.execAlgorithm">
           <span class="stat-label">Algorithm:</span>
           <strong class="stat-value">{{ experiment.execAlgorithm }}</strong>
@@ -61,6 +72,14 @@
         <strong>Execution Error:</strong>
         <p>{{ experiment.errorMessage }}</p>
       </div>
+    </div>
+
+    <!-- Failure History -->
+    <div *ngIf="failureLines.length > 0" class="history-box">
+      <div class="history-title"><i class="fas fa-history"></i> <strong>Failure history</strong></div>
+      <ul class="history-list">
+        <li *ngFor="let line of failureLines">{{ line }}</li>
+      </ul>
     </div>
 
     <!-- Global Totals Summary -->
@@ -108,6 +127,8 @@
                   <i class="fas fa-microchip circuit-icon" *ngIf="cycle.projectName"></i>
                   <strong class="circuit-name" *ngIf="cycle.projectName">{{ cycle.projectName }} &mdash; </strong>
                   <span class="cycle-name">{{ cycle.name }}</span>
+                  <span class="cycle-tag warn" *ngIf="cycle.generationCompleted === false" title="Mutant generation did not finish for this cycle">generation incomplete</span>
+                  <span class="cycle-tag" *ngIf="cycle.notExecutedCount > 0 && experiment.status !== 'RUNNING'" title="Mutants without execution results">{{ cycle.notExecutedCount }} pending</span>
                 </div>
               </td>
               <td>
@@ -143,3 +164,11 @@
   </div>
 
 </div>
+
+<app-experiment-resume-modal
+  *ngIf="showResumeModal && experiment"
+  [experimentId]="experiment.id"
+  [experimentName]="experiment.name"
+  (closed)="showResumeModal = false"
+  (resumed)="onResumed()">
+</app-experiment-resume-modal>

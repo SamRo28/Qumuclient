@@ -46,7 +46,11 @@
             <i *ngIf="exp.status === 'CANCELLED'" class="fas fa-ban"></i>
           </div>
           <div>
-            <h3 class="exp-name">{{ exp.name }}</h3>
+            <h3 class="exp-name">{{ exp.name }}
+              <span class="failures-tag" *ngIf="exp.hadFailures" title="This experiment recorded failures (see details)">
+                <i class="fas fa-exclamation-circle"></i> had failures
+              </span>
+            </h3>
             <span class="exp-date"><i class="far fa-calendar-alt"></i> {{ formatDate(exp.createdAt) }}</span>
           </div>
         </div>
@@ -63,6 +67,12 @@
           <div class="badge" [ngClass]="'badge-' + exp.status.toLowerCase()">
             {{ exp.status }}
           </div>
+          <button class="btn-action" *ngIf="exp.resumable" (click)="openResumeModal(exp, $event)" title="Resume experiment">
+            <i class="fas fa-play"></i> Resume
+          </button>
+          <button class="btn-action" *ngIf="exp.status !== 'RUNNING'" (click)="openMergeModal(exp, $event)" title="Merge with another experiment">
+            <i class="fas fa-code-merge"></i> Merge
+          </button>
           <button class="btn-delete" (click)="openDeleteModal(exp, $event)" title="Delete experiment">
             <i class="fas fa-trash-alt"></i>
           </button>
@@ -104,6 +114,64 @@
         <i *ngIf="isDeleting" class="fas fa-spinner fa-spin"></i>
         <i *ngIf="!isDeleting" class="fas fa-trash-alt"></i>
         <span>{{ isDeleting ? 'Deleting...' : 'Delete Experiment' }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Resume Modal -->
+<app-experiment-resume-modal
+  *ngIf="experimentToResume"
+  [experimentId]="experimentToResume.id"
+  [experimentName]="experimentToResume.name"
+  (closed)="closeResumeModal()"
+  (resumed)="onResumed()">
+</app-experiment-resume-modal>
+
+<!-- Merge Modal -->
+<div *ngIf="experimentToMerge" class="modal-overlay" (click)="closeMergeModal()">
+  <div class="modal-content merge-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="fas fa-code-merge"></i>
+        Merge Experiments
+      </h5>
+      <button type="button" class="modal-close" (click)="closeMergeModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="delete-msg">Merge <strong>{{ experimentToMerge.name }}</strong> with:</p>
+
+      <select class="merge-select" [(ngModel)]="mergeTargetId" (ngModelChange)="onMergeTargetChange()" [disabled]="isMerging">
+        <option value="">Select another experiment...</option>
+        <option *ngFor="let c of mergeCandidates" [value]="c.id">{{ c.name }} ({{ c.status }}, {{ formatDate(c.createdAt) }})</option>
+      </select>
+      <p class="merge-hint" *ngIf="mergeCandidates.length === 0">There are no other experiments that are not running.</p>
+
+      <div *ngIf="isLoadingMergePreview" class="merge-state"><i class="fas fa-spinner fa-spin"></i> Calculating merge...</div>
+      <div *ngIf="mergeError" class="delete-warning-box"><i class="fas fa-exclamation-triangle"></i><span>{{ mergeError }}</span></div>
+
+      <div *ngIf="mergePreview" class="merge-preview">
+        <div class="merge-row keep"><i class="fas fa-check-circle"></i> <span>Kept (older): <strong>{{ mergePreview.survivorName }}</strong></span></div>
+        <div class="merge-row drop"><i class="fas fa-trash-alt"></i> <span>Deleted (newer): <strong>{{ mergePreview.deletedName }}</strong></span></div>
+        <div class="merge-row"><i class="fas fa-exchange-alt"></i> <span>{{ mergePreview.cyclesToMove }} cycle(s) will be moved to the kept experiment.</span></div>
+        <div class="merge-row" *ngIf="mergePreview.duplicateCyclesToDelete.length > 0">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>
+            {{ mergePreview.duplicateCyclesToDelete.length }} incomplete cycle(s) of the kept experiment will be deleted because the circuit also has a cycle in the other one:
+            <ul class="merge-dups"><li *ngFor="let d of mergePreview.duplicateCyclesToDelete">{{ d.name }}</li></ul>
+          </span>
+        </div>
+        <div class="merge-row"><i class="fas fa-flag"></i> <span>Resulting status: <strong>{{ mergePreview.resultingStatus }}</strong></span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="closeMergeModal()" [disabled]="isMerging">Cancel</button>
+      <button class="btn btn-primary" (click)="confirmMerge()" [disabled]="!mergePreview || isMerging">
+        <i *ngIf="isMerging" class="fas fa-spinner fa-spin"></i>
+        <i *ngIf="!isMerging" class="fas fa-code-merge"></i>
+        <span>{{ isMerging ? 'Merging...' : 'Merge' }}</span>
       </button>
     </div>
   </div>

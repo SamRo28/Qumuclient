@@ -16,6 +16,7 @@ export class ExperimentDetailComponent implements OnInit, OnDestroy {
   public error: string | null = null;
   private refreshSub?: Subscription;
   private experimentId: string = '';
+  public showResumeModal: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -65,6 +66,20 @@ export class ExperimentDetailComponent implements OnInit, OnDestroy {
         this.managerService.showNotification(this.error || '', 'error', 4000);
       }
     });
+  }
+
+  openResume(): void {
+    this.showResumeModal = true;
+  }
+
+  onResumed(): void {
+    this.showResumeModal = false;
+    this.load();
+  }
+
+  get failureLines(): string[] {
+    const h = this.experiment?.errorHistory;
+    return h ? h.split('\n').filter(l => l.trim().length > 0) : [];
   }
 
   back(): void {

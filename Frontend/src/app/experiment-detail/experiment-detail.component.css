@@ -366,3 +366,55 @@
   margin-bottom: 1.25rem;
   filter: drop-shadow(0 2px 8px var(--shadow-glass));
 }
+
+/* Failure history & cycle tags */
+.history-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.history-title { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+
+.history-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cycle-tag {
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass-light);
+  color: var(--text-secondary);
+}
+
+.cycle-tag.warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.btn-primary {
+  background: var(--accent-gradient);
+  color: #ffffff;
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 4px 14px var(--shadow-glass);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
