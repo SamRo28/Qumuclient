@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, Input, SimpleChanges } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { Mutant } from '../model/Mutant';
 import { QCircuit } from '../model/QCircuit';
 import { ColumnLayout, computeColumnLayout, displayLabel, maxCharsForWidth } from './gate-label';
@@ -60,11 +60,13 @@ export class CircuitViewerComponent implements OnInit, OnChanges {
 
   // Interactive Zoom/Pan State
   zoomScale = 1.0;
-  panX = 0;
-  panY = 0;
   isDragging = false;
-  dragStartX = 0;
-  dragStartY = 0;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private dragStartScrollLeft = 0;
+  private dragStartScrollTop = 0;
+
+  @ViewChild('canvas') canvasRef?: ElementRef<HTMLElement>;
 
   // Tooltip State
   hoveredCell: VisualCell | null = null;
@@ -569,22 +571,33 @@ export class CircuitViewerComponent implements OnInit, OnChanges {
 
   resetZoom(): void {
     this.zoomScale = 1.0;
-    this.panX = 0;
-    this.panY = 0;
+    const el = this.canvasRef?.nativeElement;
+    if (el) {
+      el.scrollLeft = 0;
+      el.scrollTop = 0;
+    }
   }
 
   onMouseDown(event: MouseEvent): void {
     if (event.button !== 0) return;
+    const el = this.canvasRef?.nativeElement;
+    if (!el) return;
+    // Solo se arrastra desde el propio dibujo: pulsar las barras de desplazamiento no arrastra
+    const target = event.target as Element | null;
+    if (!target || !target.closest || !target.closest('svg')) return;
     this.isDragging = true;
-    this.dragStartX = event.clientX - this.panX;
-    this.dragStartY = event.clientY - this.panY;
+    this.dragStartX = event.clientX;
+    this.dragStartY = event.clientY;
+    this.dragStartScrollLeft = el.scrollLeft;
+    this.dragStartScrollTop = el.scrollTop;
   }
 
   onMouseMove(event: MouseEvent): void {
-    if (this.isDragging) {
-      this.panX = event.clientX - this.dragStartX;
-      this.panY = event.clientY - this.dragStartY;
-    }
+    if (!this.isDragging) return;
+    const el = this.canvasRef?.nativeElement;
+    if (!el) return;
+    el.scrollLeft = this.dragStartScrollLeft - (event.clientX - this.dragStartX);
+    el.scrollTop = this.dragStartScrollTop - (event.clientY - this.dragStartY);
   }
 
   onMouseUp(): void {

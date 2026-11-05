@@ -36,6 +36,7 @@
 
   <!-- Canvas Container -->
   <div 
+    #canvas
     class="circuit-canvas-container"
     [class.grabbing]="isDragging"
     (mousedown)="onMouseDown($event)"
@@ -61,7 +62,7 @@
       [attr.viewBox]="'0 0 ' + svgWidth + ' ' + svgHeight"
       class="circuit-svg"
     >
-      <g [attr.transform]="'translate(' + panX + ',' + panY + ') scale(' + zoomScale + ')'">
+      <g class="circuit-content">
         
         <!-- 1. Oracle Boxes (Rendered first at the bottom layer) -->
         <g *ngFor="let box of oracleBoxes" class="oracle-box-group" [attr.data-depth]="box.depth">
