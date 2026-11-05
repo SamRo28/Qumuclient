@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { JobStatus, pollJob } from './job-polling';
 import { StatisticsResponse } from '../model/StatisticsResponse';
 import { environment } from 'src/environments/environment';
 
@@ -41,6 +42,34 @@ export class StatisticsService {
         formData.append('threshold', threshold.toString());
 
         return this.http.post<StatisticsResponse>(`${this.baseUrl}/calculateStatistics`, formData);
+    }
+
+    private email(): string {
+        return sessionStorage.getItem('email') || '';
+    }
+
+    /**
+     * Lanza en reper el cálculo de estadísticas de un ciclo (reper monta el CSV desde la BD).
+     * Devuelve el id del trabajo asíncrono.
+     */
+    startCycleStatistics(projectId: string, cycleId: number, threshold: number = 0.05, inputBits?: number): Observable<{ jobId: string }> {
+        return this.http.post<{ jobId: string }>(`${environment.api.core}/mutantanalytics/cycleStatistics/start`,
+            { email: this.email(), projectId, cycleId, threshold, inputBits }, { withCredentials: true });
+    }
+
+    getJobStatus(jobId: string): Observable<JobStatus> {
+        return this.http.post<JobStatus>(`${environment.api.core}/jobs/status`,
+            { email: this.email(), jobId }, { withCredentials: true });
+    }
+
+    getJobResult<T = StatisticsResponse>(jobId: string): Observable<T> {
+        return this.http.post<T>(`${environment.api.core}/jobs/result`,
+            { email: this.email(), jobId }, { withCredentials: true });
+    }
+
+    /** Sondea el trabajo hasta que termina y emite las estadísticas. */
+    pollStatistics(jobId: string, intervalMs: number = 3000): Observable<StatisticsResponse> {
+        return pollJob<StatisticsResponse>(() => this.getJobStatus(jobId), () => this.getJobResult(jobId), intervalMs);
     }
 
     /**

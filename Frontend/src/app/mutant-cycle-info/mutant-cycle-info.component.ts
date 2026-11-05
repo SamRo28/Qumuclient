@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnChanges, OnDestroy, SimpleChanges, HostListener, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { MutantCycle } from '../model/MutantCycle';
 import { Result, MutantResult } from '../model/MutantResult';
 import { Mutant } from '../model/Mutant';
@@ -784,20 +785,26 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   }
 
   calculateStatistics(): void {
-    const csvContent = this.generateCSVContent();
-    if (!csvContent) return;
+    const projectId = this.manager.selectedProject?.id;
+    const cycleId = this.mutantCycle?.id;
+    if (!projectId || cycleId === undefined || cycleId === null) return;
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const file = new File([blob], `killing_matrix.csv`, { type: 'text/csv' });
+    // Ancho binario de las entradas (el mismo que usa la matriz)
+    let inputBits = 1;
+    if (this.manager.inputQubits && this.manager.inputQubits.trim() !== '') {
+      inputBits = this.manager.inputQubits.split(',').length;
+    } else if (this.manager.selectedProject?.qProgram.qubits) {
+      inputBits = this.manager.selectedProject.qProgram.qubits;
+    }
 
     this.isLoadingStats = true;
-    this.statisticsService.calculateStatistics(file).subscribe({
+    this.statisticsService.startCycleStatistics(projectId, cycleId, 0.05, inputBits).pipe(
+      switchMap(({ jobId }) => this.statisticsService.pollStatistics(jobId))
+    ).subscribe({
       next: (stats: any) => {
-        // this.statisticsService.setStatistics(stats); // Optional if we just want to show it here
         this.statistics = stats;
         this.isLoadingStats = false;
-        this.currentTab = 'statistics'; // Switch tab
-        // this.router.navigate(['/statistics']); // Removed
+        this.currentTab = 'statistics';
       },
       error: (err: any) => {
         console.error('Error calculating statistics', err);
