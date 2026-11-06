@@ -23,10 +23,9 @@ import { Operator } from '../model/OperatorFamily';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
 import {
-  ALL_RESULT_FILTERS, MatrixResultFilter, countByCategory, filterRows, toggleFilter
+  MatrixResultFilter, MatrixRow, RESULT_BADGE_CLASS, RESULT_BADGE_TEXT, RESULT_LABELS, availableCategories,
+  countByCategory, filterRows, resultsLabel, searchTestCases, toggleResult
 } from '../utils/killing-matrix-filter';
-
-type MatrixRow = { mutant: Mutant, cells: { input: string, killed: boolean, zombie: boolean, error: number }[] };
 
 @Component({
   selector: 'app-mutant-cycle-info',
@@ -52,9 +51,14 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   filteredMatrixRows: MatrixRow[] = [];
   paginatedMatrixRows: MatrixRow[] = [];
 
-  // Result filter (multi-select; empty set = no filter / "All")
-  activeResultFilters = new Set<MatrixResultFilter>();
+  // Filters: Result (multi-select; empty = all) and Test case (single; null = all)
+  activeResults = new Set<MatrixResultFilter>();
+  selectedTestCase: string | null = null;
   resultCounts: Record<MatrixResultFilter, number> = { killed: 0, alive: 0, zombie: 0, pending: 0 };
+  availableResults: MatrixResultFilter[] = ['killed', 'alive', 'zombie'];
+  showResultFilterDropdown = false;
+  showTestCaseDropdown = false;
+  testCaseQuery = '';
   inputHeaders: string[] = [];
 
   // Dropdown UI state
@@ -116,6 +120,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     event.stopPropagation();
     this.showMachineDropdown = !this.showMachineDropdown;
     this.showAlgoDropdown = false;
+    this.showTestSuiteDropdown = false;
+    this.closeFilterDropdowns();
   }
 
   toggleAlgoDropdown(event: Event) {
@@ -124,6 +130,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.showAlgoDropdown = !this.showAlgoDropdown;
     this.showMachineDropdown = false;
     this.showTestSuiteDropdown = false;
+    this.closeFilterDropdowns();
   }
 
   toggleTestSuiteDropdown(event: Event) {
@@ -132,6 +139,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.showTestSuiteDropdown = !this.showTestSuiteDropdown;
     this.showMachineDropdown = false;
     this.showAlgoDropdown = false;
+    this.closeFilterDropdowns();
   }
 
   selectMachine(machine: string) {
@@ -170,6 +178,12 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.showMachineDropdown = false;
     this.showAlgoDropdown = false;
     this.showTestSuiteDropdown = false;
+    this.closeFilterDropdowns();
+  }
+
+  private closeFilterDropdowns() {
+    this.showResultFilterDropdown = false;
+    this.showTestCaseDropdown = false;
   }
 
   ngOnInit(): void {
@@ -245,7 +259,9 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
   initializeCycleView() {
     this.currentPage = 1; // Reset to first page on new cycle
-    this.activeResultFilters = new Set<MatrixResultFilter>(); // new cycle: back to "All"
+    this.activeResults = new Set<MatrixResultFilter>(); // new cycle: back to "All"
+    this.selectedTestCase = null;
+    this.testCaseQuery = '';
 
     if (this.mutantCycle) {
       if (!this.mutantCycle.execConfiguration) {
@@ -376,43 +392,99 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     }
   }
 
-  /** Categorías que se pueden filtrar: killed/alive/zombie siempre; pending solo si hay mutantes sin ejecutar. */
-  get availableResultFilters(): MatrixResultFilter[] {
-    return ALL_RESULT_FILTERS.filter(f => f !== 'pending' || this.resultCounts.pending > 0);
+  get hasActiveFilters(): boolean {
+    return this.activeResults.size > 0 || this.selectedTestCase !== null;
   }
 
-  get isAllActive(): boolean {
-    return this.activeResultFilters.size === 0;
+  get resultsTriggerLabel(): string {
+    return resultsLabel(this.activeResults);
   }
 
-  isFilterActive(f: MatrixResultFilter): boolean {
-    return this.activeResultFilters.has(f);
+  get testCaseTriggerLabel(): string {
+    return this.selectedTestCase === null ? 'All test cases' : `Test case ${this.selectedTestCase}`;
   }
+
+  get visibleTestCases(): string[] {
+    return searchTestCases(this.inputHeaders, this.testCaseQuery);
+  }
+
+  isResultActive(f: MatrixResultFilter): boolean {
+    return this.activeResults.has(f);
+  }
+
+  label(f: MatrixResultFilter): string { return RESULT_LABELS[f]; }
+  badgeText(f: MatrixResultFilter): string { return RESULT_BADGE_TEXT[f]; }
+  badgeClass(f: MatrixResultFilter): string { return RESULT_BADGE_CLASS[f]; }
 
   /** Recalcula recuentos y lista filtrada; con resetPage vuelve a la página 1. */
   applyMatrixFilter(resetPage: boolean): void {
-    this.resultCounts = countByCategory(this.matrixRows);
-    // Si el pending desaparece (terminó la ejecución) no puede quedar activo
-    if (this.resultCounts.pending === 0 && this.activeResultFilters.has('pending')) {
-      const next = new Set(this.activeResultFilters);
-      next.delete('pending');
-      this.activeResultFilters = next;
+    if (this.selectedTestCase !== null && !this.inputHeaders.includes(this.selectedTestCase)) {
+      this.selectedTestCase = null;
     }
-    this.filteredMatrixRows = filterRows(this.matrixRows, this.activeResultFilters);
+    this.resultCounts = countByCategory(this.matrixRows, this.selectedTestCase);
+    this.availableResults = availableCategories(this.resultCounts);
+    if ([...this.activeResults].some(f => !this.availableResults.includes(f))) {
+      this.activeResults = new Set([...this.activeResults].filter(f => this.availableResults.includes(f)));
+    }
+    this.filteredMatrixRows = filterRows(this.matrixRows, { results: this.activeResults, testCase: this.selectedTestCase });
     if (resetPage) {
       this.currentPage = 1;
     }
     this.updatePagination();
   }
 
-  onToggleResultFilter(f: MatrixResultFilter): void {
-    this.activeResultFilters = toggleFilter(this.activeResultFilters, f, this.availableResultFilters);
+  toggleResultFilterDropdown(event: Event): void {
+    event.stopPropagation();
+    if (this.loadingMatrix || !this.matrixRows.length) return;
+    const open = !this.showResultFilterDropdown;
+    this.closeDropdowns();
+    this.showResultFilterDropdown = open;
+  }
+
+  toggleTestCaseDropdown(event: Event): void {
+    event.stopPropagation();
+    if (this.loadingMatrix || !this.inputHeaders.length) return;
+    const open = !this.showTestCaseDropdown;
+    this.closeDropdowns();
+    this.showTestCaseDropdown = open;
+  }
+
+  onToggleResult(f: MatrixResultFilter, event: Event): void {
+    event.stopPropagation(); // no cerrar el desplegable
+    this.activeResults = toggleResult(this.activeResults, f, this.availableResults);
     this.applyMatrixFilter(true);
   }
 
-  clearResultFilter(): void {
-    this.activeResultFilters = new Set<MatrixResultFilter>();
+  clearResultFilter(event?: Event): void {
+    event?.stopPropagation();
+    this.activeResults = new Set<MatrixResultFilter>();
     this.applyMatrixFilter(true);
+  }
+
+  selectTestCase(tc: string | null, event?: Event): void {
+    event?.stopPropagation();
+    this.selectedTestCase = tc;
+    this.showTestCaseDropdown = false;
+    this.testCaseQuery = '';
+    this.applyMatrixFilter(true);
+    if (tc !== null) {
+      this.scrollToTestColumn(tc);
+    }
+  }
+
+  clearAllFilters(): void {
+    this.activeResults = new Set<MatrixResultFilter>();
+    this.selectedTestCase = null;
+    this.applyMatrixFilter(true);
+  }
+
+  scrollToTestColumn(tc: string): void {
+    setTimeout(() => {
+      const wrapper = document.querySelector('.killing-matrix-scroll-wrapper');
+      const th = Array.from(wrapper?.querySelectorAll('th[data-test-case]') ?? [])
+        .find(el => el.getAttribute('data-test-case') === tc);
+      th?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }, 0);
   }
 
   updatePagination(): void {

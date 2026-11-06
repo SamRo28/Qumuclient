@@ -164,25 +164,59 @@
 
         <!-- Actions that were in the header (Export/Calc) - Only show for Matrix Tab -->
         <div class="tab-actions" *ngIf="currentTab === 'matrix'">
-          <div class="result-filter" role="group" aria-label="Filter mutants by result">
-            <button type="button" class="filter-chip" [class.active]="isAllActive" [attr.aria-pressed]="isAllActive"
-              [disabled]="loadingMatrix || !matrixRows.length" (click)="clearResultFilter()">All ({{ matrixRows.length }})</button>
-            <button type="button" class="filter-chip" [class.active]="isFilterActive('killed')" [attr.aria-pressed]="isFilterActive('killed')"
-              [disabled]="loadingMatrix || !matrixRows.length" (click)="onToggleResultFilter('killed')">
-              <span class="matrix-cell-badge killed">K</span> Killed ({{ resultCounts.killed }})
-            </button>
-            <button type="button" class="filter-chip" [class.active]="isFilterActive('alive')" [attr.aria-pressed]="isFilterActive('alive')"
-              [disabled]="loadingMatrix || !matrixRows.length" (click)="onToggleResultFilter('alive')">
-              <span class="matrix-cell-badge alive">A</span> Alive ({{ resultCounts.alive }})
-            </button>
-            <button type="button" class="filter-chip" [class.active]="isFilterActive('zombie')" [attr.aria-pressed]="isFilterActive('zombie')"
-              [disabled]="loadingMatrix || !matrixRows.length" (click)="onToggleResultFilter('zombie')">
-              <span class="matrix-cell-badge zombie">Z</span> Zombie ({{ resultCounts.zombie }})
-            </button>
-            <button *ngIf="resultCounts.pending > 0" type="button" class="filter-chip" [class.active]="isFilterActive('pending')" [attr.aria-pressed]="isFilterActive('pending')"
-              [disabled]="loadingMatrix || !matrixRows.length" (click)="onToggleResultFilter('pending')">
-              <span class="matrix-cell-badge not-executed">–</span> Pending ({{ resultCounts.pending }})
-            </button>
+          <div class="matrix-filters">
+            <!-- Result (multi) -->
+            <div class="custom-select filter-select" [class.open]="showResultFilterDropdown"
+              [class.disabled]="loadingMatrix || !matrixRows.length">
+              <div class="select-trigger" role="button" tabindex="0" aria-haspopup="listbox"
+                [attr.aria-expanded]="showResultFilterDropdown" (click)="toggleResultFilterDropdown($event)"
+                (keydown.enter)="toggleResultFilterDropdown($event)" (keydown.space)="toggleResultFilterDropdown($event)"
+                (keydown.escape)="showResultFilterDropdown = false">
+                <span class="filter-label">Result:</span> {{ resultsTriggerLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              </div>
+              <div class="select-options filter-options" *ngIf="showResultFilterDropdown" role="listbox"
+                aria-multiselectable="true" (keydown.escape)="showResultFilterDropdown = false">
+                <button type="button" class="option" role="option" [class.selected]="activeResults.size === 0"
+                  [attr.aria-selected]="activeResults.size === 0" (click)="clearResultFilter($event)">All results</button>
+                <button type="button" *ngFor="let f of availableResults" class="option option-check" role="option"
+                  [class.selected]="isResultActive(f)" [attr.aria-selected]="isResultActive(f)"
+                  (click)="onToggleResult(f, $event)">
+                  <span class="check-box" [class.checked]="isResultActive(f)"></span>
+                  <span class="matrix-cell-badge" [ngClass]="badgeClass(f)">{{ badgeText(f) }}</span>
+                  {{ label(f) }} <span class="option-count">({{ resultCounts[f] }})</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Test case (single) -->
+            <div class="custom-select filter-select" [class.open]="showTestCaseDropdown"
+              [class.disabled]="loadingMatrix || !inputHeaders.length">
+              <div class="select-trigger" role="button" tabindex="0" aria-haspopup="listbox"
+                [attr.aria-expanded]="showTestCaseDropdown" (click)="toggleTestCaseDropdown($event)"
+                (keydown.enter)="toggleTestCaseDropdown($event)" (keydown.space)="toggleTestCaseDropdown($event)"
+                (keydown.escape)="showTestCaseDropdown = false">
+                <span class="filter-label">Test case:</span> {{ testCaseTriggerLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              </div>
+              <div class="select-options filter-options test-case-options" *ngIf="showTestCaseDropdown" role="listbox"
+                (keydown.escape)="showTestCaseDropdown = false">
+                <input *ngIf="inputHeaders.length > 16" class="option-search" type="text" placeholder="Search test case…"
+                  [(ngModel)]="testCaseQuery" (click)="$event.stopPropagation()">
+                <button type="button" class="option" role="option" [class.selected]="selectedTestCase === null"
+                  [attr.aria-selected]="selectedTestCase === null" (click)="selectTestCase(null, $event)">All test cases</button>
+                <button type="button" *ngFor="let tc of visibleTestCases" class="option option-mono" role="option"
+                  [class.selected]="selectedTestCase === tc" [attr.aria-selected]="selectedTestCase === tc"
+                  (click)="selectTestCase(tc, $event)">{{ tc }}</button>
+                <div class="option-empty" *ngIf="!visibleTestCases.length">No test cases found</div>
+              </div>
+            </div>
+
+            <button type="button" class="clear-filters-link" *ngIf="hasActiveFilters" (click)="clearAllFilters()">Clear filters</button>
           </div>
           <button class="export-btn" (click)="exportMatrixToCSV()" [disabled]="!matrixRows.length || loadingMatrix">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -207,8 +241,8 @@
         <ng-container *ngIf="!loadingMatrix">
           <div *ngIf="mutantCycle.mutants && mutantCycle.mutants.length > 0; else emptyMatrix">
           <div class="matrix-filter-empty" *ngIf="filteredMatrixRows.length === 0">
-            <p>No mutants match the selected filter</p>
-            <button type="button" class="filter-chip" (click)="clearResultFilter()">Show all</button>
+            <p>No mutants match the selected filters</p>
+            <button type="button" class="clear-filters-link" (click)="clearAllFilters()">Clear filters</button>
           </div>
           <div class="killing-matrix-container" *ngIf="filteredMatrixRows.length > 0">
             <div class="killing-matrix-scroll-wrapper">
@@ -217,7 +251,8 @@
                   <tr>
                     <th class="index-column sticky-col">Index</th>
                     <th class="operator-column">Operator</th>
-                    <th *ngFor="let header of inputHeaders" class="input-header">{{ header }}</th>
+                    <th *ngFor="let header of inputHeaders" class="input-header" [attr.data-test-case]="header"
+                        [class.selected-test-column]="header === selectedTestCase">{{ header }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -236,7 +271,7 @@
                         <small class="operator-detail" *ngIf="row.mutant.mutationDetail">{{ row.mutant.mutationDetail }}</small>
                       </div>
                     </td>
-                    <td *ngFor="let header of inputHeaders" class="result-cell">
+                    <td *ngFor="let header of inputHeaders" class="result-cell" [class.selected-test-column]="header === selectedTestCase">
                       <ng-container *ngFor="let cell of row.cells">
                         <span *ngIf="cell.input === header" class="matrix-cell-badge"
                           [ngClass]="cell.killed ? 'killed' : (cell.zombie ? 'zombie' : 'alive')"

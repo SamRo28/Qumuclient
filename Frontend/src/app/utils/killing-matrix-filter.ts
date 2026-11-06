@@ -4,6 +4,20 @@ import { Result } from '../model/MutantResult';
 export type MatrixResultFilter = 'killed' | 'alive' | 'zombie' | 'pending';
 export const ALL_RESULT_FILTERS: MatrixResultFilter[] = ['killed', 'alive', 'zombie', 'pending'];
 
+export interface MatrixCell { input: string; killed: boolean; zombie: boolean; error: number; }
+export interface MatrixRow { mutant: Mutant; cells: MatrixCell[]; }
+export interface MatrixFilter { results: ReadonlySet<MatrixResultFilter>; testCase: string | null; }
+
+export const RESULT_LABELS: Record<MatrixResultFilter, string> = {
+    killed: 'Killed', alive: 'Alive', zombie: 'Zombie', pending: 'Pending'
+};
+export const RESULT_BADGE_TEXT: Record<MatrixResultFilter, string> = {
+    killed: 'K', alive: 'A', zombie: 'Z', pending: '–'
+};
+export const RESULT_BADGE_CLASS: Record<MatrixResultFilter, string> = {
+    killed: 'killed', alive: 'alive', zombie: 'zombie', pending: 'not-executed'
+};
+
 /** Categoría global de un mutante (Result -> filtro; sin resultado -> 'pending'). */
 export function resultCategory(mutant: Mutant): MatrixResultFilter {
     switch (mutant.result?.result) {
@@ -14,26 +28,42 @@ export function resultCategory(mutant: Mutant): MatrixResultFilter {
     }
 }
 
-/** Recuento por categoría sobre todas las filas. */
-export function countByCategory<T extends { mutant: Mutant }>(rows: T[]): Record<MatrixResultFilter, number> {
+/**
+ * Categoría de una fila: resultado global si testCase es null; si no, el de su celda en esa
+ * columna (K -> killed, Z -> zombie, A -> alive; sin celda -> 'pending').
+ */
+export function rowCategory(row: MatrixRow, testCase: string | null): MatrixResultFilter {
+    if (testCase === null) return resultCategory(row.mutant);
+    const cell = row.cells.find(c => c.input === testCase);
+    if (!cell) return 'pending';
+    return cell.killed ? 'killed' : (cell.zombie ? 'zombie' : 'alive');
+}
+
+/** Recuento por categoría (según testCase). */
+export function countByCategory(rows: MatrixRow[], testCase: string | null): Record<MatrixResultFilter, number> {
     const counts: Record<MatrixResultFilter, number> = { killed: 0, alive: 0, zombie: 0, pending: 0 };
     for (const row of rows) {
-        counts[resultCategory(row.mutant)]++;
+        counts[rowCategory(row, testCase)]++;
     }
     return counts;
 }
 
-/** Filas que cumplen el filtro; conjunto vacío = sin filtro (devuelve `rows` tal cual). Mantiene el orden. */
-export function filterRows<T extends { mutant: Mutant }>(rows: T[], active: ReadonlySet<MatrixResultFilter>): T[] {
-    if (active.size === 0) return rows;
-    return rows.filter(row => active.has(resultCategory(row.mutant)));
+/** Categorías que se ofrecen: killed, alive y zombie siempre; pending solo si su recuento > 0. */
+export function availableCategories(counts: Record<MatrixResultFilter, number>): MatrixResultFilter[] {
+    return ALL_RESULT_FILTERS.filter(f => f !== 'pending' || counts.pending > 0);
 }
 
 /**
- * Nuevo conjunto tras pulsar una categoría. Si quedan activas todas las categorías disponibles
- * devuelve el conjunto vacío (= All).
+ * Filas que cumplen el filtro, en el orden original. Sin filtro de resultado devuelve `rows`
+ * (misma referencia) aunque haya testCase: en ese caso solo se resalta la columna.
  */
-export function toggleFilter(active: ReadonlySet<MatrixResultFilter>, f: MatrixResultFilter,
+export function filterRows(rows: MatrixRow[], filter: MatrixFilter): MatrixRow[] {
+    if (filter.results.size === 0) return rows;
+    return rows.filter(row => filter.results.has(rowCategory(row, filter.testCase)));
+}
+
+/** Conjunto tras marcar/desmarcar una categoría; si quedan marcadas todas las disponibles, devuelve vacío (= All). */
+export function toggleResult(active: ReadonlySet<MatrixResultFilter>, f: MatrixResultFilter,
                              available: MatrixResultFilter[]): Set<MatrixResultFilter> {
     const next = new Set(active);
     if (next.has(f)) {
@@ -45,4 +75,16 @@ export function toggleFilter(active: ReadonlySet<MatrixResultFilter>, f: MatrixR
         return new Set();
     }
     return next;
+}
+
+/** Casos de prueba que contienen `query` (sin espacios); query vacía -> todos. */
+export function searchTestCases(headers: string[], query: string): string[] {
+    const q = (query || '').replace(/\s+/g, '');
+    return q ? headers.filter(h => h.includes(q)) : headers;
+}
+
+/** Texto del activador del desplegable Result. */
+export function resultsLabel(active: ReadonlySet<MatrixResultFilter>): string {
+    if (active.size === 0) return 'All results';
+    return ALL_RESULT_FILTERS.filter(f => active.has(f)).map(f => RESULT_LABELS[f]).join(', ');
 }
