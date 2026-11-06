@@ -107,7 +107,7 @@
                     <h3>
                         Kill Rate per Mutant
                         <div class="info-icon"
-                            data-tooltip="Percentage of test cases that killed each specific mutant. Low values indicate hard-to-kill mutants.">
+                            data-tooltip="Mutants grouped by how many tests kill them. Expand a group to see its mutants.">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -117,14 +117,22 @@
                         </div>
                     </h3>
                     <div class="custom-chart-container">
-                        <div class="chart-bar-row" *ngFor="let item of mutantRates" [attr.title]="item.tooltip">
-                            <div class="bar-label" [title]="item.label">{{ item.label }}</div>
-                            <div class="bar-track">
-                                <div class="bar-fill mutant-fill" [style.width.%]="item.value * 100">
+                        <div *ngIf="mutantRateGroups.length === 0" class="empty-text">No data</div>
+                        <ng-container *ngFor="let g of mutantRateGroups; trackBy: trackByKilled">
+                            <div class="chart-bar-row group-toggle" [attr.title]="g.tooltip" (click)="toggleGroup(g)">
+                                <div class="bar-label" [title]="g.label">{{ g.label }}</div>
+                                <div class="bar-track">
+                                    <div class="bar-fill mutant-fill" [style.width.%]="g.percentage * 100"></div>
                                 </div>
+                                <div class="bar-value-text">{{ g.displayValue }}</div>
                             </div>
-                            <div class="bar-value-text">{{ item.displayValue }}</div>
-                        </div>
+                            <div class="mutant-chips" *ngIf="g.expanded">
+                                <span class="mutant-chip" *ngFor="let id of g.mutants.slice(0, g.shown)">Mutant {{ id }}</span>
+                                <button class="show-more-btn" *ngIf="g.count > g.shown" (click)="showMore(g)">
+                                    Show more ({{ g.count - g.shown }} left)
+                                </button>
+                            </div>
+                        </ng-container>
                     </div>
                 </div>
 
@@ -222,12 +230,12 @@
                     </div>
                 </div>
 
-                <!-- 5. Subsumed Mutants -->
+                <!-- 5. Subsumption -->
                 <div class="list-card col-12">
                     <h3>
-                        Subsumed Mutants
+                        Subsumption
                         <div class="info-icon"
-                            data-tooltip="Mutants grouped by their non-redundant parent. Targeting the parent (representative) mutant guarantees that all child (redundant) mutants inside it are also killed.">
+                            data-tooltip="Mutants killed by exactly the same tests form a class. All mutants of a class are subsumed by the root mutant: a test that kills the root kills the whole class.">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -237,19 +245,61 @@
                         </div>
                     </h3>
                     <div class="list-container detailed-list">
-                        <div *ngIf="subsumedGroups.length === 0" class="empty-text">No subsumed mutants detected in this execution.</div>
-                        <div class="subsumed-groups-grid" *ngIf="subsumedGroups.length > 0">
-                            <div class="representative-box" *ngFor="let group of subsumedGroups">
-                                <div class="representative-header" title="Target this representative mutant to cover all redundant mutants shown on the right">
-                                    <span class="rep-title">Mutant {{ group.representative }}</span>
-                                </div>
-                                <div class="redundants-container">
-                                    <div class="redundant-child-box" *ngFor="let child of group.redundants">
-                                        {{ child.mutant }}
+                        <div *ngIf="subsumptionEmpty" class="empty-text">No redundant mutants detected in this execution.</div>
+                        <ng-container *ngIf="!subsumptionEmpty && subsumption">
+                            <div class="subsumption-summary">
+                                <div class="score-card"><div class="score-value">{{ subsumption.summary.killed_mutants }}</div><div class="score-label">Killed</div></div>
+                                <div class="score-card"><div class="score-value">{{ subsumption.summary.redundant }}</div><div class="score-label">Redundant</div></div>
+                                <div class="score-card"><div class="score-value">{{ subsumption.summary.minimal }}</div><div class="score-label">Minimal</div></div>
+                                <div class="score-card"><div class="score-value">{{ subsumption.summary.redundancy_rate | percent:'1.1-1' }}</div><div class="score-label">Redundancy rate</div></div>
+                                <div class="score-card"><div class="score-value">{{ subsumption.summary.classes }}</div><div class="score-label">Classes</div></div>
+                            </div>
+
+                            <div *ngIf="byOperatorItems.length > 0">
+                                <h4>Redundancy by operator</h4>
+                                <div class="chart-bar-row" *ngFor="let o of byOperatorItems" [attr.title]="o.tooltip">
+                                    <div class="bar-label" [title]="o.operator">{{ o.operator | operatorLabel }}</div>
+                                    <div class="bar-track">
+                                        <div class="bar-fill redundancy-fill" [style.width.%]="o.rate * 100"></div>
                                     </div>
+                                    <div class="bar-value-text">{{ o.displayValue }}</div>
                                 </div>
                             </div>
-                        </div>
+
+                            <table class="subsumption-table">
+                                <thead>
+                                    <tr>
+                                        <th>Class</th><th>Root mutant</th><th>Killed by</th><th>Tests</th><th>Size</th><th>Redundant</th><th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <ng-container *ngFor="let r of classRows.slice(0, classesShown); trackBy: trackByClassId">
+                                        <tr>
+                                            <td>{{ r.id }}</td>
+                                            <td>Mutant {{ r.subsumed_by }}</td>
+                                            <td>{{ r.testNames }}</td>
+                                            <td>{{ r.num_tests }}</td>
+                                            <td>{{ r.size }}</td>
+                                            <td>{{ r.redundant }}</td>
+                                            <td><button class="show-more-btn" (click)="toggleClass(r)">{{ r.expanded ? 'Hide' : 'Show mutants' }}</button></td>
+                                        </tr>
+                                        <tr *ngIf="r.expanded">
+                                            <td colspan="7">
+                                                <div class="mutant-chips">
+                                                    <span class="mutant-chip" *ngFor="let id of r.mutants.slice(0, r.shown)">Mutant {{ id }}</span>
+                                                    <button class="show-more-btn" *ngIf="r.mutants.length > r.shown" (click)="showMoreClass(r)">
+                                                        Show more ({{ r.mutants.length - r.shown }} left)
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </ng-container>
+                                </tbody>
+                            </table>
+                            <button class="show-more-btn" *ngIf="classRows.length > classesShown" (click)="showMoreClasses()">
+                                Show more classes ({{ classRows.length - classesShown }} left)
+                            </button>
+                        </ng-container>
                     </div>
                 </div>
 

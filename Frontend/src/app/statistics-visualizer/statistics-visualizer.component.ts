@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { StatisticsService } from '../services/statistics.service';
-import { StatisticsResponse, OperatorStatistic, ZombieOperatorStatistic, ZombieSummary } from '../model/StatisticsResponse';
+import { StatisticsResponse, OperatorStatistic, ZombieOperatorStatistic, ZombieSummary, Subsumption, SubsumptionClass } from '../model/StatisticsResponse';
+import { classTestNames, killRateGroupLabel, subsumptionIsEmpty } from '../model/statistics-utils';
 import { ManagerService } from '../services/manager.service';
 
 interface ChartItem {
@@ -35,13 +36,34 @@ interface uniqueKillItem {
     count: number;
 }
 
-interface SubsumedGroup {
-    representative: string;
-    redundants: {
-        mutant: string;
-        reason: string;
-    }[];
+interface MutantRateGroupItem {
+    killed: number;
+    total: number;
+    percentage: number; // 0 to 1
+    count: number;
+    label: string;
+    displayValue: string;
+    tooltip: string;
+    mutants: string[];
+    expanded: boolean;
+    shown: number;
 }
+
+interface SubsumptionClassRow extends SubsumptionClass {
+    testNames: string;
+    expanded: boolean;
+    shown: number;
+}
+
+interface ByOperatorItem {
+    operator: string;
+    rate: number; // 0 to 1
+    displayValue: string;
+    tooltip: string;
+}
+
+const PAGE_SIZE = 200;
+const CLASS_PAGE_SIZE = 100;
 
 @Component({
     selector: 'app-statistics-visualizer',
@@ -56,9 +78,14 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
     statistics: StatisticsResponse | null = null;
 
     testRates: ChartItem[] = [];
-    mutantRates: ChartItem[] = [];
+    mutantRateGroups: MutantRateGroupItem[] = [];
     testsWithUniqueKills: uniqueKillItem[] = [];
-    subsumedGroups: SubsumedGroup[] = [];
+    subsumption: Subsumption | null = null;
+    classRows: SubsumptionClassRow[] = [];
+    classesShown = CLASS_PAGE_SIZE;
+    byOperatorItems: ByOperatorItem[] = [];
+    readonly pageSize = PAGE_SIZE;
+    readonly classPageSize = CLASS_PAGE_SIZE;
     mostLethalOperators: OperatorRankItem[] = [];
     innocuousOperators: OperatorRankItem[] = [];
     unstableOperators: UnstableOperatorItem[] = [];
@@ -111,15 +138,19 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
             }))
             .sort((a, b) => b.value - a.value);
 
-        // Process Kill Rate per Mutant
-        this.mutantRates = Object.entries(this.statistics.kill_rate_per_mutant)
-            .map(([key, value]) => ({
-                label: `Mutant ${key}`,
-                value: value.percentage,
-                displayValue: `${(value.percentage * 100).toFixed(1)}% (${value.killed})`,
-                tooltip: `Killed: ${value.killed}, Total: ${value.total}`
-            }))
-            .sort((a, b) => b.value - a.value);
+        // Process Kill Rate per Mutant (grouped by number of killing tests)
+        const krm = this.statistics.kill_rate_per_mutant;
+        const totalTests = krm?.total ?? 0;
+        this.mutantRateGroups = (krm?.groups ?? []).map(g => ({
+            killed: g.killed,
+            total: totalTests,
+            percentage: g.percentage,
+            count: g.mutants.length,
+            ...killRateGroupLabel(g, totalTests),
+            mutants: g.mutants,
+            expanded: false,
+            shown: PAGE_SIZE
+        }));
 
         // Process Surviving Mutants
         // Surviving = Total - Killed
@@ -139,23 +170,21 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
             count: value.length
         })).filter(item => item.count > 0);
 
-        // Process Subsumed Groups (grouped by representative parent)
-        const groupsMap = new Map<string, { mutant: string; reason: string }[]>();
-        if (this.statistics.subsumed_mutants) {
-            for (const item of this.statistics.subsumed_mutants) {
-                const rep = item.subsumed_by;
-                if (!groupsMap.has(rep)) {
-                    groupsMap.set(rep, []);
-                }
-                groupsMap.get(rep)!.push({
-                    mutant: item.redundant_mutant,
-                    reason: item.reason
-                });
-            }
-        }
-        this.subsumedGroups = Array.from(groupsMap.entries()).map(([rep, redundants]) => ({
-            representative: rep,
-            redundants: redundants
+        // Process Subsumption (classes of mutants killed by exactly the same tests)
+        const sub = this.statistics.subsumption;
+        this.subsumption = sub ?? null;
+        this.classesShown = CLASS_PAGE_SIZE;
+        this.classRows = subsumptionIsEmpty(sub) ? [] : sub!.classes.map(c => ({
+            ...c,
+            testNames: classTestNames(sub!, c),
+            expanded: false,
+            shown: PAGE_SIZE
+        }));
+        this.byOperatorItems = (sub?.by_operator ?? []).map(o => ({
+            operator: o.operator,
+            rate: o.redundancy_rate,
+            displayValue: `${(o.redundancy_rate * 100).toFixed(0)}% (${o.redundant}/${o.killed})`,
+            tooltip: `Redundancy rate: ${(o.redundancy_rate * 100).toFixed(1)}% — ${o.redundant} redundant of ${o.killed} killed`
         }));
 
         // Process Operator Rankings (most lethal / innocuous). Zombies count as
@@ -189,6 +218,19 @@ export class StatisticsVisualizerComponent implements OnInit, OnDestroy {
             tooltip: `Zombie rate: ${(op.zombie_rate * 100).toFixed(1)}% — Zombie ${op.zombie}/${op.total}`
         };
     }
+
+    get subsumptionEmpty(): boolean {
+        return subsumptionIsEmpty(this.subsumption);
+    }
+
+    toggleGroup(item: MutantRateGroupItem) { item.expanded = !item.expanded; }
+    showMore(item: MutantRateGroupItem) { item.shown += PAGE_SIZE; }
+    toggleClass(row: SubsumptionClassRow) { row.expanded = !row.expanded; }
+    showMoreClass(row: SubsumptionClassRow) { row.shown += PAGE_SIZE; }
+    showMoreClasses() { this.classesShown += CLASS_PAGE_SIZE; }
+
+    trackByKilled(_: number, g: MutantRateGroupItem) { return g.killed; }
+    trackByClassId(_: number, r: SubsumptionClassRow) { return r.id; }
 
     toggleSidebar() {
         if (!this.hasAnalyzed) {
