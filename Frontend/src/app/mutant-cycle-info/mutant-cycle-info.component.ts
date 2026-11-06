@@ -22,6 +22,11 @@ import { QCircuit } from '../model/QCircuit';
 import { Operator } from '../model/OperatorFamily';
 import { StatisticsService } from '../services/statistics.service';
 import { StatisticsResponse } from '../model/StatisticsResponse';
+import {
+  ALL_RESULT_FILTERS, MatrixResultFilter, countByCategory, filterRows, toggleFilter
+} from '../utils/killing-matrix-filter';
+
+type MatrixRow = { mutant: Mutant, cells: { input: string, killed: boolean, zombie: boolean, error: number }[] };
 
 @Component({
   selector: 'app-mutant-cycle-info',
@@ -42,11 +47,14 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
   totalPages: number = 0;
   loadingMatrix: boolean = false;
 
-  paginatedMutants: Mutant[] = [];
-
   // Matrix properties
-  matrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, zombie: boolean, error: number }[] }[] = [];
-  paginatedMatrixRows: { mutant: Mutant, cells: { input: string, killed: boolean, zombie: boolean, error: number }[] }[] = [];
+  matrixRows: MatrixRow[] = [];
+  filteredMatrixRows: MatrixRow[] = [];
+  paginatedMatrixRows: MatrixRow[] = [];
+
+  // Result filter (multi-select; empty set = no filter / "All")
+  activeResultFilters = new Set<MatrixResultFilter>();
+  resultCounts: Record<MatrixResultFilter, number> = { killed: 0, alive: 0, zombie: 0, pending: 0 };
   inputHeaders: string[] = [];
 
   // Dropdown UI state
@@ -213,6 +221,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         if (this.mutantCycle && this.mutantCycle.id === update.cycleId) {
           // Refresh view
           this.loadKillingMatrixFromExistingResults();
+          this.applyMatrixFilter(false);
           // Ensure change detection runs
           this.cdr.detectChanges();
         }
@@ -231,11 +240,12 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
         }
       )
     }
-    this.updatePagination();
+    this.applyMatrixFilter(true);
   }
 
   initializeCycleView() {
     this.currentPage = 1; // Reset to first page on new cycle
+    this.activeResultFilters = new Set<MatrixResultFilter>(); // new cycle: back to "All"
 
     if (this.mutantCycle) {
       if (!this.mutantCycle.execConfiguration) {
@@ -277,7 +287,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     this.inputHeaders = [];
 
     this.loadKillingMatrixFromExistingResults();
-    this.updatePagination();
+    this.applyMatrixFilter(true);
 
     // Reset statistics state for new cycle
     this.statistics = null;
@@ -366,16 +376,56 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     }
   }
 
+  /** Categorías que se pueden filtrar: killed/alive/zombie siempre; pending solo si hay mutantes sin ejecutar. */
+  get availableResultFilters(): MatrixResultFilter[] {
+    return ALL_RESULT_FILTERS.filter(f => f !== 'pending' || this.resultCounts.pending > 0);
+  }
+
+  get isAllActive(): boolean {
+    return this.activeResultFilters.size === 0;
+  }
+
+  isFilterActive(f: MatrixResultFilter): boolean {
+    return this.activeResultFilters.has(f);
+  }
+
+  /** Recalcula recuentos y lista filtrada; con resetPage vuelve a la página 1. */
+  applyMatrixFilter(resetPage: boolean): void {
+    this.resultCounts = countByCategory(this.matrixRows);
+    // Si el pending desaparece (terminó la ejecución) no puede quedar activo
+    if (this.resultCounts.pending === 0 && this.activeResultFilters.has('pending')) {
+      const next = new Set(this.activeResultFilters);
+      next.delete('pending');
+      this.activeResultFilters = next;
+    }
+    this.filteredMatrixRows = filterRows(this.matrixRows, this.activeResultFilters);
+    if (resetPage) {
+      this.currentPage = 1;
+    }
+    this.updatePagination();
+  }
+
+  onToggleResultFilter(f: MatrixResultFilter): void {
+    this.activeResultFilters = toggleFilter(this.activeResultFilters, f, this.availableResultFilters);
+    this.applyMatrixFilter(true);
+  }
+
+  clearResultFilter(): void {
+    this.activeResultFilters = new Set<MatrixResultFilter>();
+    this.applyMatrixFilter(true);
+  }
+
   updatePagination(): void {
     if (!this.mutantCycle || !this.mutantCycle.mutants) {
-      this.paginatedMutants = [];
+      this.paginatedMatrixRows = [];
       this.totalPages = 0;
       return;
     }
-    
+
+    const total = this.filteredMatrixRows.length;
     let effectivePageSize = 100;
     if (this.pageSize === 'All') {
-      effectivePageSize = this.mutantCycle.mutants.length || 1;
+      effectivePageSize = total || 1;
     } else if (this.pageSize === 'Custom') {
       effectivePageSize = this.customPageSize || 100;
     } else {
@@ -384,8 +434,8 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
 
     if (effectivePageSize <= 0) effectivePageSize = 1;
 
-    this.totalPages = Math.ceil(this.mutantCycle.mutants.length / effectivePageSize);
-    
+    this.totalPages = Math.ceil(total / effectivePageSize);
+
     if (this.currentPage > this.totalPages && this.totalPages > 0) {
       this.currentPage = this.totalPages;
     } else if (this.currentPage < 1) {
@@ -395,8 +445,7 @@ export class MutantCycleInfoComponent extends MutantsExecutor implements OnInit,
     const startIndex = (this.currentPage - 1) * effectivePageSize;
     const endIndex = startIndex + effectivePageSize;
 
-    this.paginatedMutants = this.mutantCycle.mutants.slice(startIndex, endIndex);
-    this.paginatedMatrixRows = this.matrixRows.slice(startIndex, endIndex);
+    this.paginatedMatrixRows = this.filteredMatrixRows.slice(startIndex, endIndex);
   }
 
   nextPage(): void {
