@@ -23,7 +23,9 @@ public class SimpleFitnesser extends Fitnesser {
 			mutantError =  Math.round(mutantError*100.0)/100.0;
 			
 			mutantResult.setError(mutantError);
-			mutantResult.setKilled(toleratedError<=mutantError);
+			double killThreshold = toleratedError + zombieError;
+			mutantResult.setKilled(killThreshold <= mutantError);
+			mutantResult.setZombie(toleratedError <= mutantError && mutantError < killThreshold);
 		}
 		
 		mutantResults.sort((o1, o2) -> {

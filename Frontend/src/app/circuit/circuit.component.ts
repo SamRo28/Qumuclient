@@ -1,14 +1,16 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ReperService } from '../reper.service';
-import { QProgram } from '../model/QProgram';
+import { ReperService } from '../services/reper.service';
 import { Subscription } from 'rxjs';
 import { AppComponent } from '../app.component';
-import { ManagerService } from '../manager.service';
-import { QumugenService } from '../qumugen.service';
-import { QasmService } from '../qasm.service';
+import { ManagerService } from '../services/manager.service';
+import { QumugenService } from '../services/qumugen.service';
+import { QasmService } from '../services/qasm.service';
 import { Output, EventEmitter } from '@angular/core';
 import { Project } from '../model/Project';
+import { UserService } from '../services/user.service';
+import { ConvertedCircuit } from '../model/ImportModels';
 
 @Component({
   selector: 'app-circuit',
@@ -31,8 +33,10 @@ export class CircuitComponent implements OnInit, OnDestroy {
 
   circuits: Project[] = []
   selectedTab: string = 'circuit';
+  showCircuitImport: boolean = false;
+  representationMode: string = 'quirk';
 
-  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService) {
+  constructor(public sanitizer: DomSanitizer, private reper: ReperService, private manager: ManagerService, private qumugen: QumugenService, private qasm: QasmService, private userService: UserService, private router: Router) {
     this.url = '';
   }
   ngOnInit(): void {
@@ -91,9 +95,11 @@ export class CircuitComponent implements OnInit, OnDestroy {
   set circuitName(value: string) {
     this._circuitName = value;
     if (this.selectedProject) {
+      // Se muta en sitio (es la misma referencia que tiene el manager) y se marca
+      // modificado. NO se llama a setselectedProject: reemitiría selectedProject$,
+      // que este mismo componente escucha, y recargaría los campos del editor en
+      // cada tecla (había que pegar el texto de golpe para poder cambiarlo).
       this.selectedProject.name = value;
-      this.manager.setselectedProject(this.selectedProject);
-      // Marcar proyecto como modificado cuando cambia el nombre
       this.manager.markProjectAsModified();
     }
     this.checkValidity();
@@ -120,8 +126,10 @@ export class CircuitComponent implements OnInit, OnDestroy {
         this.selectedProject.qProgram.qCircuit.quirkCode = null;
       }
 
-      this.manager.setselectedProject(this.selectedProject);
-      // Marcar proyecto como modificado cuando cambia el código Quirk
+      // Mutación en sitio + marcar modificado. Sin setselectedProject para no
+      // reemitir selectedProject$ (bucle que recargaba el editor en cada tecla).
+      // El preview vivo se actualiza igual: JSON.parse crea un quirkCode nuevo y
+      // su binding [quirkCode] cambia de referencia, disparando el re-render.
       this.manager.markProjectAsModified();
     }
     this.checkValidity();
@@ -166,7 +174,7 @@ export class CircuitComponent implements OnInit, OnDestroy {
     this.qumugen.getQiskitCode(this.selectedProject.qProgram).then(
       result => {
         if (this.selectedProject) {
-          this.selectedProject.qProgram.qCode!.code = result.wholeCode.split("\n")
+          this.selectedProject.qProgram.qCodes = [new (require('../model/QCode').QCode)(undefined, result.wholeCode, "QuMu")]
         }
       }
     )
@@ -187,7 +195,35 @@ export class CircuitComponent implements OnInit, OnDestroy {
   }
 
   isLoggedIn(): boolean {
-    return !!sessionStorage.getItem('token');
+    return this.userService.isAuthenticated$.value;
+  }
+
+  onCircuitImported(circuit: ConvertedCircuit): void {
+    if (this.quirkCode.trim() === '') {
+      this.applyImported(circuit);
+      return;
+    }
+    this.manager.openConfirmationModal({
+      title: 'Replace circuit',
+      message: 'The current circuit will be replaced by the imported one (' + circuit.qubits + ' qubits). Continue?',
+      confirmText: 'Replace',
+      cancelText: 'Cancel',
+      type: 'warning',
+      onConfirm: () => this.applyImported(circuit)
+    });
+  }
+
+  private applyImported(circuit: ConvertedCircuit): void {
+    // El setter actualiza textQuirkCode y quirkCode del proyecto y lo marca modificado
+    this.quirkCode = JSON.stringify(circuit.quirk, null, 2);
+    if (this.selectedProject) {
+      const qCircuit = this.selectedProject.qProgram.qCircuit;
+      qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
+      qCircuit.mutableRows = qCircuit.calculateMutableRows();
+    }
+    this.manager.markProjectAsModified();
+    this.showCircuitImport = false;
+    this.manager.showNotification('Circuit imported', 'success', 4000);
   }
 
   onDeleteCircuit(): void {
@@ -195,23 +231,38 @@ export class CircuitComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      this.reper.delete(this.selectedProject.id).subscribe({
-        next: () => {
-          this.manager.notifyProjectDeleted(this.selectedProject!.id!);
-        },
-        error: (error) => {
-          console.error('Error deleting project:', error);
-          AppComponent.error = "Error deleting project";
-        }
-      });
-    }
+    this.manager.openConfirmationModal({
+      title: 'Delete Project',
+      message: 'Are you sure you want to delete this project? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: () => {
+        this.reper.delete(this.selectedProject!.id!).subscribe({
+          next: (resp) => {
+            if (resp?.jobId) {
+              this.reper.watchJob(resp.jobId).subscribe({
+                next: () => this.manager.showNotification('Project deleted', 'success', 4000),
+                error: (err) => {
+                  console.error('Background deletion failed:', err);
+                  this.manager.showNotification('Error deleting project: ' + (err?.message || 'unknown error'), 'error', 10000);
+                }
+              });
+            }
+            this.manager.notifyProjectDeleted(this.selectedProject!.id!);
+            this.router.navigate(['/']); // Navigate to home
+          },
+          error: (error) => {
+            console.error('Error deleting project:', error);
+            AppComponent.error = "Error deleting project";
+          }
+        });
+      }
+    });
   }
 
   selectTab(tab: 'circuit' | 'mutants') {
     if (tab === 'mutants' && !this.isCircuitValid) return;
     this.selectedTab = tab;
   }
-
-
 }

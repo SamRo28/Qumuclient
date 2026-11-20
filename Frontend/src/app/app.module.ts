@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { AppRoutingModule } from './app-routing.module';
 import { HttpClientModule } from '@angular/common/http'
 import { FormsModule } from '@angular/forms';
 
@@ -18,10 +19,35 @@ import { MutantCycleInfoComponent } from './mutant-cycle-info/mutant-cycle-info.
 import { SaveButtonComponent } from './save-button/save-button.component';
 import { ProjectNotesComponent } from './project-notes/project-notes.component';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { ConfirmationModalComponent } from './components/confirmation-modal/confirmation-modal.component';
+import { StatisticsVisualizerComponent } from './statistics-visualizer/statistics-visualizer.component';
+import { ChatSideBarComponent } from './chat-side-bar/chat-side-bar.component';
+import { CircuitViewerComponent } from './circuit-viewer/circuit-viewer.component';
+import { ExperimentWizardComponent } from './experiment-wizard/experiment-wizard.component';
+import { ExperimentsDashboardComponent } from './experiments-dashboard/experiments-dashboard.component';
+import { ExperimentDetailComponent } from './experiment-detail/experiment-detail.component';
+import { QubitSelectorComponent } from './qubit-selector/qubit-selector.component';
+import { ExperimentResumeModalComponent } from './experiment-resume-modal/experiment-resume-modal.component';
+import { ExperimentProgressTrackerComponent } from './experiment-progress-tracker/experiment-progress-tracker.component';
+import { OperatorLabelPipe, MutationDetailPipe } from './components/operator-label.pipe';
+import { OperatorGridComponent } from './components/operator-grid/operator-grid.component';
+import { OperatorInfoModalComponent } from './components/operator-info-modal/operator-info-modal.component';
+import { NoiseRotationsComponent } from './components/noise-rotations/noise-rotations.component';
+import { ImportProjectsComponent } from './import-projects/import-projects.component';
+import { CircuitImportComponent } from './circuit-import/circuit-import.component';
+import { CircuitRepresentationComponent } from './circuit-representation/circuit-representation.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    OperatorLabelPipe,
+    MutationDetailPipe,
+    OperatorGridComponent,
+    OperatorInfoModalComponent,
+    NoiseRotationsComponent,
+    ImportProjectsComponent,
+    CircuitImportComponent,
+    CircuitRepresentationComponent,
     OperatorsComponent,
     CircuitComponent,
     SpinnerComponent,
@@ -35,10 +61,21 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
     MutantCycleInfoComponent,
     SaveButtonComponent,
     ProjectNotesComponent,
-    ThemeToggleComponent
+    ThemeToggleComponent,
+    ConfirmationModalComponent,
+    StatisticsVisualizerComponent,
+    ChatSideBarComponent,
+    CircuitViewerComponent,
+    ExperimentWizardComponent,
+    ExperimentsDashboardComponent,
+    ExperimentDetailComponent,
+    ExperimentResumeModalComponent,
+    QubitSelectorComponent,
+    ExperimentProgressTrackerComponent
   ],
   imports: [
     BrowserModule,
+    AppRoutingModule,
     FormsModule,
     HttpClientModule
   ],

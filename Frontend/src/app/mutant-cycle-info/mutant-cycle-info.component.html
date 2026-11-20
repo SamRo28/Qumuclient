@@ -1,14 +1,20 @@
 <div class="mutant-cycle-container" *ngIf="mutantCycle">
   <div class="header">
     <h2>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
-      <span class="title-text">Mutant Cycle: {{ mutantCycle.id }}</span>
-      <button class="execute-btn" (click)="runMutants()">
-        <span class="execute-text">EXECUTE</span>
+      <div class="title-container">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div class="input-wrapper">
+          <input type="text" class="cycle-name-input" [(ngModel)]="mutantCycle.name" (change)="onNameChange()"
+            placeholder="Mutant Cycle Name" [style.width.ch]="(mutantCycle.name?.length || 15) + 1">
+        </div>
+      </div>
+
+      <button class="execute-btn" (click)="runMutants()" [disabled]="runningMutants || areAllMutantsExecuted()">
+        <span class="execute-text">{{ hasExecutionResults() && !areAllMutantsExecuted() ? 'RESUME' : 'EXECUTE' }}</span>
         <span class="execute-icon">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M5 3l14 9-14 9V3z" />
@@ -35,90 +41,330 @@
         <div class="form-group">
           <label for="executionDate">Execution Date</label>
           <input type="date" id="executionDate" name="executionDate" [value]="getFormattedDate()"
-            (change)="updateExecutionDate($event)" class="form-input">
+            (change)="updateExecutionDate($event)" class="form-input" [disabled]="hasExecutionResults()">
         </div>
 
         <div class="form-group machine-group">
           <label for="machine">Machine</label>
-          <input type="text" id="machine" name="machine" [value]="mutantCycle.execConfiguration?.machine || ''"
-            (input)="updateMachine($event)" class="form-input machine-input" placeholder="Enter machine name">
+          <div class="custom-select" [class.open]="showMachineDropdown" [class.disabled]="hasExecutionResults()"
+            (click)="toggleMachineDropdown($event)">
+            <div class="select-trigger">
+              {{ mutantCycle.execConfiguration?.machine || 'AerSimulator' }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="select-options" *ngIf="showMachineDropdown">
+              <div class="option" [class.selected]="mutantCycle.execConfiguration?.machine === 'AerSimulator'"
+                (click)="selectMachine('AerSimulator')">AerSimulator</div>
+              <!-- Add more options here if needed in future -->
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group algorithm-group">
           <label for="execAlgorithm">Execution Algorithm</label>
-          <input type="text" id="execAlgorithm" name="execAlgorithm"
-            [value]="mutantCycle.execConfiguration?.execAlgorithm || ''" (input)="updateExecAlgorithm($event)"
-            class="form-input algorithm-input" placeholder="Enter execution algorithm">
+          <div class="custom-select" [class.open]="showAlgoDropdown" [class.disabled]="hasExecutionResults()"
+            (click)="toggleAlgoDropdown($event)">
+            <div class="select-trigger">
+              {{ mutantCycle.execConfiguration?.execAlgorithm || 'AllAgainstAll' }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="select-options" *ngIf="showAlgoDropdown">
+              <div class="option" [class.selected]="mutantCycle.execConfiguration?.execAlgorithm === 'AllAgainstAll'"
+                (click)="selectAlgorithm('AllAgainstAll')">AllAgainstAll</div>
+              <div class="option" [class.selected]="mutantCycle.execConfiguration?.execAlgorithm === 'TestSuite'"
+                (click)="selectAlgorithm('TestSuite')">TestSuite</div>
+              <!-- Add more options here if needed -->
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group test-suite-group" *ngIf="mutantCycle.execConfiguration?.execAlgorithm === 'TestSuite'">
+          <label for="testSuite">Test Suite</label>
+          <div class="custom-select" [class.open]="showTestSuiteDropdown" [class.disabled]="hasExecutionResults()"
+            (click)="toggleTestSuiteDropdown($event)">
+            <div class="select-trigger">
+              {{ getSelectedTestSuiteName() }}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="select-options" *ngIf="showTestSuiteDropdown">
+              <div class="option" *ngFor="let suite of manager.selectedProject?.testSuites"
+                [class.selected]="mutantCycle.execConfiguration?.testSuiteId === suite.id"
+                (click)="selectTestSuite(suite)">
+                {{ suite.id }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group tolerated-error-group">
+          <label for="toleratedError">Tolerated Error</label>
+          <input type="number" id="toleratedError" name="toleratedError" [value]="manager.toleratedError"
+            (change)="updateToleratedError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05"
+            [disabled]="hasExecutionResults()">
+        </div>
+
+        <div class="form-group zombie-error-group">
+          <label for="zombieError">Zombie Error</label>
+          <input type="number" id="zombieError" name="zombieError" [value]="manager.zombieError"
+            (change)="updateZombieError($event)" step="0.01" min="0" max="1" class="form-input" placeholder="0.05"
+            [disabled]="hasExecutionResults()">
+        </div>
+
+        <div class="form-group shots-group">
+          <label for="shots">Shots</label>
+          <input type="number" id="shots" name="shots" [value]="manager.shots" (change)="updateShots($event)" step="100"
+            min="1" max="1000000" class="form-input" placeholder="1024" [disabled]="hasExecutionResults()">
         </div>
       </div>
     </div>
 
     <div class="section">
-      <h3>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        Killing Matrix
-      </h3>
+      <!-- Tabs Header -->
+      <div class="tabs-header">
+        <button class="tab-btn" [class.active]="currentTab === 'matrix'" (click)="setTab('matrix')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Killing Matrix
+        </button>
+        <button class="tab-btn" [class.active]="currentTab === 'statistics'" (click)="setTab('statistics')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          Statistics
+        </button>
 
-      <div *ngIf="mutantCycle.mutants && mutantCycle.mutants.length > 0; else emptyMatrix">
-        <div class="killing-matrix-container">
-          <table class="killing-matrix-table">
-            <thead>
-              <tr>
-                <th class="index-column">Índice</th>
-                <th class="operator-column">Operador</th>
-                <th class="position-column">Fila</th>
-                <th class="position-column">Columna</th>
-                <th class="result-column">Resultado</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let mutant of mutantCycle.mutants; trackBy: trackByMutantIndex">
-                <td class="index-column">
-                  <span [class.empty-cell]="mutant.mutantIndex === undefined">
-                    {{ mutant.mutantIndex !== undefined ? mutant.mutantIndex : '-' }}
-                  </span>
-                </td>
-                <td class="operator-column">
-                  <span [class.empty-cell]="!mutant.mutationOperator">
-                    {{ mutant.mutationOperator || 'N/A' }}
-                  </span>
-                </td>
-                <td class="position-column">
-                  <span [class.empty-cell]="mutant.mutatedRow === undefined">
-                    {{ mutant.mutatedRow !== undefined ? mutant.mutatedRow : '-' }}
-                  </span>
-                </td>
-                <td class="position-column">
-                  <span [class.empty-cell]="mutant.mutatedColumn === undefined">
-                    {{ mutant.mutatedColumn !== undefined ? mutant.mutatedColumn : '-' }}
-                  </span>
-                </td>
-                <td class="result-column">
-                  <span class="result-badge" [ngClass]="getResultBadgeClass(mutant.result?.result)">
-                    {{ getResultDisplayText(mutant.result?.result) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Inline Execution Progress Bar -->
+        <div class="execution-progress-inline" *ngIf="executionStatus.isRunning">
+          <div class="progress-details">
+            <span class="progress-text">Executing: {{ executionStatus.progress }} / {{ executionStatus.total }}</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" [style.width.%]="getProgressPercentage()"></div>
+          </div>
+        </div>
+
+        <!-- Actions that were in the header (Export/Calc) - Only show for Matrix Tab -->
+        <div class="tab-actions" *ngIf="currentTab === 'matrix'">
+          <div class="matrix-filters">
+            <!-- Result (multi) -->
+            <div class="custom-select filter-select" [class.open]="showResultFilterDropdown"
+              [class.disabled]="loadingMatrix || !matrixRows.length">
+              <div class="select-trigger" role="button" tabindex="0" aria-haspopup="listbox"
+                [attr.aria-expanded]="showResultFilterDropdown" (click)="toggleResultFilterDropdown($event)"
+                (keydown.enter)="toggleResultFilterDropdown($event)" (keydown.space)="toggleResultFilterDropdown($event)"
+                (keydown.escape)="showResultFilterDropdown = false">
+                <span class="filter-label">Result:</span> {{ resultsTriggerLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              </div>
+              <div class="select-options filter-options" *ngIf="showResultFilterDropdown" role="listbox"
+                aria-multiselectable="true" (keydown.escape)="showResultFilterDropdown = false">
+                <button type="button" class="option" role="option" [class.selected]="activeResults.size === 0"
+                  [attr.aria-selected]="activeResults.size === 0" (click)="clearResultFilter($event)">All results</button>
+                <button type="button" *ngFor="let f of availableResults" class="option option-check" role="option"
+                  [class.selected]="isResultActive(f)" [attr.aria-selected]="isResultActive(f)"
+                  (click)="onToggleResult(f, $event)">
+                  <span class="check-box" [class.checked]="isResultActive(f)"></span>
+                  <span class="matrix-cell-badge" [ngClass]="badgeClass(f)">{{ badgeText(f) }}</span>
+                  {{ label(f) }} <span class="option-count">({{ resultCounts[f] }})</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Test case (single) -->
+            <div class="custom-select filter-select" [class.open]="showTestCaseDropdown"
+              [class.disabled]="loadingMatrix || !inputHeaders.length">
+              <div class="select-trigger" role="button" tabindex="0" aria-haspopup="listbox"
+                [attr.aria-expanded]="showTestCaseDropdown" (click)="toggleTestCaseDropdown($event)"
+                (keydown.enter)="toggleTestCaseDropdown($event)" (keydown.space)="toggleTestCaseDropdown($event)"
+                (keydown.escape)="showTestCaseDropdown = false">
+                <span class="filter-label">Test case:</span> {{ testCaseTriggerLabel }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-icon">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              </div>
+              <div class="select-options filter-options test-case-options" *ngIf="showTestCaseDropdown" role="listbox"
+                (keydown.escape)="showTestCaseDropdown = false">
+                <input *ngIf="inputHeaders.length > 16" class="option-search" type="text" placeholder="Search test case…"
+                  [(ngModel)]="testCaseQuery" (click)="$event.stopPropagation()">
+                <button type="button" class="option" role="option" [class.selected]="selectedTestCase === null"
+                  [attr.aria-selected]="selectedTestCase === null" (click)="selectTestCase(null, $event)">All test cases</button>
+                <button type="button" *ngFor="let tc of visibleTestCases" class="option option-mono" role="option"
+                  [class.selected]="selectedTestCase === tc" [attr.aria-selected]="selectedTestCase === tc"
+                  (click)="selectTestCase(tc, $event)">{{ tc }}</button>
+                <div class="option-empty" *ngIf="!visibleTestCases.length">No test cases found</div>
+              </div>
+            </div>
+
+            <button type="button" class="clear-filters-link" *ngIf="hasActiveFilters" (click)="clearAllFilters()">Clear filters</button>
+          </div>
+          <button class="export-btn" (click)="exportMatrixToCSV()" [disabled]="!matrixRows.length || loadingMatrix">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Exportar CSV
+          </button>
+
         </div>
       </div>
 
-      <ng-template #emptyMatrix>
-        <div class="killing-matrix-empty">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <p class="empty-text">No hay mutantes en este ciclo</p>
+      <!-- Killing Matrix Content -->
+      <div *ngIf="currentTab === 'matrix'">
+        <div *ngIf="loadingMatrix" class="loading-state">
+          <div class="spinner-lg"></div>
+          <p>Loading killing matrix…</p>
         </div>
-      </ng-template>
+
+        <ng-container *ngIf="!loadingMatrix">
+          <div *ngIf="mutantCycle.mutants && mutantCycle.mutants.length > 0; else emptyMatrix">
+          <div class="matrix-filter-empty" *ngIf="filteredMatrixRows.length === 0">
+            <p>No mutants match the selected filters</p>
+            <button type="button" class="clear-filters-link" (click)="clearAllFilters()">Clear filters</button>
+          </div>
+          <div class="killing-matrix-container" *ngIf="filteredMatrixRows.length > 0">
+            <div class="killing-matrix-scroll-wrapper">
+              <table class="killing-matrix-table matrix-table">
+                <thead>
+                  <tr>
+                    <th class="index-column sticky-col">Index</th>
+                    <th class="operator-column">Operator</th>
+                    <th *ngFor="let header of inputHeaders" class="input-header" [attr.data-test-case]="header"
+                        [class.selected-test-column]="header === selectedTestCase">{{ header }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let row of paginatedMatrixRows; trackBy: trackByMatrixRow">
+                    <td class="index-column sticky-col">
+                      <span [class.empty-cell]="row.mutant.mutantIndex === undefined">
+                        {{ row.mutant.mutantIndex !== undefined ? row.mutant.mutantIndex : '-' }}
+                      </span>
+                    </td>
+                    <td class="operator-column">
+                      <div class="operator-tooltip-container" (click)="goToMutant(row.mutant)"
+                        (mouseenter)="showOperatorTooltip($event, row.mutant)" (mouseleave)="hideOperatorTooltip()">
+                        <span class="operator-text">
+                          {{ (row.mutant.mutationOperator | operatorLabel) || '-' }}
+                        </span>
+                        <small class="operator-detail" *ngIf="row.mutant.mutationDetail">{{ row.mutant.mutationDetail }}</small>
+                      </div>
+                    </td>
+                    <td *ngFor="let header of inputHeaders" class="result-cell" [class.selected-test-column]="header === selectedTestCase">
+                      <ng-container *ngFor="let cell of row.cells">
+                        <span *ngIf="cell.input === header" class="matrix-cell-badge"
+                          [ngClass]="cell.killed ? 'killed' : (cell.zombie ? 'zombie' : 'alive')"
+                          [title]="'Error: ' + cell.error">
+                          {{ cell.killed ? 'K' : (cell.zombie ? 'Z' : 'A') }}
+                        </span>
+                      </ng-container>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Controls (Page Size + Pagination) -->
+            <div class="pagination-footer" *ngIf="filteredMatrixRows.length > 0">
+              <div class="page-size-selector">
+                <label>Items per page:</label>
+                <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="page-size-dropdown">
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="25">25</option>
+                  <option [ngValue]="50">50</option>
+                  <option [ngValue]="100">100</option>
+                  <option value="All">Show All</option>
+                  <option value="Custom">Custom</option>
+                </select>
+                <input *ngIf="pageSize === 'Custom'" type="number" class="custom-page-input" [value]="customPageSize" (change)="onCustomPageSizeChange($event)" min="1" placeholder="Qty">
+              </div>
+
+              <!-- Pagination Controls -->
+              <div class="pagination-controls" *ngIf="totalPages > 1">
+                <button (click)="previousPage()" [disabled]="currentPage === 1" class="page-btn" title="Previous Page">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </button>
+                <span class="page-info">
+                  Page <input type="number" class="page-input" [value]="currentPage" (change)="onPageInput($event)"
+                    min="1" [max]="totalPages"> of <span class="total-pages">{{ totalPages
+                    }}</span>
+                </span>
+                <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="page-btn" title="Next Page">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <ng-template #emptyMatrix>
+          <div class="killing-matrix-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p class="empty-text">No hay mutantes en este ciclo</p>
+          </div>
+        </ng-template>
+        </ng-container>
+      </div>
+
+      <!-- Statistics Content -->
+      <div *ngIf="currentTab === 'statistics'" class="stats-tab-content">
+        <div *ngIf="isLoadingStats" class="loading-state">
+          <div class="spinner-lg"></div>
+          <p>Calculating statistics...</p>
+        </div>
+
+        <div *ngIf="!isLoadingStats && !statistics" class="empty-stats">
+          <ng-container *ngIf="hasExecutionResults(); else noExecution">
+            <p>Statistics could not be generated. Please try again.</p>
+            <button class="primary-btn" (click)="calculateStatistics()">Retry</button>
+          </ng-container>
+          <ng-template #noExecution>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); opacity: 0.5;">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            <p>Statistics are not available because the mutant cycle has not been executed yet.</p>
+          </ng-template>
+        </div>
+
+        <app-statistics-visualizer *ngIf="statistics" [inputStatistics]="statistics"
+          [isEmbedded]="true"></app-statistics-visualizer>
+      </div>
+
     </div>
   </div>
 </div>
@@ -129,4 +375,30 @@
     <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
   </svg>
   <p>Select a Mutant Cycle to view its information</p>
+</div>
+
+<!-- Global Operator Tooltip -->
+<div class="global-operator-tooltip" *ngIf="activeTooltip.show && activeTooltip.mutant"
+  [style.top.px]="activeTooltip.top" [style.left.px]="activeTooltip.left">
+  <div class="tooltip-header">Operator Details</div>
+  <div class="tooltip-body">
+    <div class="tooltip-row">
+      <span class="tooltip-label">Row:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.mutatedRow !== undefined && activeTooltip.mutant.mutatedRow
+        !== null ? activeTooltip.mutant.mutatedRow : 'N/A' }}</span>
+    </div>
+    <div class="tooltip-row">
+      <span class="tooltip-label">Column:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.mutatedColumn !== undefined &&
+        activeTooltip.mutant.mutatedColumn !== null ? activeTooltip.mutant.mutatedColumn : 'N/A' }}</span>
+    </div>
+    <div class="tooltip-row" *ngIf="activeTooltip.mutant.oracleName">
+      <span class="tooltip-label">Oracle:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.oracleName }}</span>
+    </div>
+    <div class="tooltip-row" *ngIf="activeTooltip.mutant.mutationDetail">
+      <span class="tooltip-label">Rotation:</span>
+      <span class="tooltip-value">{{ activeTooltip.mutant.mutationDetail | mutationDetail }}</span>
+    </div>
+  </div>
 </div>

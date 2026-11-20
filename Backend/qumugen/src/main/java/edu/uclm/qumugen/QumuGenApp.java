@@ -14,20 +14,19 @@ import java.util.concurrent.TimeoutException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.servlet.ServletComponentScan;
+
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-@ServletComponentScan
 public class QumuGenApp extends SpringBootServletInitializer {
-	
-	public static void main( String[] args ) throws IOException {
-		String defaultPort = "8500";
 
-    	System.out.print("QumuGen's listening port (enter for default: " + defaultPort + "): ");
-    	BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-    	
-    	// Usar un ExecutorService para manejar el tiempo límite de 5 segundos
+    public static void main(String[] args) throws IOException {
+        String defaultPort = "8500";
+
+        System.out.print("QumuGen's listening port (enter for default: " + defaultPort + "): ");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+        // Usar un ExecutorService para manejar el tiempo límite de 5 segundos
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Callable<String> task = () -> reader.readLine().trim();
 
@@ -54,10 +53,10 @@ public class QumuGenApp extends SpringBootServletInitializer {
         SpringApplication app = new SpringApplication(QumuGenApp.class);
         app.setDefaultProperties(Collections.singletonMap("server.port", sPort));
         app.run(args);
-	}
-	
-	@Override
+    }
+
+    @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-		return builder.sources(QumuGenApp.class);
+        return builder.sources(QumuGenApp.class);
     }
 }

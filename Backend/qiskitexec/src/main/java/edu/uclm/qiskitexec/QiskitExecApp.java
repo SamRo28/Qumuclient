@@ -14,14 +14,13 @@ import java.util.concurrent.TimeoutException;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.boot.web.servlet.ServletComponentScan;
+
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
 @SpringBootApplication
-@ServletComponentScan
 public class QiskitExecApp extends SpringBootServletInitializer {
-	
-	public static void main(String[] args) throws IOException {
+
+    public static void main(String[] args) throws IOException {
         String defaultPort = "8502";
 
         System.out.print("QiskitExecApp listening port (enter for default: " + defaultPort + "): ");
@@ -55,9 +54,9 @@ public class QiskitExecApp extends SpringBootServletInitializer {
         app.setDefaultProperties(Collections.singletonMap("server.port", sPort));
         app.run(args);
     }
-	
-	@Override
+
+    @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-		return builder.sources(QiskitExecApp.class);
+        return builder.sources(QiskitExecApp.class);
     }
 }

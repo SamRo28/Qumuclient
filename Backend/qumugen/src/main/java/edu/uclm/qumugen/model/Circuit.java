@@ -1,8 +1,13 @@
 package edu.uclm.qumugen.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -10,6 +15,8 @@ import org.json.JSONObject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Circuit {
+
+	private static final Pattern MATRIX_ROW = Pattern.compile("\\{([^{}]*)\\}");
 	private int qubits;
 	private InitColumn init;
 	private List<QColumn> columns;
@@ -20,25 +27,118 @@ public class Circuit {
 	private int mutantIndex;
 	private Map<String, Object> quirk;
 	private String qiskitCode;
+	private String oracleName;
+	private String mutationDetail;
 
 	public Circuit(JSONObject jso) {
-		JSONArray init = jso.optJSONArray("init");
-		if (init!=null) {
+		if (jso != null && !jso.has("cols")) {
+			if (jso.has("circuit") && jso.get("circuit") instanceof JSONObject) {
+				jso = jso.getJSONObject("circuit");
+			} else if (jso.has("quirkCode") && jso.get("quirkCode") instanceof JSONObject) {
+				jso = jso.getJSONObject("quirkCode");
+				if (!jso.has("cols") && jso.has("circuit") && jso.get("circuit") instanceof JSONObject) {
+					jso = jso.getJSONObject("circuit");
+				}
+			} else if (jso.has("qCircuit") && jso.get("qCircuit") instanceof JSONObject) {
+				jso = jso.getJSONObject("qCircuit");
+				if (!jso.has("cols") && jso.has("quirkCode") && jso.get("quirkCode") instanceof JSONObject) {
+					jso = jso.getJSONObject("quirkCode");
+				}
+			}
+		}
+		JSONArray init = jso != null ? jso.optJSONArray("init") : null;
+		if (init != null) {
 			this.qubits = this.loadInit(init);
 		}
-		JSONArray gates = jso.optJSONArray("gates");
-		if (gates!=null) {
+		JSONArray gates = jso != null ? jso.optJSONArray("gates") : null;
+		if (gates != null) {
 			this.loadGates(gates);
 		}
 		this.columns = new ArrayList<>();
-		JSONArray cols = jso.getJSONArray("cols");
-		for (int i=0; i<cols.length(); i++) {
-			JSONArray col = cols.getJSONArray(i);
-			QColumn column = new QColumn(i, col); 
-			this.columns.add(column);
-			if (column.getGates().size()>this.qubits)
-				this.qubits = column.getGates().size();
+		JSONArray cols = jso != null ? jso.optJSONArray("cols") : null;
+		if (cols != null) {
+			for (int i = 0; i < cols.length(); i++) {
+				JSONArray col = cols.optJSONArray(i);
+				if (col != null) {
+					QColumn column = new QColumn(i, col);
+					this.columns.add(column);
+					if (column.getGates().size() > this.qubits)
+						this.qubits = column.getGates().size();
+				}
+			}
 		}
+		// El número de filas de una columna no basta: una puerta customizada ocupa
+		// varios qubits a partir de su fila (p. ej. una columna ["~oraculo"] tiene
+		// una sola fila pero puede ocupar 4 qubits).
+		this.qubits = Math.max(this.qubits, heightOfCircuit(this, this.customGatesById(), new HashMap<>()));
+	}
+
+	/** Indexa por id las puertas customizadas declaradas en este circuito. */
+	public Map<String, CustomizedGate> customGatesById() {
+		Map<String, CustomizedGate> byId = new HashMap<>();
+		if (this.customizedGates != null)
+			for (CustomizedGate cg : this.customizedGates)
+				if (cg != null && cg.getId() != null)
+					byId.put(cg.getId(), cg);
+		return byId;
+	}
+
+	/** Qubits que ocupa un circuito, teniendo en cuenta la altura de cada puerta. */
+	public static int heightOfCircuit(Circuit circuit, Map<String, CustomizedGate> byId, Map<String, Integer> cache) {
+		return heightOfCircuit(circuit, byId, cache, new HashSet<>());
+	}
+
+	/** Qubits que ocupa una puerta: 1, salvo que sea customizada. */
+	public static int heightOfGate(String gateName, Map<String, CustomizedGate> byId, Map<String, Integer> cache) {
+		return heightOfGate(gateName, byId, cache, new HashSet<>());
+	}
+
+	private static int heightOfCircuit(Circuit circuit, Map<String, CustomizedGate> byId, Map<String, Integer> cache,
+			Set<String> visiting) {
+		int max = 1;
+		if (circuit == null || circuit.columns == null)
+			return max;
+		for (QColumn column : circuit.columns)
+			for (int row = 0; row < column.getGates().size(); row++) {
+				String name = String.valueOf(column.getGates().get(row).getName());
+				int height = heightOfGate(name, byId, cache, visiting);
+				if (row + height > max)
+					max = row + height;
+			}
+		return max;
+	}
+
+	private static int heightOfGate(String gateName, Map<String, CustomizedGate> byId, Map<String, Integer> cache,
+			Set<String> visiting) {
+		CustomizedGate cg = byId.get(gateName);
+		if (cg == null)
+			return 1;
+		if (cache.containsKey(gateName))
+			return cache.get(gateName);
+		if (!visiting.add(gateName))
+			return 1; // definición cíclica: se corta aquí
+
+		int height = 1;
+		if (cg.getCircuit() != null)
+			height = heightOfCircuit(cg.getCircuit(), byId, cache, visiting);
+		else if (cg.getMatrix() != null) {
+			int dimension = matrixDimension(cg.getMatrix());
+			if (dimension > 1)
+				height = Math.max(1, (int) Math.round(Math.log(dimension) / Math.log(2)));
+		}
+
+		visiting.remove(gateName);
+		cache.put(gateName, height);
+		return height;
+	}
+
+	/** Filas de una matriz en formato Quirk ("{{1,0},{0,1}}" -> 2). */
+	private static int matrixDimension(String matrix) {
+		Matcher matcher = MATRIX_ROW.matcher(matrix);
+		int rows = 0;
+		while (matcher.find())
+			rows++;
+		return rows;
 	}
 
 	public Circuit(Circuit circuit) {
@@ -53,6 +153,11 @@ public class Circuit {
 		for (int i=0; i<circuit.columns.size(); i++) 
 			this.columns.add(new QColumn(circuit.columns.get(i)));
 		this.qubits = circuit.getQubits();
+		this.oracleName = circuit.oracleName;
+		this.mutationOperator = circuit.mutationOperator;
+		this.mutatedColumn = circuit.mutatedColumn;
+		this.mutatedRow = circuit.mutatedRow;
+		this.mutationDetail = circuit.mutationDetail;
 	}
 
 	public JSONObject toQuirk() {
@@ -156,5 +261,50 @@ public class Circuit {
 	
 	public void setQiskitCode(String qiskitCode) {
 		this.qiskitCode = qiskitCode;
+	}
+
+	public List<CustomizedGate> getCustomizedGates() {
+		return this.customizedGates;
+	}
+
+	public void setCustomizedGates(List<CustomizedGate> customizedGates) {
+		this.customizedGates = customizedGates;
+	}
+
+	public String getOracleName() {
+		return this.oracleName;
+	}
+
+	public void setOracleName(String oracleName) {
+		this.oracleName = oracleName;
+	}
+
+	public String getMutationDetail() {
+		return this.mutationDetail;
+	}
+
+	public void setMutationDetail(String mutationDetail) {
+		this.mutationDetail = mutationDetail;
+	}
+
+	public void replaceGateName(Object oldName, Object newName) {
+		if (this.columns != null) {
+			for (QColumn column : this.columns) {
+				if (column.getGates() == null) continue;
+				for (Gate gate : column.getGates()) {
+					if (oldName.equals(gate.getName())) {
+						gate.setName(newName);
+					}
+				}
+			}
+		}
+		if (this.customizedGates != null) {
+			for (CustomizedGate cg : this.customizedGates) {
+				if (cg.getCircuit() != null) {
+					cg.getCircuit().replaceGateName(oldName, newName);
+					cg.getOriginalQuirk().put("circuit", cg.getCircuit().toQuirk());
+				}
+			}
+		}
 	}
 }

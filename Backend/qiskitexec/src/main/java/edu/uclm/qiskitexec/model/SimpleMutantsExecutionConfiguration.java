@@ -8,6 +8,7 @@ import edu.uclm.qiskitexec.runners.ProgramExecutionResult;
 public class SimpleMutantsExecutionConfiguration {
 	
 	private double toleratedError;
+	private double zombieError;
 	private ProgramExecutionResult originalResults;
 	private int qubits;
 	private List<Mutant> mutants;
@@ -24,7 +25,15 @@ public class SimpleMutantsExecutionConfiguration {
 	public void setToleratedError(double toleratedError) {
 		this.toleratedError = toleratedError;
 	}
-	
+
+	public double getZombieError() {
+		return zombieError;
+	}
+
+	public void setZombieError(double zombieError) {
+		this.zombieError = zombieError;
+	}
+
 	public ProgramExecutionResult getOriginalResults() {
 		return originalResults;
 	}

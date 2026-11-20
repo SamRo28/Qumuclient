@@ -1,11 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { QumugenService } from '../qumugen.service';
+import { QumugenService } from '../services/qumugen.service';
 
 import { OperatorFamily } from '../model/OperatorFamily';
 import { AppComponent } from '../app.component';
-import { ManagerService } from '../manager.service';
-import { LoadingService } from '../loading.service';
+import { ManagerService } from '../services/manager.service';
+import { LoadingService } from '../services/loading.service';
 import { Subscription } from 'rxjs';
+import { NoiseConfig, DEFAULT_NOISE_CONFIG, areValidNoiseRotations, isNoiseOperator } from '../model/NoiseConfig';
+import { splitFamiliesForLayout } from '../model/family-layout';
 
 @Component({
   selector: 'app-operators',
@@ -14,25 +16,15 @@ import { Subscription } from 'rxjs';
 })
 export class OperatorsComponent implements OnInit, OnDestroy {
   families: OperatorFamily[] = []
+  compactFamilies: OperatorFamily[] = []
+  wideFamilies: OperatorFamily[] = []
   error: string = ""
   qubitCount: number = -1;
+  inputQubitsSelection: { [key: number]: boolean } = {};
   outputQubitsSelection: { [key: number]: boolean } = {};
+  qubitsIndices: number[] = [];
+  public noiseRotations: NoiseConfig[] = [{ ...DEFAULT_NOISE_CONFIG }];
   private projectSubscription?: Subscription;
-
-  get outputQubitsArray(): string[] {
-    if (!this.manager.outputQubits || this.manager.outputQubits.trim() === '') {
-      return [];
-    }
-    return this.manager.outputQubits.split(',').filter(item => item.trim() !== '');
-  }
-
-  getOutputQubitsIndices(): number[] {
-    return this.outputQubitsArray.map((_, index) => index);
-  }
-
-  getSelectedOutputQubitsCount(): number {
-    return Object.values(this.outputQubitsSelection).filter(selected => selected).length;
-  }
 
   constructor(private service: QumugenService, public manager: ManagerService, private loading: LoadingService) { }
 
@@ -55,6 +47,9 @@ export class OperatorsComponent implements OnInit, OnDestroy {
           let family = new OperatorFamily(familyData.name, familyData.operators)
           this.families.push(family)
         }
+        const layout = splitFamiliesForLayout(this.families);
+        this.compactFamilies = layout.compact;
+        this.wideFamilies = layout.wide;
       },
       error => {
         this.error = error
@@ -70,46 +65,110 @@ export class OperatorsComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    // Recargar qubitCount
-    this.qubitCount = this.manager.selectedProject ? this.manager.selectedProject.getQubits() : -1;
-    if (this.manager.selectedProject) {
-      this.manager.selectedProject.qProgram.qubits = this.qubitCount;
-
-      // Calcular mutableColumns y mutableRows si están vacíos o son valores por defecto
-      const qCircuit = this.manager.selectedProject.qProgram.qCircuit;
-
-      // Si mutableColumns está vacío o es el valor por defecto "-1,", calcularlo
-      if (!qCircuit.mutableColumns || qCircuit.mutableColumns === '' || qCircuit.mutableColumns === '-1,') {
-        qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
-      }
-
-      // Si mutableRows está vacío, calcularlo
-      if (!qCircuit.mutableRows || qCircuit.mutableRows === '') {
-        qCircuit.mutableRows = qCircuit.calculateMutableRows();
-      }
+    if (!this.manager.selectedProject) {
+      this.qubitCount = -1;
+      this.qubitsIndices = [];
+      return;
     }
 
-    // Reinicializar outputQubitsSelection
+    // Recargar qubitCount
+    this.qubitCount = this.manager.selectedProject.getQubits();
+    this.manager.selectedProject.qProgram.qubits = this.qubitCount;
+
+    // Generar índices de qubits [0, 1, ..., n-1]
+    this.qubitsIndices = Array.from({ length: this.qubitCount }, (_, i) => i);
+
+    // Calcular mutableColumns y mutableRows si están vacíos
+    const qCircuit = this.manager.selectedProject.qProgram.qCircuit;
+    if (!qCircuit.mutableColumns || qCircuit.mutableColumns === '' || qCircuit.mutableColumns === '-1,') {
+      qCircuit.mutableColumns = qCircuit.calculateMutableColumns();
+    }
+    if (!qCircuit.mutableRows || qCircuit.mutableRows === '') {
+      qCircuit.mutableRows = qCircuit.calculateMutableRows();
+    }
+
+    // Inicializar inputQubitsSelection
+    this.inputQubitsSelection = {};
+    const inputQubitsStr = this.manager.selectedProject.qProgram.inputQubits || "";
+    if (inputQubitsStr.trim() === "") {
+      // Si está vacío, dejarlos desmarcados en lugar de marcarlos todos
+      this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = false);
+    } else {
+      const selectedInputs = inputQubitsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = selectedInputs.includes(i));
+    }
+
+    // Inicializar outputQubitsSelection
     this.outputQubitsSelection = {};
-    this.outputQubitsArray.forEach((_, index) => {
-      this.outputQubitsSelection[index] = true; // Por defecto todos seleccionados
-    });
+    const outputQubitsStr = this.manager.selectedProject.qProgram.outputQubits || "";
+    if (outputQubitsStr.trim() === "") {
+      // Si está vacío, dejarlos desmarcados en lugar de marcarlos todos
+      this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = false);
+    } else {
+      const selectedOutputs = outputQubitsStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = selectedOutputs.includes(i));
+    }
+  }
+
+  updateInputQubits() {
+    const selected = this.qubitsIndices.filter(i => this.inputQubitsSelection[i]);
+    const str = selected.join(',');
+
+    if (this.manager.selectedProject) {
+      this.manager.selectedProject.qProgram.inputQubits = str;
+      this.manager.inputQubits = str; // Sync manager property if needed
+      this.manager.markProjectAsModified();
+    }
+  }
+
+  updateOutputQubits() {
+    const selected = this.qubitsIndices.filter(i => this.outputQubitsSelection[i]);
+    const str = selected.join(',');
+
+    if (this.manager.selectedProject) {
+      this.manager.selectedProject.qProgram.outputQubits = str;
+      this.manager.outputQubits = str; // Sync manager property if needed
+      this.manager.markProjectAsModified();
+    }
+  }
+
+  toggleAllInputQubits() {
+    const allSelected = this.qubitsIndices.every(i => this.inputQubitsSelection[i]);
+    this.qubitsIndices.forEach(i => this.inputQubitsSelection[i] = !allSelected);
+    this.updateInputQubits();
+  }
+
+  toggleAllOutputQubits() {
+    const allSelected = this.qubitsIndices.every(i => this.outputQubitsSelection[i]);
+    this.qubitsIndices.forEach(i => this.outputQubitsSelection[i] = !allSelected);
+    this.updateOutputQubits();
   }
 
   selectAll() {
-    this.families.forEach(f =>
-      f.select())
+    // Check if every enabled operator across all families is selected
+    const allSelected = this.families.every(family =>
+      this.getEnabledOperators(family).every(op => op.selected)
+    );
+
+    // Toggle all based on the uniform check
+    this.families.forEach(family => {
+      this.getEnabledOperators(family).forEach(op => op.selected = !allSelected);
+    });
   }
 
   selectFamily(family: OperatorFamily) {
-    family.select();
+    // Check if every enabled operator in THIS family is selected
+    const allSelected = this.getEnabledOperators(family).every(op => op.selected);
+
+    // Toggle all based on the uniform check
+    this.getEnabledOperators(family).forEach(op => op.selected = !allSelected);
   }
 
   generateMutants() {
     AppComponent.error = ""
     let selectedCircuit = this.manager.selectedProject;
     if (!selectedCircuit) {
-      AppComponent.error = "Please, select the circuit you want to mutate"
+      this.manager.showNotification("Please, select the circuit you want to mutate", "error", 5000);
       return
     }
     selectedCircuit.qProgram.setMutableColumns();
@@ -122,31 +181,48 @@ export class OperatorsComponent implements OnInit, OnDestroy {
           selectedOperators.push(this.families[i].operators[j].name)
       }
     }
+    if (this.hasNoiseSelected() && !areValidNoiseRotations(this.noiseRotations)) {
+      this.manager.showNotification("Please fix the noise rotations: each angle must be in (0, 2π] and rotations cannot repeat (max 6).", "error", 5000);
+      return;
+    }
+
     if (selectedOperators.length > 0) {
       this.loading.show()
-      this.service.generateMutants(selectedCircuit.qProgram, selectedOperators).subscribe(
-        mutants => {
-          this.manager.showSidebar = true
-          this.manager.setMutants(mutants)
-          this.loading.hide()
-
-
-        },
-        error => {
-          AppComponent.error = error.error ? error.error.message : error.error
-          if (!AppComponent.error)
-            AppComponent.error = "Se ha producido un error, probablemente un 500. Intenta generar menos mutantes seleccionando menos operadores, menos columnas o filas. Si has marcado lo de \"Generate with all inputs\", puedes desmarcarlo o disminuir el número de Input qubits"
-          this.loading.hide()
+      this.manager.showNotification("Generating mutants...", "loading", 0);
+      let lastProgress = 0
+      this.service.generateMutants(
+        selectedCircuit.qProgram,
+        selectedOperators,
+        this.hasNoiseSelected() ? this.noiseRotations.map(r => ({ axis: r.axis, angle: Number(r.angle) })) : undefined,
+        received => {
+          const now = Date.now()
+          if (now - lastProgress >= 500) {
+            lastProgress = now
+            this.manager.showNotification("Receiving mutants... " + received, "loading", 0);
+          }
         }
-      )
-    } else
-      AppComponent.error = "Please, select one operator at least"
+      ).then(mutants => {
+        this.manager.showSidebar = true
+        this.manager.setMutants(mutants)
+        this.loading.hide()
+        this.manager.showNotification("Mutants generated successfully!", "success", 5000);
+      }).catch(error => {
+        let errorMsg = error?.error ? error.error.message : error?.error
+        if (!errorMsg)
+          errorMsg = "Se ha producido un error, probablemente un 500. Intenta generar menos mutantes seleccionando menos operadores, menos columnas o filas. Si has marcado lo de \"Generate with all inputs\", puedes desmarcarlo o disminuir el número de Input qubits"
+        this.loading.hide()
+        this.manager.showNotification(errorMsg, "error", 10000);
+      })
+    } else {
+      this.manager.showNotification("Please, select one operator at least", "error", 5000);
+    }
   }
 
   reloadOriginalCode() {
     this.service.getQiskitCode(this.manager.selectedProject!.qProgram).then(
       result => {
-        this.manager.selectedProject!.qProgram.qCode.code = result.wholeCode.split("\n")
+        const QCodeClass = require('../model/QCode').QCode;
+        this.manager.selectedProject!.qProgram.qCodes = [new QCodeClass(undefined, result.wholeCode, "QuMu")]
       }
     )
   }
@@ -172,6 +248,29 @@ export class OperatorsComponent implements OnInit, OnDestroy {
     return this.families.some(family =>
       family.operators.some(op => op.selected)
     );
+  }
+
+  isNoiseFamily(family: OperatorFamily): boolean {
+    if (!family || !family.operators) return false;
+    return family.operators.some(op => isNoiseOperator(op.name));
+  }
+
+  selectedNoiseCount(): number {
+    let count = 0;
+    for (const family of this.families) {
+      if (family.operators) {
+        for (const op of family.operators) {
+          if (op.selected && isNoiseOperator(op.name)) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
+  }
+
+  hasNoiseSelected(): boolean {
+    return this.selectedNoiseCount() > 0;
   }
 
 }

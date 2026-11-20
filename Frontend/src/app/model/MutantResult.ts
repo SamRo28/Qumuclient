@@ -5,11 +5,13 @@ export enum Result {
 }
 
 export class MutantResult {
-    id? : number
+    id?: number
     result?: Result
+    error?: number
 
-    constructor(MutantResult? : any) {
+    constructor(MutantResult?: any) {
         this.id = MutantResult.id
         this.result = MutantResult.result
+        this.error = MutantResult.error
     }
 }

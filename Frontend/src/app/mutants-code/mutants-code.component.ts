@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Mutant } from '../model/Mutant';
-import { ManagerService } from '../manager.service';
+import { ManagerService } from '../services/manager.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
@@ -15,7 +15,7 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
   private subscription = new Subscription();
   highlightedMutantCode: SafeHtml = '';
 
-  constructor(public manager: ManagerService, private sanitizer: DomSanitizer) { }  ngOnInit(): void {
+  constructor(public manager: ManagerService, private sanitizer: DomSanitizer) { } ngOnInit(): void {
     this.subscription.add(
       this.manager.selectedMutant$.subscribe(mutant => {
         this.selectedMutant = mutant;
@@ -29,21 +29,16 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private updateHighlightedCode(): void {
-    if (this.selectedMutant?.circuit?.qCode.code && this.manager.selectedProject?.qProgram.qCode.code) {
-      const originalCode = Array.isArray(this.manager.selectedProject?.qProgram.qCode.code) 
-        ? this.manager.selectedProject.qProgram.qCode.code.join('\n')
-        : this.manager.selectedProject.qProgram.qCode.code;
-      const mutantCode = Array.isArray(this.selectedMutant.circuit.qCode.code)
-        ? this.selectedMutant.circuit.qCode.code.join('\n')
-        : this.selectedMutant.circuit.qCode.code;
+    if (this.selectedMutant?.circuit?.qCodes?.[0]?.code && this.manager.selectedProject?.qProgram.qCodes?.[0]?.code) {
+      const originalCode = this.manager.selectedProject.qProgram.qCodes[0].code;
+      const mutantCode = this.selectedMutant.circuit.qCodes[0].code;
+
       this.highlightedMutantCode = this.sanitizer.bypassSecurityTrustHtml(
-        this.highlightDifferences(originalCode, mutantCode)
+        this.highlightDifferences(originalCode!, mutantCode!)
       );
     } else {
-      const fallbackCode = this.selectedMutant?.circuit?.qCode.code;
-      this.highlightedMutantCode = Array.isArray(fallbackCode) 
-        ? fallbackCode.join('\n') 
-        : (fallbackCode || '');
+      const fallbackCode = this.selectedMutant?.circuit?.qCodes?.[0]?.code;
+      this.highlightedMutantCode = fallbackCode || '';
     }
   }
 
@@ -51,32 +46,32 @@ export class MutantsCodeComponent implements OnInit, OnDestroy, AfterViewInit {
     const originalLines = original.split('\n');
     const mutantLines = mutant.split('\n');
     const maxLines = Math.max(originalLines.length, mutantLines.length);
-    
+
     let result = '';
-    
+
     for (let i = 0; i < maxLines; i++) {
       const originalLine = originalLines[i] || '';
       const mutantLine = mutantLines[i] || '';
-      
+
       if (originalLine !== mutantLine) {
-        // Línea completa diferente - resaltar en amarillo
-        result += `<span style="background-color: yellow;">${this.escapeHtml(mutantLine)}</span>`;
+        // Línea completa diferente - resaltar
+        result += `<span class="diff-highlight">${this.escapeHtml(mutantLine)}</span>`;
       } else {
         // Línea igual
         result += this.escapeHtml(mutantLine);
       }
-      
+
       if (i < maxLines - 1) {
         result += '\n';
       }
     }
-    
+
     return result;
   }
 
   getOriginalCode(): string {
-    const code = this.manager.selectedProject?.qProgram.qCode.code;
-    return Array.isArray(code) ? code.join('\n') : (code || '');
+    const code = this.manager.selectedProject?.qProgram.qCodes?.[0]?.code;
+    return code || '';
   }
 
   private escapeHtml(text: string): string {

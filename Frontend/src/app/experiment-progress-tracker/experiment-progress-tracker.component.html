@@ -1,0 +1,30 @@
+<div *ngIf="experimentService.isLoggedIn() && primaryExperiment && !isDismissed" class="experiment-tracker-banner">
+  <div class="tracker-icon-pulse">
+    <i class="fas fa-flask"></i>
+  </div>
+
+  <div class="tracker-content">
+    <div class="tracker-header">
+      <span class="tracker-title">
+        <strong>Experimento en Ejecución:</strong> {{ primaryExperiment.name }}
+      </span>
+      <span class="tracker-count">
+        {{ primaryExperiment.completedCircuits }} de {{ primaryExperiment.totalCircuits }} circuitos completados
+        <span *ngIf="primaryExperiment.startedAt" class="tracker-duration">({{ getDurationText(primaryExperiment) }})</span>
+      </span>
+    </div>
+
+    <div class="tracker-progress-track">
+      <div class="tracker-progress-fill" [style.width.%]="primaryExperiment.percentage"></div>
+    </div>
+  </div>
+
+  <div class="tracker-actions">
+    <button class="btn-tracker-view" (click)="viewExperiments()" title="Ver detalles">
+      <i class="fas fa-external-link-alt"></i> Ver Experimentos
+    </button>
+    <button class="btn-tracker-close" (click)="dismiss()" title="Ocultar aviso">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>

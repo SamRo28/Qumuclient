@@ -20,29 +20,39 @@
 		{
 			"family" : "Position errors",
 			"operators" : [ "MoveGateDownAdj", "MoveGateDownAll","MoveGateUpAdj", "MoveGateUpAll","ChangeControlledQubitDown", "ChangeControlledQubitUp","ChangeControlQubitDown", "ChangeControlQubitUp" ]
+		},
+		{
+			"family" : "Noise insertion",
+			"containerClass" : "NoiseInsertion",
+			"operators" : [ "NoiseInsertionStart", "NoiseInsertionEnd", "NoiseInsertionRandom" ]
+		},
+		{
+			"family" : "Gate addition",
+			"containerClass" : "GateAddition",
+			"operators" : [ "AddGateStart_H", "AddGateStart_X", "AddGateStart_X^½", "AddGateStart_X^-½", "AddGateStart_X^¼", "AddGateStart_X^-¼", "AddGateStart_Y", "AddGateStart_Y^½", "AddGateStart_Y^-½", "AddGateStart_Y^¼", "AddGateStart_Y^-¼", "AddGateStart_Z", "AddGateStart_Z^½", "AddGateStart_Z^-½", "AddGateStart_Z^¼", "AddGateStart_Z^-¼", "AddGateEnd_H", "AddGateEnd_X", "AddGateEnd_X^½", "AddGateEnd_X^-½", "AddGateEnd_X^¼", "AddGateEnd_X^-¼", "AddGateEnd_Y", "AddGateEnd_Y^½", "AddGateEnd_Y^-½", "AddGateEnd_Y^¼", "AddGateEnd_Y^-¼", "AddGateEnd_Z", "AddGateEnd_Z^½", "AddGateEnd_Z^-½", "AddGateEnd_Z^¼", "AddGateEnd_Z^-¼", "AddGateRandom_H", "AddGateRandom_X", "AddGateRandom_X^½", "AddGateRandom_X^-½", "AddGateRandom_X^¼", "AddGateRandom_X^-¼", "AddGateRandom_Y", "AddGateRandom_Y^½", "AddGateRandom_Y^-½", "AddGateRandom_Y^¼", "AddGateRandom_Y^-¼", "AddGateRandom_Z", "AddGateRandom_Z^½", "AddGateRandom_Z^-½", "AddGateRandom_Z^¼", "AddGateRandom_Z^-¼" ]
 		}
 	],
 	"gates" : [
-		[ "H", "H", "circuit.h(#QUBIT#)" ],
-		
-		[ "X", "X", "circuit.x(#QUBIT#)" ],
-		[ "X^½", "X^½", "circuit.sx(#QUBIT#)" ],
-		[ "X^-½", "X^-½" ],
-		[ "X^¼", "X^¼" ],
-		[ "X^-¼", "X^-¼" ],
-		
-		[ "Y", "Y", "circuit.y(#QUBIT#)" ],
-		[ "Y^½", "Y^½" ],
-		[ "Y^-½", "Y^-½" ],
-		[ "Y^¼", "Y^¼" ],
-		[ "Y^-¼", "Y^-¼" ],
-		
-		[ "Z", "Z", "circuit.z(#QUBIT#)" ],
-		[ "Z^½", "Z^½", "circuit.s(#QUBIT#)" ],
-		[ "Z^-½", "Z^-½", "circuit.sdg(#QUBIT#)" ],
-		[ "Z^¼", "Z^¼", "circuit.t(#QUBIT#)" ],
-		[ "Z^-¼", "Z^-¼", "circuit.tdg(#QUBIT#)" ],
-		
+		[ "H", "H", "circuit.h(#QUBIT#)", "HGate()" ],
+
+		[ "X", "X", "circuit.x(#QUBIT#)", "XGate()" ],
+		[ "X^½", "X^½", "circuit.sx(#QUBIT#)", "SXGate()" ],
+		[ "X^-½", "X^-½", "circuit.sxdg(#QUBIT#)", "SXdgGate()" ],
+		[ "X^¼", "X^¼", "circuit.append(XGate().power(1/4), [#QUBIT#])", "XGate().power(1/4)" ],
+		[ "X^-¼", "X^-¼", "circuit.append(XGate().power(-1/4), [#QUBIT#])", "XGate().power(-1/4)" ],
+
+		[ "Y", "Y", "circuit.y(#QUBIT#)", "YGate()" ],
+		[ "Y^½", "Y^½", "circuit.append(YGate().power(1/2), [#QUBIT#])", "YGate().power(1/2)" ],
+		[ "Y^-½", "Y^-½", "circuit.append(YGate().power(-1/2), [#QUBIT#])", "YGate().power(-1/2)" ],
+		[ "Y^¼", "Y^¼", "circuit.append(YGate().power(1/4), [#QUBIT#])", "YGate().power(1/4)" ],
+		[ "Y^-¼", "Y^-¼", "circuit.append(YGate().power(-1/4), [#QUBIT#])", "YGate().power(-1/4)" ],
+
+		[ "Z", "Z", "circuit.z(#QUBIT#)", "ZGate()" ],
+		[ "Z^½", "Z^½", "circuit.s(#QUBIT#)", "SGate()" ],
+		[ "Z^-½", "Z^-½", "circuit.sdg(#QUBIT#)", "SdgGate()" ],
+		[ "Z^¼", "Z^¼", "circuit.t(#QUBIT#)", "TGate()" ],
+		[ "Z^-¼", "Z^-¼", "circuit.tdg(#QUBIT#)", "TdgGate()" ],
+
 		[ "•", "•" ],
 		[ 1, 1 ],
 		[ 0, 0 ]

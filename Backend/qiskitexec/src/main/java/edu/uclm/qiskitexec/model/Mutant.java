@@ -1,5 +1,8 @@
 package edu.uclm.qiskitexec.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Mutant {
 
 	private String wholeCode;

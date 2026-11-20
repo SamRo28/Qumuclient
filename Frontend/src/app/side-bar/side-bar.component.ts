@@ -1,19 +1,21 @@
-import { Component, ElementRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { of, Subscription, switchMap, tap } from 'rxjs';
-import { ReperService } from '../reper.service';
-import { ManagerService } from '../manager.service';
-import { QProgram } from '../model/QProgram';
+import { Subscription } from 'rxjs';
+import { ReperService } from '../services/reper.service';
+import { ManagerService } from '../services/manager.service';
 import { MutantCycle } from '../model/MutantCycle';
 import { Mutant } from '../model/Mutant';
-import { QumugenService } from '../qumugen.service';
-import { AppComponent } from '../app.component';
+import { Operator } from '../model/OperatorFamily';
+import { QProgram } from '../model/QProgram';
+import { QCircuit } from '../model/QCircuit';
+import { ExecConfiguration } from '../model/ExecConfiguration';
+import { QumugenService } from '../services/qumugen.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Project } from '../model/Project';
-import { QCircuit } from '../model/QCircuit';
-import { UserService } from '../user.service';
-import { Operator } from '../model/OperatorFamily';
-import { ProjectNote } from '../model/ProjectNote';
+import { UserService } from '../services/user.service';
+import { ThemeService } from '../services/theme.service';
+import { environment } from 'src/environments/environment';
+
 
 @Component({
   selector: 'app-side-bar',
@@ -26,7 +28,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
 
   menuAbierto = false;
   mostrarInicio = true;
-  circuits: Project[] = [];
+  // circuits: Project[] = []; // Removed: using getter from ManagerService
   expandedCircuits: Set<string> = new Set();
   expandedProjects: Set<string> = new Set();
   loading = false;
@@ -42,7 +44,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     private manager: ManagerService,
     private qumugen: QumugenService,
     public sanitizer: DomSanitizer,
-    private userService: UserService
+    private userService: UserService,
+    private themeService: ThemeService
   ) {
     this.router.events.subscribe(event => {
       if (event instanceof NavigationEnd) {
@@ -54,9 +57,12 @@ export class SideBarComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.manager.sidebarExpanded = this.menuAbierto;
 
-    if (sessionStorage.getItem('token')) {
-      this.loadCircuitsFromService();
-    }
+    // Verify session via cookie on initialization
+    this.userService.checkSession().subscribe(isAuthenticated => {
+      if (isAuthenticated) {
+        this.loadCircuitsFromService();
+      }
+    });
 
     // Suscribirse a eventos de login
     this.subs.add(
@@ -69,21 +75,14 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.manager.selectedProject$.subscribe((project) => {
         if (project) {
-          // Buscar si ya existe por ID o por referencia
-          const existingIndex = this.circuits.findIndex(c =>
-            (c.id && project.id && c.id === project.id) || c === project
-          );
-
-          if (existingIndex === -1) {
-            // No existe, agregarlo
-            this.circuits.push(project);
-            // Expandir automáticamente el nuevo proyecto
-            if (project.name) {
-              this.expandedCircuits.add(project.name);
-            }
-          } else {
-            // Ya existe, actualizarlo en su posición
-            this.circuits[existingIndex] = project;
+          // Si el proyecto no está en la lista (ej. creado nuevo), agregarlo
+          const exists = this.circuits.some(c => c.id === project.id);
+          if (!exists) {
+            // Re-load circuits to ensure sync or push to manager
+            // For now, assuming manager handles the list state
+          }
+          if (project.name) {
+            this.expandedCircuits.add(project.name);
           }
         }
       })
@@ -92,26 +91,14 @@ export class SideBarComponent implements OnInit, OnDestroy {
     // Suscribirse a eliminación de proyectos
     this.subs.add(
       this.manager.projectDeleted$.subscribe((projectId) => {
-        this.circuits = this.circuits.filter(c => c.id !== projectId);
-        if (this.circuits.length > 0) {
-          this.selectCircuit(this.circuits[0]);
-        } else {
-          this.createNewCircuit();
-        }
+        // Removed this.loadCircuitsFromService(); to prevent unnecessary network request
+        // array updates are handled by ManagerService natively.
       })
     );
+  }
 
-    // Agregar el proyecto actual si existe y no está en la lista
-    if (this.manager.selectedProject) {
-      const exists = this.circuits.some(c =>
-        (c.id && this.manager.selectedProject!.id && c.id === this.manager.selectedProject!.id) ||
-        c === this.manager.selectedProject
-      );
-
-      if (!exists) {
-        this.circuits.push(this.manager.selectedProject);
-      }
-    }
+  get circuits(): Project[] {
+    return this.manager.projects;
   }
 
   toggleMenu() {
@@ -120,28 +107,16 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   createNewCircuit() {
-    // Protección contra doble-click
     if (this.isCreatingProject) {
       return;
     }
-
     this.isCreatingProject = true;
 
-    // Generar nombre único
-    let name = 'Project' + (this.circuits.length + 1);
-    let newCircuit = new Project();
-    newCircuit.name = name;
-
-    // Configurar el manager
-    this.manager.setNewselectedProject(newCircuit);
-    this.manager.showCircuit = true;
-    this.manager.showMutantsInfo = false;
-    this.manager.showSaveButton = false;
-    this.manager.showMutantCycleInfo = false;
-
-    // Resetear protección después de un breve delay
     setTimeout(() => {
+      let circuit = new Project(crypto.randomUUID(), "Project" + (this.circuits.length + 1));
+      this.manager.setNewselectedProject(circuit);
       this.isCreatingProject = false;
+      this.router.navigate(['/project', circuit.id]);
     }, 500);
   }
 
@@ -169,53 +144,178 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return this.expandedProjects.has(projectKey);
   }
 
+  isCircuitSelected(circuit: Project): boolean {
+    // Exact match for project route
+    return this.router.isActive(`/project/${circuit.id}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
+  }
+
+  isMutantCycleSelected(cycle: MutantCycle, project: Project): boolean {
+    // Exact match for cycle route
+    return this.router.isActive(`/project/${project.id}/cycle/${cycle.id}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
+  }
+
+  isMutantSelected(mutant: Mutant, cycle: MutantCycle, project: Project): boolean {
+    // Exact match for mutant route
+    return this.router.isActive(`/project/${project.id}/cycle/${cycle.id}/mutant/${mutant.mutantIndex}`, { paths: 'exact', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' });
+  }
+
+  deleteMutantCycle(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined) return;
+
+    this.manager.openConfirmationModal({
+      title: 'Delete Mutant Cycle',
+      message: `Are you sure you want to delete this mutant cycle? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.reperService.deleteMutantCycle(project.id!, cycle.id!).subscribe({
+          next: (resp) => {
+            this.watchDeletion(resp?.jobId, 'Mutant cycle');
+            // Remove the cycle locally
+            project.mutantCycles = project.mutantCycles.filter(c => c.id !== cycle.id);
+            // Save removed cycle to local cache
+            this.manager.cacheProjectLocally(project);
+            // If the deleted cycle was selected, navigate to the project
+            if (this.isMutantCycleSelected(cycle, project)) {
+              this.router.navigate(['/project', project.id]);
+            }
+            this.loading = false;
+          },
+          error: (err) => {
+            console.error('Error deleting mutant cycle:', err);
+            this.loading = false;
+          }
+        });
+      }
+    });
+  }
+
+  /** El borrado sigue en segundo plano en reper: se avisa al terminar o si falla. */
+  private watchDeletion(jobId: string | undefined, what: string): void {
+    if (!jobId) return;
+    this.reperService.watchJob(jobId).subscribe({
+      next: () => this.manager.showNotification(`${what} deleted`, 'success', 4000),
+      error: (err) => {
+        console.error('Background deletion failed:', err);
+        this.manager.showNotification(`Error deleting ${what.toLowerCase()}: ${err?.message || err?.error?.error || 'unknown error'}`, 'error', 10000);
+      }
+    });
+  }
+
+  duplicateMutantCycle(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined) return;
+
+    this.manager.openConfirmationModal({
+      title: 'Duplicate Mutant Cycle',
+      message: 'Are you sure you want to duplicate this mutant cycle? An identical cycle with pending results will be created.',
+      confirmText: 'Duplicate',
+      type: 'info',
+      onConfirm: async () => {
+        this.manager.showNotification('Loading mutant circuits…', 'loading');
+        try {
+          await this.manager.ensureCycleCircuits(cycle);
+        } catch (err) {
+          console.error('Error loading circuits for duplicate', err);
+          this.manager.showNotification('Error loading mutant circuits', 'error', 5000);
+          return;
+        }
+
+        // Deep clone mutants array
+        const clonedMutants: Mutant[] = cycle.mutants.map(m => {
+          const newMutant = new Mutant();
+          newMutant.id = undefined;
+          newMutant.mutantIndex = m.mutantIndex;
+          newMutant.mutatedColumn = m.mutatedColumn;
+          newMutant.mutatedRow = m.mutatedRow;
+          newMutant.mutationOperator = m.mutationOperator;
+          newMutant.oracleName = m.oracleName;
+          newMutant.mutationDetail = m.mutationDetail;
+
+          if (m.operator) {
+            newMutant.operator = new Operator({
+              name: m.operator.name,
+              type: m.operator.id,
+              enabled: m.operator.enabled,
+              description: m.operator.description
+            });
+          }
+
+          if (m.circuit) {
+            const newProgram = new QProgram();
+            newProgram.id = crypto.randomUUID();
+            newProgram.qubits = m.circuit.qubits;
+            newProgram.inputQubits = m.circuit.inputQubits;
+            newProgram.outputQubits = m.circuit.outputQubits;
+            if (m.circuit.qCircuit) {
+              newProgram.qCircuit = new QCircuit(undefined, m.circuit.qCircuit.quirkCode, false);
+            }
+            newMutant.circuit = newProgram;
+          }
+
+          newMutant.mutantResults = [];
+          newMutant.result = undefined;
+          return newMutant;
+        });
+
+        // Clone execution configuration
+        let clonedConfig: ExecConfiguration | undefined;
+        if (cycle.execConfiguration) {
+          clonedConfig = new ExecConfiguration(cycle.execConfiguration);
+          clonedConfig.id = crypto.randomUUID();
+          clonedConfig.executionDate = new Date();
+        }
+
+        // Create new cycle
+        const newCycleId = project.getNextMutantCycleId();
+        const newCycle = new MutantCycle(clonedMutants, newCycleId, clonedConfig);
+        newCycle.newlyGenerated = true;
+
+        project.mutantCycles.push(newCycle);
+        this.manager.markProjectAsModified(project);
+
+        this.router.navigate(['/projects', project.id, 'cycle', newCycleId]);
+        this.manager.showNotification('The cycle has been duplicated successfully.', 'success', 3000);
+      }
+    });
+  }
+
+  // Inline editing state: stores the ID of the mutant cycle currently being renamed
+  editingCycleId: number | null = null;
+  editCycleNameCache: string = "";
+
+  renameMutantCycle(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined) return;
+    this.editingCycleId = cycle.id;
+    this.editCycleNameCache = cycle.name || `Mutant Cycle ${cycle.id}`;
+  }
+
+  saveMutantCycleName(cycle: MutantCycle, project: Project): void {
+    if (!project.id || cycle.id === undefined || this.editingCycleId !== cycle.id) return;
+
+    const newName = this.editCycleNameCache.trim();
+    if (newName !== "" && newName !== cycle.name) {
+      cycle.name = newName;
+      this.manager.markProjectAsModified(project);
+    }
+    this.editingCycleId = null;
+  }
+
+  cancelRename(): void {
+    this.editingCycleId = null;
+  }
+
   selectCircuit(circuit: Project): void {
-    this.manager.setselectedProject(circuit);
-    this.manager.showCircuit = true;
-    this.manager.showHome = false;
-    this.manager.showMutantsInfo = false;
-    this.manager.showMutantCycleInfo = false;
+    this.router.navigate(['/project', circuit.id]);
   }
 
-  selectMutant(mutant: Mutant, project: Project): void {
-    this.manager.setselectedProject(project);
-    this.manager.setSelectedMutant(mutant);
-    this.manager.showCircuit = false;
-    this.manager.showHome = false;
-    this.manager.showMutantsInfo = true;
-    this.manager.showMutantCycleInfo = false;
-
-    //Modificar para que no se haga aqui
-    if (this.manager.selectedProject) {
-      this.qumugen.getQiskitCode(this.manager.selectedProject.qProgram).then(
-        code => {
-          this.manager.selectedProject!.qProgram.qCode!.code = code.wholeCode.split("\n")
-        }
-      ).catch(error => {
-        console.error('Error getting qiskit code for selected circuit:', error);
-      })
-    }
-
-    if (mutant.circuit && mutant.circuit.qCircuit.textQuirkCode) {
-      this.qumugen.getQiskitCode(mutant.circuit).then(
-        code => {
-          this.url = this.sanitizer.bypassSecurityTrustResourceUrl(AppComponent.quirkUrl + "#circuit=" + mutant.circuit!.qCircuit.textQuirkCode)
-          mutant.circuit!.qCode!.code = code.wholeCode.split("\n")
-        }
-      ).catch(error => {
-        console.error('Error getting qiskit code for mutant circuit:', error);
-      })
-    } else {
-      console.warn('Cannot process mutant: circuit or quirk code not available');
-    }
+  selectMutant(mutant: Mutant, mutantCycle: MutantCycle, project: Project): void {
+    this.router.navigate(['/project', project.id, 'cycle', mutantCycle.id, 'mutant', mutant.mutantIndex]);
   }
 
-  selectMutantCycle(mutantCycle: MutantCycle): void {
-    this.manager.setSelectedMutantCycle(mutantCycle);
-    this.manager.showCircuit = false;
-    this.manager.showHome = false;
-    this.manager.showMutantsInfo = false;
-    this.manager.showMutantCycleInfo = true;
+  selectMutantCycle(mutantCycle: MutantCycle, project: Project): void {
+    this.router.navigate(['/project', project.id, 'cycle', mutantCycle.id]);
   }
 
   getProjectKey(circuitId: string, projectId: number): string {
@@ -242,9 +342,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   goToHome() {
-    this.manager.showHome = true;
-    this.manager.showCircuit = false;
-    this.manager.showMutantsInfo = false;
+    this.router.navigate(['/']);
   }
 
   ngOnDestroy(): void {
@@ -254,109 +352,35 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   isLoggedIn(): boolean {
-    return !!sessionStorage.getItem('token');
+    return this.userService.isAuthenticated$.value;
   }
 
   refreshCircuits(): void {
     // Verificar si hay cambios sin guardar en el proyecto actual
     if (this.manager.selectedProject && !this.manager.selectedProject.saved) {
-      const confirmRefresh = confirm('You have unsaved changes in the current project. If you refresh, these changes will be lost. Do you want to continue?');
-      if (!confirmRefresh) {
-        return;
-      }
+      this.manager.openConfirmationModal({
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes in the current project. If you refresh, these changes will be lost. Do you want to continue?',
+        confirmText: 'Refresh',
+        cancelText: 'Cancel',
+        type: 'warning',
+        onConfirm: () => {
+          this.loadCircuitsFromService(true);
+        }
+      });
+      return;
     }
 
-    this.loadCircuitsFromService();
+    this.loadCircuitsFromService(true);
   }
 
-  loadCircuitsFromService(): void {
+  loadCircuitsFromService(forceRefresh = false): void {
     const email = sessionStorage.getItem('email');
-    const token = sessionStorage.getItem('token')!;
+    if (!email) return;
 
     this.loading = true;
-
-    let email$ = email
-      ? of(email)
-      : this.reperService.getUser(token).pipe(
-        tap(userEmail => sessionStorage.setItem('email', userEmail))
-      );
-
-    email$.pipe(
-      switchMap(userEmail => this.reperService.getCircuits(userEmail, token))
-    ).subscribe({
-      next: (data) => {
-        this.circuits = data.map((circuitData: any) => {
-          // Mapeo profundo a clases
-          const project = new Project(undefined, undefined, undefined, undefined, true);
-          project.id = circuitData.id;
-          project.name = circuitData.name;
-
-          // QProgram
-          if (circuitData.qProgram) {
-            const qProgram = new QProgram();
-            Object.assign(qProgram, circuitData.qProgram);
-
-            // QCircuit
-            if (circuitData.qProgram.qCircuit) {
-              const qCircuit = new QCircuit(circuitData.qProgram.qCircuit.id, circuitData.qProgram.qCircuit.quirkCode);
-              qProgram.qCircuit = qCircuit;
-            }
-            project.qProgram = qProgram;
-          }
-
-          // MutantCycles
-          project.mutantCycles = (circuitData.mutantCycles || []).map((cycleData: any) => {
-            const mutantCycle = new (require('../model/MutantCycle').MutantCycle)();
-            mutantCycle.id = cycleData.id;
-            mutantCycle.date = cycleData.date;
-            mutantCycle.execConfig = cycleData.execConfig;
-
-            // Mutants
-            mutantCycle.mutants = (cycleData.mutants || []).map((mutantData: any) => {
-              const mutant = new (require('../model/Mutant').Mutant)();
-              mutant.id = mutantData.id;
-              mutant.mutantResults = mutantData.mutantResults;
-              mutant.mutantIndex = mutantData.mutantIndex;
-              mutant.mutatedColumn = mutantData.mutatedColumn;
-              mutant.mutatedRow = mutantData.mutatedRow;
-              mutant.operator.name = mutantData.operator.name;
-              mutant.mutationOperator = mutantData.operator.name;
-              mutant.operator.id = mutantData.operator.type;
-              mutant.operator.enabled = mutantData.operator.enabled;
-              mutant.operator.description = mutantData.operator.description;
-
-
-              // Circuit (QProgram)
-              if (mutantData.circuit) {
-                const mutantQProgram = new QProgram();
-                Object.assign(mutantQProgram, mutantData.circuit);
-
-                if (mutantData.circuit.qCircuit) {
-                  const mutantQCircuit = new QCircuit(mutantData.circuit.qCircuit.id, mutantData.circuit.qCircuit.quirkCode);
-                  mutantQProgram.qCircuit = mutantQCircuit;
-                }
-                mutant.circuit = mutantQProgram;
-              }
-              return mutant;
-            });
-
-            return mutantCycle;
-          });
-
-          if (circuitData.projectNotes) {
-            project.projectNotes = (circuitData.projectNotes || []).map((noteData: any) => {
-              const note = new ProjectNote(
-                noteData.title,
-                noteData.text,
-                noteData.type,
-                noteData.id,
-                new Date(noteData.timestamp)
-              );
-              return note;
-            });
-          }
-          return project;
-        });
+    this.manager.loadProjects(email, forceRefresh).subscribe({
+      next: () => {
         this.loading = false;
       },
       error: (error) => {
@@ -364,5 +388,51 @@ export class SideBarComponent implements OnInit, OnDestroy {
         this.loading = false;
       }
     });
+  }
+
+  // User Section Methods
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  logout(): void {
+    this.userMenuOpen = false;
+    this.userService.logout();
+  }
+
+  openExperiments(): void {
+    this.router.navigate(['/experiments']);
+  }
+
+  openImport(): void {
+    this.router.navigate(['/import']);
+  }
+
+  navigateToExperiments(): void {
+    this.userMenuOpen = false;
+    this.router.navigate(['/experiments']);
+  }
+
+  navigateToCreateExperiment(): void {
+    this.userMenuOpen = false;
+    this.router.navigate(['/experiments/create']);
+  }
+
+  navigateToQSauron(): void {
+    // Redirect to QSauron login/dashboard
+    window.location.href = environment.loginUrl;
+  }
+
+  userMenuOpen = false;
+  toggleUserMenu(event: Event): void {
+    event.stopPropagation();
+    this.userMenuOpen = !this.userMenuOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (this.userMenuOpen) {
+      this.userMenuOpen = false;
+    }
   }
 }

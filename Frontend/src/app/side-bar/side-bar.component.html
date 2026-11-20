@@ -1,9 +1,38 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <div class="sidebar" [class.open]="menuAbierto">
-  <button class="toggle-btn" (click)="toggleMenu()" aria-label="Toggle menu">
-    <i class="fas" [ngClass]="menuAbierto ? 'fa-times' : 'fa-bars'"></i>
-  </button>
+  <!-- Unified Header -->
+  <div class="sidebar-header">
+    <h3 *ngIf="menuAbierto">Circuits</h3>
+
+    <div class="header-actions">
+      <ng-container *ngIf="menuAbierto">
+        <button *ngIf="isLoggedIn()" class="refresh-btn" (click)="refreshCircuits()" title="Refresh project list"
+          aria-label="Refresh project list">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+
+        <button *ngIf="isLoggedIn()" class="new-btn" (click)="openExperiments()" title="Mis Experimentos"
+          aria-label="Mis Experimentos">
+          <i class="fas fa-flask"></i>
+        </button>
+
+        <button *ngIf="isLoggedIn()" class="new-btn" (click)="openImport()" title="Import projects"
+          aria-label="Import projects">
+          <i class="fas fa-file-import"></i>
+        </button>
+
+        <button class="new-btn" (click)="createNewCircuit()" [disabled]="isCreatingProject"
+          [class.creating]="isCreatingProject" aria-label="Create new quantum circuit project">
+          <i class="fas" [ngClass]="isCreatingProject ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+        </button>
+      </ng-container>
+
+      <button class="toggle-btn" (click)="toggleMenu()" aria-label="Toggle menu">
+        <i class="fas" [ngClass]="menuAbierto ? 'fa-times' : 'fa-bars'"></i>
+      </button>
+    </div>
+  </div>
 
   <!-- Loading indicator -->
   <div *ngIf="loading" class="loading-container">
@@ -13,26 +42,11 @@
 
   <!-- Circuits tree structure -->
   <div *ngIf="!loading" class="tree-container">
-    <div class="tree-header" *ngIf="menuAbierto">
-      <div class="header-content">
-        <h3>Circuits</h3>
-        <!-- Refresh Button -->
-        <button *ngIf="isLoggedIn()" class="refresh-btn" (click)="refreshCircuits()" title="Refresh project list"
-          aria-label="Refresh project list">
-          <i class="fas fa-sync-alt"></i>
-        </button>
-
-        <button class="new-btn" (click)="createNewCircuit()" [disabled]="isCreatingProject"
-          [class.creating]="isCreatingProject" aria-label="Create new quantum circuit project">
-          <i class="fas" [ngClass]="isCreatingProject ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
-        </button>
-      </div>
-    </div>
 
     <ul class="tree-list">
       <li *ngFor="let circuit of circuits" class="tree-item circuit-item">
         <!-- QProgram node -->
-        <div class="tree-node" (click)="toggleCircuit(circuit.name)">
+        <div class="tree-node" (click)="toggleCircuit(circuit.name)" [class.selected]="isCircuitSelected(circuit)">
           <i class="fas fa-chevron-right expand-icon" [class.expanded]="isCircuitExpanded(circuit.name)"></i>
           <i class="fas fa-microchip circuit-icon"></i>
           <span *ngIf="menuAbierto" class="node-label" (click)="selectCircuit(circuit); $event.stopPropagation()">
@@ -49,25 +63,48 @@
         <ul *ngIf="isCircuitExpanded(circuit.name)" class="tree-sublist">
           <li *ngFor="let project of circuit.mutantCycles" class="tree-item project-item">
             <!-- Project node -->
-            <div class="tree-node" (click)="toggleProject(getProjectKey(circuit.name, project.id))">
+            <div class="tree-node" (click)="toggleProject(getProjectKey(circuit.name, project.id))"
+              [class.selected]="isMutantCycleSelected(project, circuit)">
               <i class="fas fa-chevron-right expand-icon"
                 [class.expanded]="isProjectExpanded(getProjectKey(circuit.name, project.id))"></i>
               <i class="fas fa-folder project-icon"></i>
-              <span *ngIf="menuAbierto" class="node-label"
-                (click)="selectMutantCycle(project); $event.stopPropagation()">
-                Mutant Cycle {{ project.id }} ({{ project.mutants.length }} mutants)
+              <span *ngIf="menuAbierto && editingCycleId !== project.id" class="node-label"
+                (click)="selectMutantCycle(project, circuit); $event.stopPropagation()">
+                {{ project.name || 'Mutant Cycle ' + project.id }} ({{ project.mutants.length }} mutants)
               </span>
-              <span *ngIf="!menuAbierto" class="tooltip">Project {{ project.id }}</span>
+
+              <!-- Inline Edit Input -->
+              <input *ngIf="menuAbierto && editingCycleId === project.id" type="text" class="edit-cycle-name-input"
+                [(ngModel)]="editCycleNameCache" (keyup.enter)="saveMutantCycleName(project, circuit)"
+                (keyup.escape)="cancelRename()" (blur)="saveMutantCycleName(project, circuit)"
+                (click)="$event.stopPropagation()" autofocus>
+              <div *ngIf="menuAbierto" class="node-actions">
+                <button class="rename-cycle-btn" (click)="renameMutantCycle(project, circuit); $event.stopPropagation()"
+                  title="Rename Mutant Cycle" aria-label="Rename Mutant Cycle">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="duplicate-cycle-btn"
+                  (click)="duplicateMutantCycle(project, circuit); $event.stopPropagation()"
+                  title="Duplicate Mutant Cycle" aria-label="Duplicate Mutant Cycle">
+                  <i class="fas fa-copy"></i>
+                </button>
+                <button class="delete-cycle-btn" (click)="deleteMutantCycle(project, circuit); $event.stopPropagation()"
+                  title="Delete Mutant Cycle" aria-label="Delete Mutant Cycle">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+              <span *ngIf="!menuAbierto" class="tooltip">{{ project.name || 'Project ' + project.id }}</span>
             </div>
 
             <!-- Mutants level -->
             <ul *ngIf="isProjectExpanded(getProjectKey(circuit.name, project.id))" class="tree-sublist">
               <li *ngFor="let mutant of project.mutants" class="tree-item mutant-item">
-                <div class="tree-node" (click)="selectMutant(mutant, circuit)">
+                <div class="tree-node" (click)="selectMutant(mutant, project, circuit)"
+                  [class.selected]="isMutantSelected(mutant, project, circuit)">
                   <i class="fas fa-bug mutant-icon"></i>
                   <span *ngIf="menuAbierto" class="node-label">
                     Mutant {{ mutant.mutantIndex }}
-                    <small>({{ mutant.mutationOperator }})</small>
+                    <small>({{ mutant.mutationOperator | operatorLabel }}<span *ngIf="mutant.mutationDetail"> · {{ mutant.mutationDetail }}</span>)</small>
                   </span>
                   <span *ngIf="!menuAbierto" class="tooltip">
                     Mutant {{ mutant.mutantIndex }}
@@ -87,4 +124,58 @@
     </div>
   </div>
 
+  <!-- User Section (Footer) -->
+  <div class="sidebar-footer">
+    <div class="user-section">
+
+      <!-- User Icon with Dropdown -->
+      <div class="user-menu-container">
+        <div class="user-icon-wrapper" (click)="toggleUserMenu($event)" [class.active]="userMenuOpen">
+          <i class="fas fa-user-circle user-icon"></i>
+
+          <!-- Dropdown Menu -->
+          <div class="user-dropdown" *ngIf="userMenuOpen" (click)="$event.stopPropagation()">
+
+            <!-- Header/Info -->
+            <div class="dropdown-header" *ngIf="isLoggedIn()">
+              <span>User Info</span>
+            </div>
+
+            <!-- Logged In Options -->
+            <ng-container *ngIf="isLoggedIn()">
+              <button (click)="navigateToExperiments()" class="dropdown-item">
+                <i class="fas fa-flask"></i> My Experiments
+              </button>
+              <button (click)="navigateToCreateExperiment()" class="dropdown-item">
+                <i class="fas fa-plus-circle"></i> New Experiment
+              </button>
+              <button (click)="navigateToQSauron()" class="dropdown-item">
+                <span class="item-logo"></span> Go to Projects
+              </button>
+              <button (click)="toggleTheme()" class="dropdown-item">
+                <i class="fas fa-adjust"></i> Toggle Theme
+              </button>
+            </ng-container>
+
+            <!-- Logged Out Options -->
+            <ng-container *ngIf="!isLoggedIn()">
+              <button (click)="toggleTheme()" class="dropdown-item">
+                <i class="fas fa-adjust"></i> Toggle Theme
+              </button>
+              <button (click)="navigateToQSauron()" class="dropdown-item">
+                <i class="fas fa-sign-in-alt"></i> Login
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Logout Icon (Only if Logged In) -->
+      <div *ngIf="isLoggedIn()" class="logout-wrapper" (click)="logout()" title="Logout">
+        <i class="fas fa-sign-out-alt logout-icon"></i>
+      </div>
+
+    </div>
+  </div>
 </div>

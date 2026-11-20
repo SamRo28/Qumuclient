@@ -21,11 +21,10 @@
 		{
 			"name" : "Samuel",
 			"path" : "C:/Python312/Scripts/;C:/Python312/;C:/Program Files/Common Files/Oracle/Java/javapath;C:/Program Files (x86)/Common Files/Oracle/Java/java8path;C:/Program Files (x86)/Common Files/Oracle/Java/javapath;C:/Windows/system32;C:/Windows;C:/Windows/System32/Wbem;C:/Windows/System32/WindowsPowerShell/v1.0/;C:/Windows/System32/OpenSSH/;C:/Program Files (x86)/NVIDIA Corporation/PhysX/Common;C:/Program Files/NVIDIA Corporation/NVIDIA NvDLISR;C:/WINDOWS/system32;C:/WINDOWS;C:/WINDOWS/System32/Wbem;C:/WINDOWS/System32/WindowsPowerShell/v1.0/;C:/WINDOWS/System32/OpenSSH/;C:/Program Files/AutoFirma/AutoFirma;C:/Program Files/dotnet/;C:/Program Files/Git/cmd;C:/Users/samue/apache-maven-3.9.9/bin;C:/Program Files/nodejs/;C:/ProgramData/chocolatey/bin;C:/Program Files (x86)/Microsoft SQL Server/160/DTS/Binn/;C:/Program Files (x86)/Microsoft SQL Server/160/Tools/Binn/;C:/Program Files/Microsoft SQL Server/160/Tools/Binn/;C:/Program Files/Microsoft SQL Server/Client SDK/ODBC/170/Tools/Binn/;C:/Program Files/Microsoft SQL Server/160/DTS/Binn/;C:/Users/samue/AppData/Local/Microsoft/WindowsApps;C:/Users/samue/AppData/Local/Programs/Microsoft VS Code/bin;C:/Users/samue/.dotnet/tools;C:/Users/samue/AppData/Local/GitHubDesktop/bin;C:/Users/samue/AppData/Roaming/npm",
-			"commands" : [ "cmd", "/c", "C:/Python312/python.exe" ],
+			"commands" : [ "cmd", "/c", "C:/Users/samue/AppData/Local/Python/PythonCore-3.14-64/python.exe" ],
 			"working directory" : "C:/Users/Public/",
 			"output directory" : "C:/Users/Public/",
 			"qiskit template" : "qiskitTemplateWindows.txt"
 		}
 	]
 }
-		

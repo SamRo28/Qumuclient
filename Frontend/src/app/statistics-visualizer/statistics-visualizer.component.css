@@ -1,0 +1,674 @@
+:host {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.stats-page-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-gradient);
+    overflow-x: hidden;
+    /* Prevent unwanted horizontal scroll */
+    overflow-y: hidden;
+    width: 100%;
+    position: relative;
+}
+
+/* Optional: Add a subtle pattern overlay if desired, utilizing theme colors if possible, 
+   or keep it simple with just the gradient which looks cleaner in glassmorphism */
+.stats-page-container::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(var(--text-muted) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.header {
+    flex-shrink: 0;
+    padding: 2rem 2rem 1.5rem 2rem;
+    /* Added top padding to unstick from top */
+    background: transparent;
+    /* Removed glass background to match Mutant Cycle */
+    border-bottom: 2px solid var(--border-glass);
+    /* Thicker border */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    z-index: 20;
+    position: relative;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+/* ... styles for back-btn ... */
+
+/* ... styles for header h2 ... */
+
+/* Layout Wrapper */
+.stats-body-wrapper {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    width: 100%;
+    /* Ensure it shrinks */
+    min-width: 0;
+    /* Important for flex child to shrink */
+    transition: all 0.3s;
+}
+
+/* Actions Bar */
+.actions-bar {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ai-analyze-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.ai-analyze-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.ai-analyze-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    box-shadow: none;
+}
+
+.ai-analyze-btn.icon-only {
+    padding: 0.75rem;
+    background: var(--glass-bg-hover);
+    color: var(--text-secondary);
+    box-shadow: none;
+    border: 1px solid var(--border-glass-light);
+}
+
+.ai-analyze-btn.icon-only:hover {
+    background: var(--glass-bg);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+}
+
+/* Score Card */
+.score-card {
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.score-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.score-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.score-value {
+    font-size: 3rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: var(--accent-primary);
+    /* Fallback */
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* 12-Column Responsive Grid System */
+.col-6 {
+    grid-column: span 6;
+}
+
+.col-12 {
+    grid-column: span 12;
+}
+
+@media (max-width: 1100px) {
+    .col-6 {
+        grid-column: span 6;
+    }
+    .col-12 {
+        grid-column: span 12;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .col-6, .col-12 {
+        grid-column: span 1;
+    }
+}
+
+.chart-card {
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.chart-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.chart-card h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 250px;
+    /* Limit height for scrollbars */
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.bar-label {
+    width: 80px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-track {
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.05);
+    /* Neutral track */
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+:host-context([data-theme='dark']) .bar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}
+
+.test-fill {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.mutant-fill {
+    background: var(--accent-gradient);
+}
+
+.lethal-fill {
+    background: linear-gradient(90deg, #f97316, #ef4444);
+}
+
+.zombie-fill {
+    background: linear-gradient(90deg, #a855f7, #7c3aed);
+}
+
+/* Innocuous operators: all have 0% kill rate, so we show a badge instead of an empty bar */
+.innocuous-badge {
+    flex: 1;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    background: rgba(100, 116, 139, 0.12);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    text-align: center;
+}
+
+/* Zombie panel: global summary + unstable operators ranking */
+.zombie-panel {
+    display: flex;
+    gap: 1.5rem;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.zombie-summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-width: 180px;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.zombie-summary-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #a855f7;
+    line-height: 1.1;
+}
+
+.zombie-summary-detail {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.zombie-summary-note {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+    font-style: italic;
+}
+
+.zombie-operators {
+    flex: 1;
+    min-width: 260px;
+}
+
+.zombie-operators-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.bar-value-text {
+    width: 40px;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Lists Grid */
+
+
+.list-card {
+    background: var(--glass-bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.list-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.list-card h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.list-item {
+    padding: 0.6rem 0.8rem;
+    background: var(--glass-bg-hover);
+    border: 1px solid var(--border-glass-light);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.empty-text {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+
+
+.info-icon:hover {
+    color: var(--accent-primary);
+}
+
+/* Tooltip Implementation */
+.info-icon[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 0.8rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    white-space: normal;
+    width: max-content;
+    max-width: 250px;
+    margin-bottom: 8px;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(4px);
+}
+
+.info-icon[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+    margin-bottom: -2px;
+    z-index: 100;
+}
+
+
+/* Loading Spinner */
+.spinner-sm {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.no-data {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Scrollbars */
+.content::-webkit-scrollbar,
+.list-container::-webkit-scrollbar,
+.custom-chart-container::-webkit-scrollbar,
+.stats-page-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    /* For horizontal scrollbar */
+}
+
+.content::-webkit-scrollbar-track,
+.list-container::-webkit-scrollbar-track,
+.custom-chart-container::-webkit-scrollbar-track,
+.stats-page-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb,
+.list-container::-webkit-scrollbar-thumb,
+.custom-chart-container::-webkit-scrollbar-thumb,
+.stats-page-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover,
+.list-container::-webkit-scrollbar-thumb:hover,
+.custom-chart-container::-webkit-scrollbar-thumb:hover,
+.stats-page-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+:host-context([data-theme='dark']) .content::-webkit-scrollbar-thumb,
+:host-context([data-theme='dark']) .list-container::-webkit-scrollbar-thumb,
+:host-context([data-theme='dark']) .custom-chart-container::-webkit-scrollbar-thumb,
+:host-context([data-theme='dark']) .stats-page-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+:host-context([data-theme='dark']) .content::-webkit-scrollbar-thumb:hover,
+:host-context([data-theme='dark']) .list-container::-webkit-scrollbar-thumb:hover,
+:host-context([data-theme='dark']) .custom-chart-container::-webkit-scrollbar-thumb:hover,
+:host-context([data-theme='dark']) .stats-page-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* New Styles for Refactor */
+
+.score-details {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.bar-value-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 40px;
+}
+
+.unique-kill-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+}
+
+.unique-kill-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.mini-score-card {
+    justify-content: center;
+    text-align: center;
+}
+
+.mini-score-card .score-value {
+    font-size: 2.5rem;
+    /* Slightly smaller than main score */
+}
+
+/* Ensure grid items stretch */
+.dashboard-grid>div {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.list-container,
+.custom-chart-container {
+    flex: 1;
+    /* Take remaining height */
+    max-height: 250px;
+    /* Or whatever fixed height matches design */
+}
+
+/* Subsumed detailed layout styles are now managed by col-8 class */
+
+.subsumption-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.subsumption-summary .score-card {
+    flex: 1;
+    min-width: 120px;
+    margin-bottom: 0;
+    padding: 0.8rem;
+}
+
+.subsumption-summary .score-value {
+    font-size: 1.6rem;
+}
+
+.redundancy-fill {
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.group-toggle {
+    cursor: pointer;
+}
+
+.group-toggle:hover {
+    background: rgba(16, 185, 129, 0.06);
+}
+
+.mutant-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.4rem 0 0.6rem 0.6rem;
+}
+
+.mutant-chip {
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+:host-context([data-theme='dark']) .mutant-chip {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.show-more-btn {
+    background: transparent;
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    color: var(--accent-primary);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+}
+
+.show-more-btn:hover {
+    border-color: var(--accent-primary);
+}
+
+.subsumption-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.subsumption-table th,
+.subsumption-table td {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.subsumption-table th {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+:host-context([data-theme='dark']) .subsumption-table th,
+:host-context([data-theme='dark']) .subsumption-table td {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}

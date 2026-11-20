@@ -1,0 +1,18 @@
+<div class="qubit-group">
+  <div class="qubit-group-header">
+    <label class="config-label">
+      <i [class]="icon"></i>
+      {{ label }}
+    </label>
+    <button type="button" class="select-all-btn small-btn" (click)="toggleAll()">
+      <i class="fas fa-check-double"></i> Select All
+    </button>
+  </div>
+  <div class="qubits-checkboxes-row">
+    <label *ngFor="let i of indices" class="qubit-checkbox-item">
+      <input type="checkbox" class="glass-checkbox" [checked]="selection[i]"
+             (change)="onToggle(i, $any($event.target).checked)">
+      <span>Q{{ i }}</span>
+    </label>
+  </div>
+</div>

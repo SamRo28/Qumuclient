@@ -1,0 +1,80 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal-content resume-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="fas fa-play-circle text-accent"></i>
+        Resume Experiment
+      </h5>
+      <button type="button" class="modal-close" (click)="close()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p class="resume-msg">Experiment <strong>{{ experimentName }}</strong></p>
+
+      <div *ngIf="loading" class="state-box"><i class="fas fa-spinner fa-spin"></i> Loading what is left to do...</div>
+
+      <div *ngIf="error" class="error-banner"><i class="fas fa-exclamation-triangle"></i> {{ error }}</div>
+
+      <ng-container *ngIf="preview && !loading">
+        <div *ngIf="!preview.resumable" class="error-banner">
+          <i class="fas fa-ban"></i> {{ preview.reason || 'This experiment cannot be resumed.' }}
+        </div>
+
+        <ng-container *ngIf="preview.resumable">
+          <div class="section">
+            <h6>Cycles with pending mutants ({{ preview.pendingCycles.length }})</h6>
+            <p class="hint" *ngIf="preview.pendingCycles.length === 0">No cycle has mutants left to execute.</p>
+            <ul class="item-list" *ngIf="preview.pendingCycles.length > 0">
+              <li *ngFor="let c of preview.pendingCycles">
+                <div class="item-title">
+                  <strong>{{ c.name }}</strong>
+                  <span class="pill">{{ c.pendingMutants }} mutants pending</span>
+                </div>
+                <div class="qubits-form" *ngIf="c.needsQubits">
+                  <p class="hint">This cycle was created before input/output qubits were stored. Select them as when creating an experiment.</p>
+                  <p class="hint suggested" *ngIf="c.suggestedFromResults"><i class="fas fa-lightbulb"></i> Suggested from already executed results — check it</p>
+                  <div class="qubit-selectors-grid">
+                    <app-qubit-selector label="Input Qubits" icon="fas fa-arrow-right-to-bracket"
+                      [qubits]="c.qubits" [(value)]="qubits[key(c)].input"></app-qubit-selector>
+                    <app-qubit-selector label="Output Qubits" icon="fas fa-arrow-right-from-bracket"
+                      [qubits]="c.qubits" [(value)]="qubits[key(c)].output"></app-qubit-selector>
+                  </div>
+                  <p class="hint warn-text" *ngIf="qubits[key(c)].input === ''"><i class="fas fa-info-circle"></i> No input qubits: the cycle runs with all inputs set to 0</p>
+                  <p class="hint error-text" *ngIf="qubits[key(c)].output === ''"><i class="fas fa-exclamation-triangle"></i> Select at least one output qubit</p>
+                </div>
+                <div class="hint" *ngIf="!c.needsQubits">{{ savedSummary(c) }}</div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="section" *ngIf="preview.skippedCycles.length > 0">
+            <h6>Cycles that will be skipped ({{ preview.skippedCycles.length }})</h6>
+            <ul class="item-list">
+              <li *ngFor="let s of preview.skippedCycles">
+                <div class="item-title"><strong>{{ s.name }}</strong><span class="pill warn">{{ s.reason }}</span></div>
+              </li>
+            </ul>
+            <p class="hint">They stay as they are and the skip is noted in the failure history.</p>
+          </div>
+
+          <div class="section">
+            <h6>Circuits not started yet</h6>
+            <p class="hint" *ngIf="preview.hasDefinition">{{ preview.remainingCircuits }} circuit(s) of the original definition will be generated and executed.</p>
+            <p class="hint" *ngIf="!preview.hasDefinition">This experiment has no saved definition, so only pending executions can be resumed. Circuits that never started cannot be rebuilt.</p>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="close()" [disabled]="submitting">Cancel</button>
+      <button class="btn btn-primary" (click)="confirm()" [disabled]="!canConfirm">
+        <i *ngIf="submitting" class="fas fa-spinner fa-spin"></i>
+        <i *ngIf="!submitting" class="fas fa-play"></i>
+        <span>{{ submitting ? 'Resuming...' : 'Resume' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

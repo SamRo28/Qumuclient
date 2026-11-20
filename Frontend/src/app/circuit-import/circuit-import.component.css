@@ -1,0 +1,146 @@
+.circuit-import-panel {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-glass);
+    background: var(--glass-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panel-title i {
+    color: var(--accent-primary);
+}
+
+.panel-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.panel-close:hover {
+    color: var(--text-primary);
+}
+
+.panel-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.panel-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.panel-select,
+.panel-code {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-glass-light);
+    background: var(--glass-bg-card);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    outline: none;
+}
+
+.panel-select:focus,
+.panel-code:focus {
+    border-color: var(--accent-primary);
+}
+
+.panel-code {
+    font-family: 'JetBrains Mono', monospace;
+    resize: vertical;
+}
+
+.panel-file {
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.panel-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.mode-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mode-tab {
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-glass-light);
+    background: var(--glass-bg-card);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.mode-tab.active {
+    background: var(--accent-gradient);
+    border-color: var(--accent-primary);
+    color: #ffffff;
+}
+
+.panel-error {
+    color: #ef4444;
+    font-size: 0.85rem;
+}
+
+.panel-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.panel-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-glass);
+}
+
+.panel-btn.primary {
+    background: var(--accent-gradient);
+    border-color: var(--accent-primary);
+    color: #ffffff;
+}
+
+.panel-btn.secondary {
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+.panel-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

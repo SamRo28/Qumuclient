@@ -305,3 +305,35 @@ select.input:disabled {
     transform: translateY(0);
   }
 }
+
+.oracle-badge {
+  background: var(--glass-bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-primary);
+  box-shadow: 0 4px 12px var(--shadow-glass);
+  animation: fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+}
+
+.oracle-badge svg {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.oracle-badge-content {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.oracle-badge-content strong {
+  color: var(--accent-primary);
+  font-weight: 600;
+}

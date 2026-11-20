@@ -1,0 +1,178 @@
+<div class="noise-rotations-container">
+  <!-- Step 1: Where to insert noise -->
+  <div class="step-header">
+    <div class="step-title-row">
+      <h4 class="step-title">
+        <span class="step-badge">1</span> Where should the noise be inserted?
+      </h4>
+      <div class="step-meta">
+        <span class="step-count">{{ positionsSelected }} / {{ positions.length }}</span>
+        <button type="button" class="select-all-link" (click)="toggleAllPositions()">
+          {{ positionsSelected === positions.length && positions.length > 0 ? 'None' : 'All positions' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="position-options">
+    <button
+      type="button"
+      *ngFor="let p of positions"
+      class="position-option"
+      role="checkbox"
+      [attr.aria-checked]="p.op.selected"
+      [class.selected]="p.op.selected"
+      (click)="togglePosition(p.op)"
+    >
+      <div class="position-check" [class.checked]="p.op.selected">
+        <svg *ngIf="p.op.selected" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+
+      <!-- Mini circuit diagram -->
+      <svg class="circuit-diagram" viewBox="0 0 132 40" width="100%" height="40">
+        <!-- Wire -->
+        <line x1="4" y1="20" x2="128" y2="20" stroke="var(--text-muted)" stroke-width="1.5" />
+
+        <!-- Existing Gates at x=44 and x=76 -->
+        <rect x="44" y="12" width="16" height="16" rx="3" fill="var(--glass-bg-card)" stroke="var(--text-secondary)" stroke-width="1.5" />
+        <rect x="76" y="12" width="16" height="16" rx="3" fill="var(--glass-bg-card)" stroke="var(--text-secondary)" stroke-width="1.5" />
+
+        <!-- Noise Gate slot: 0 -> x=14, 1 -> x=60, 2 -> x=104 -->
+        <g [attr.opacity]="p.op.selected ? 1 : 0.35">
+          <!-- Random slot dashed outline indicator -->
+          <rect *ngIf="p.slot === 1" x="58" y="10" width="20" height="20" rx="4" fill="none" stroke="var(--accent-primary)" stroke-width="1" stroke-dasharray="2 2" />
+          <rect [attr.x]="p.slot === 0 ? 14 : (p.slot === 1 ? 60 : 104)" y="12" width="16" height="16" rx="3" fill="var(--accent-primary)" />
+          <text [attr.x]="p.slot === 0 ? 22 : (p.slot === 1 ? 68 : 112)" y="24" fill="#ffffff" font-size="10" font-weight="700" text-anchor="middle" dominant-baseline="central">N</text>
+        </g>
+      </svg>
+
+      <strong class="position-title">{{ p.title }}</strong>
+      <small class="position-desc">{{ p.desc }}</small>
+    </button>
+  </div>
+
+  <!-- Step 2: Rotations -->
+  <div class="step-header step-2-header">
+    <div class="step-title-row">
+      <h4 class="step-title">
+        <span class="step-badge">2</span> Which rotations?
+      </h4>
+      <span class="rotations-count-badge">{{ rotations.length }} / {{ max }}</span>
+    </div>
+    <p class="rotations-help">Each rotation is inserted separately, so it creates its own set of mutants.</p>
+    <div *ngIf="positionsSelected === 0" class="step-inline-note">
+      Choose at least one position in step 1 so these rotations are used.
+    </div>
+  </div>
+
+  <div class="rotations-list" [class.dimmed]="positionsSelected === 0">
+    <div
+      *ngFor="let r of rotations; let i = index; trackBy: trackByIndex"
+      class="rotation-card"
+      [class.has-error]="!isValid(r) || dupOf(i) !== -1"
+    >
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="rotation-badge">{{ i + 1 }}</span>
+          <span class="rotation-preview">{{ preview(r) }}</span>
+        </div>
+        <button
+          type="button"
+          class="btn-remove"
+          [disabled]="rotations.length <= 1"
+          [attr.aria-label]="'Remove rotation ' + (i + 1)"
+          (click)="remove(i)"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Remove</span>
+        </button>
+      </div>
+
+      <div class="card-body">
+        <!-- Axis Row -->
+        <div class="config-row axis-row">
+          <label class="row-label">Axis</label>
+          <div class="axis-controls">
+            <div class="axis-segmented">
+              <button
+                type="button"
+                *ngFor="let a of axes"
+                class="segment-btn"
+                [class.active]="r.axis === a"
+                [attr.aria-pressed]="r.axis === a"
+                (click)="setAxis(r, a)"
+              >
+                {{ a }}
+              </button>
+            </div>
+            <span class="axis-hint" *ngIf="r.axis === 'X'">bit-flip-like</span>
+            <span class="axis-hint" *ngIf="r.axis === 'Y'">bit + phase</span>
+            <span class="axis-hint" *ngIf="r.axis === 'Z'">phase-like</span>
+          </div>
+        </div>
+
+        <!-- Angle Row -->
+        <div class="config-row angle-row">
+          <label class="row-label">Angle</label>
+          <div class="angle-controls">
+            <div class="angle-input-wrapper">
+              <input
+                type="number"
+                step="0.01"
+                min="0.001"
+                max="6.2832"
+                [(ngModel)]="r.angle"
+                class="angle-input"
+              />
+              <span class="input-suffix">rad</span>
+            </div>
+
+            <div class="preset-chips">
+              <button
+                type="button"
+                *ngFor="let p of presets"
+                class="preset-chip"
+                [class.active]="isPresetActive(r, p.value)"
+                (click)="setPreset(r, p.value)"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inline error messages -->
+        <div *ngIf="!isValid(r)" class="error-msg">
+          Angle must be greater than 0 and at most 2π (≈ 6.2832) rad.
+        </div>
+        <div *ngIf="dupOf(i) !== -1" class="error-msg">
+          Same as rotation {{ dupOf(i) + 1 }}, change the axis or the angle.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rotations-footer">
+    <button
+      type="button"
+      class="btn-add-rotation"
+      (click)="add()"
+      [disabled]="rotations.length >= max"
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>{{ rotations.length >= max ? 'Maximum of 6 rotations reached' : 'Add rotation' }}</span>
+    </button>
+
+    <div class="rotations-summary">
+      <span>{{ positionsSelected }} position(s) × {{ rotations.length }} rotation(s) = <strong>{{ mutantsPerQubit }}</strong> mutants per qubit</span>
+    </div>
+  </div>
+</div>

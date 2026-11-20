@@ -1,0 +1,117 @@
+import { HttpClient } from '@angular/common/http';
+import { JobStatus, pollJobDone } from './job-polling';
+import { tap } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { Project } from '../model/Project';
+import { User } from '../model/User';
+import { environment } from 'src/environments/environment';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ReperService {
+  private right: string = "?db=quantum_mutation&collection="
+
+  constructor(private client: HttpClient) { }
+
+  getCircuits(email: string) {
+    return this.client.post<any>(`${environment.api.core}/projects/getAllByUser`, { email }, { withCredentials: true })
+  }
+
+  getSidebarCircuits(email: string) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getSidebarProjects`, { email }, { withCredentials: true })
+  }
+
+  getProject(email: string, projectId: string) {
+    return this.client.post<any>(`${environment.api.core}/projects/getProject`, { email, projectId }, { withCredentials: true })
+  }
+
+  getProjectLight(email: string, projectId: string) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getProjectLight`, { email, projectId }, { withCredentials: true })
+  }
+
+  getCycleMatrix(email: string, projectId: string, cycleId: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getCycleMatrix`, { email, projectId, cycleId }, { withCredentials: true })
+  }
+
+  getMutant(email: string, projectId: string, cycleId: number, mutantIndex: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getMutant`, { email, projectId, cycleId, mutantIndex }, { withCredentials: true })
+  }
+
+  getMutantCircuits(email: string, projectId: string, cycleId: number, fromIndex: number, limit: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/getMutantCircuits`, { email, projectId, cycleId, fromIndex, limit }, { withCredentials: true })
+  }
+
+  save(circuit: Project) {
+    // Crear una copia del circuito para no modificar el original
+    const circuitToSend: any = { ...circuit };
+
+    // Eliminar testSuites y generator porque no se modifican en esta herramienta
+    // y pueden dar de error de proxy de Hibernate al intentar guardarlos
+    delete circuitToSend.testSuites;
+    if (circuitToSend.qProgram) {
+      circuitToSend.qProgram = { ...circuitToSend.qProgram };
+      delete (circuitToSend.qProgram as any).generator;
+    }
+
+    // Enviar todos los ciclos para que el backend no los borre, pero
+    // vaciar el array de mutantes para que no sature la red ni el backend los reemplace.
+    // Los mutantes se mandarán por lotes con saveMutantsBatch/saveExecutionsBatch.
+    if (circuit.mutantCycles) {
+      circuitToSend.mutantCycles = circuit.mutantCycles.map(mc => {
+        const mcToSend = { ...mc };
+        // Any para forzar saltarse el tipado estricto si hace falta
+        (mcToSend as any).mutants = null;
+        return mcToSend as any;
+      });
+    }
+
+    return this.client.put<any>(`${environment.api.core}/projects/save`, {
+      circuit: circuitToSend, user: {
+        id: sessionStorage.getItem('email')
+      }
+    }, { withCredentials: true })
+  }
+
+  saveMutantsBatch(projectId: string, cycleId: number, mutants: any[]) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/saveMutantsBatch`, { projectId, cycleId, mutants, email: sessionStorage.getItem('email')! }, { withCredentials: true })
+  }
+
+  saveExecutionsBatch(projectId: string, cycleId: number, mutants: any[]) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/saveExecutionsBatch`, { projectId, cycleId, mutants, email: sessionStorage.getItem('email')! }, { withCredentials: true })
+  }
+
+  delete(projectId: string) {
+    return this.client.post<any>(`${environment.api.core}/projects/delete`, { projectId, userId: sessionStorage.getItem('email')! }, { withCredentials: true })
+  }
+
+  deleteMutantCycle(projectId: string, cycleId: number) {
+    return this.client.post<any>(`${environment.api.core}/qumureper/deleteMutantCycle`, { projectId, cycleId, email: sessionStorage.getItem('email')! }, { withCredentials: true })
+  }
+
+  getJobStatus(jobId: string) {
+    return this.client.post<JobStatus>(`${environment.api.core}/jobs/status`, { email: sessionStorage.getItem('email')!, jobId }, { withCredentials: true })
+  }
+
+  /** Sondea un trabajo de borrado hasta que termina; falla con el mensaje de reper si acaba en FAILED. */
+  watchJob(jobId: string, intervalMs: number = 3000) {
+    return pollJobDone(() => this.getJobStatus(jobId), intervalMs);
+  }
+
+  getUser() {
+    return this.client.post<User>(`${environment.api.core}/users/getUser`, {}, {
+      withCredentials: true
+    }).pipe(
+      tap(user => {
+        const email = typeof user === 'string' ? user : user?.email;
+        if (email) {
+          sessionStorage.setItem('email', email);
+        }
+      })
+    );
+  }
+
+  getProjects(token: string, id: string) {
+    return this.client.post<any>(`${environment.api.core}/projects/getAllByUser`, { token, email: sessionStorage.getItem('email')!, id }, { withCredentials: true })
+  }
+}

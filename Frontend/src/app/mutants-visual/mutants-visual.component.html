@@ -10,10 +10,8 @@
                 ORIGINAL CIRCUIT
             </h2>
             <div class="circuit-iframe-container">
-                <iframe *ngIf="originalCircuitUrl" [src]="originalCircuitUrl" class="circuit-iframe" frameborder="0"
-                    title="Original QProgram Visualization">
-                </iframe>
-                <div *ngIf="!originalCircuitUrl" class="no-circuit-message">
+                <app-circuit-viewer *ngIf="originalCircuitQuirk" [quirkCode]="originalCircuitQuirk" [isMutant]="false"></app-circuit-viewer>
+                <div *ngIf="!originalCircuitQuirk" class="no-circuit-message">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" />
                         <path d="M3 9h18M9 3v18" stroke="currentColor" stroke-width="2" />
@@ -33,10 +31,8 @@
                 MUTANT CIRCUIT
             </h2>
             <div class="circuit-iframe-container">
-                <iframe *ngIf="mutantCircuitUrl" [src]="mutantCircuitUrl" class="circuit-iframe" frameborder="0"
-                    title="Mutant QProgram Visualization">
-                </iframe>
-                <div *ngIf="!mutantCircuitUrl" class="no-circuit-message">
+                <app-circuit-viewer *ngIf="mutantCircuitQuirk" [quirkCode]="mutantCircuitQuirk" [isMutant]="true" [mutant]="selectedMutant"></app-circuit-viewer>
+                <div *ngIf="!mutantCircuitQuirk" class="no-circuit-message">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" />
                         <path d="M3 9h18M9 3v18" stroke="currentColor" stroke-width="2" />

@@ -161,6 +161,19 @@ body {
     color: #f59e0b;
 }
 
+/* Diff Highlighting */
+.code-display ::ng-deep .diff-highlight {
+    background: rgba(21, 128, 61, 0.2);
+    /* Dark Green transparent */
+    border: 1px solid rgba(21, 128, 61, 0.3);
+    border-radius: 4px;
+    display: inline-block;
+    width: 100%;
+    padding: 0 4px;
+    color: #15803d;
+    font-weight: 600;
+}
+
 /* Animations */
 @keyframes fadeInUp {
     from {
