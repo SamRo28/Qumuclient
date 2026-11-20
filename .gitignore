@@ -2,3 +2,13 @@ Frontend/src/estilo_frontend.css
 Frontend/C:/Users/samue/Documents/Builds/frontends/qumuclient/3rdpartylicenses.txt
 .claude/
 .vscode/
+# Secrets and build artifacts
+contraseña.txt
+**/C:/
+build.log
+coverage.txt
+**/target/
+**/node_modules/
+Frontend/dist/
+.DS_Store
+*.log
