@@ -24,7 +24,6 @@
 - [Testing](#testing)
 - [QSauron ecosystem](#qsauron-ecosystem)
 - [Roadmap](#roadmap)
-- [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
@@ -174,10 +173,6 @@ flowchart LR
 - [x] Maven project names aligned with the module names
 - [ ] Add more mutation operators and strategies
 - [ ] Upgrade the Angular front end
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
